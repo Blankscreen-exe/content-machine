@@ -23,7 +23,7 @@ body { margin: 0; }
 /* both set a display of their own, which would otherwise override `hidden` */
 .due-badge[hidden], .due[hidden] { display: none; }
 
-/* what is due, above the pieces list */
+/* what is due, above the month on the Calendar tab */
 .due-list { margin: 0; padding-left: 20px; }
 .due-list li { margin: 2px 0; }
 
@@ -87,6 +87,15 @@ body { margin: 0; }
 .list tbody tr { cursor: pointer; }
 .list td.title { cursor: pointer; }
 .list td select { width: auto; max-width: 100%; }   /* inline stage picker stays compact */
+
+/* paging controls (DataTables): a compact row above and below the list. The look of the
+   buttons and the table cells is each theme's, through DataTables' own variables.
+   Scoped under .app to outrank DataTables' stylesheet, which loads after this one. */
+.app div.dt-container .dt-layout-row { display: flex; flex-wrap: wrap; align-items: center;
+                                       justify-content: space-between; gap: 8px 14px; margin: 10px 0; }
+.app div.dt-container .dt-length { display: flex; align-items: center; gap: 8px; }
+.app div.dt-container .dt-length select { width: auto; }
+.app div.dt-container .dt-paging nav { display: flex; flex-wrap: wrap; gap: 4px; }
 .empty { text-align: center; padding: 26px 10px; }
 
 /* a status or stage shown as a badge; each theme colours .status-<name> */
@@ -99,6 +108,24 @@ span.status { display: inline-block; padding: 1px 8px; white-space: nowrap; }
 .editor .row { display: flex; flex-wrap: wrap; gap: 14px; }
 .editor .row label { flex: 1 1 150px; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* draft search results, above the pieces list */
+.hit-list { list-style: none; margin: 0; padding: 0; }
+.hit-list li { margin: 0 0 12px; }
+.snippet { margin: 4px 0 0; }
+
+/* Calendar: a month grid, one column per weekday */
+.calendar-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+                gap: 10px; margin-bottom: 12px; }
+.calendar-bar h2 { margin: 0; }
+.calendar-nav { display: flex; gap: 6px; }
+.month { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.month th { padding: 4px 6px; text-align: left; }
+.month td.day { vertical-align: top; height: 96px; padding: 4px 6px; overflow: hidden; }
+.day-number { display: block; margin-bottom: 4px; }
+.day-name { display: none; }      /* only on phones, where there are no column headings */
+.cal-piece { display: block; margin: 2px 0; padding: 1px 5px; font-size: 13px; text-decoration: none;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Manage: a sidebar of sections, then the section over the other four fifths */
 .manage { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; margin-top: 14px; }
@@ -145,6 +172,15 @@ textarea { resize: vertical; }
   .actions-cell .btn { min-height: 40px; padding: 8px 14px; }
   .plain th, .plain td { display: block; padding: 2px 0; }
   .editor .row label { flex: 1 1 100%; }
+
+  /* Calendar: seven columns do not fit, so the month becomes a list of the days that
+     have something on them */
+  .month, .month tbody, .month tr, .month td { display: block; width: 100%; }
+  .month thead { display: none; }
+  .month td.day { height: auto; }
+  .month td.no-pieces, .month td.other-month { display: none; }
+  .day-name { display: inline; }
+  .cal-piece { white-space: normal; }
 
   /* Manage: the sidebar becomes a row of tabs above the section */
   .manage { grid-template-columns: minmax(0, 1fr); }

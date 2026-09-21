@@ -55,6 +55,20 @@ input, textarea, select {
 .tabs a { color: #6b5f4b; text-decoration: none; }
 .tabs a.on { color: #2e2a24; border-bottom: 2px solid #8a7c63; }
 
+/* draft search: the matched words */
+.snippet { color: #6b5f4b; }
+.snippet mark { background: #f2ead6; color: #2e2a24; border-bottom: 1px solid #8a7c63; }
+
+/* calendar */
+.month th { font-variant: small-caps; letter-spacing: 1px; font-weight: normal; color: #6b5f4b;
+            border-bottom: 1px solid #c9bda2; }
+.month td.day { border: 1px solid #e4dbc6; }
+.month td.other-month { color: #b3a88f; background: #f6f1e4; }
+.month td.today { background: #f2ead6; }
+.month td.today .day-number { font-weight: bold; color: #2e2a24; }
+.day-number { color: #7a6e58; }
+.cal-piece.overdue { border-left: 3px solid #8c2f2a; }
+
 /* Manage sidebar and item cards */
 .manage-nav a { color: #6b5f4b; text-decoration: none; font-variant: small-caps; letter-spacing: 1px; border-left: 2px solid transparent; }
 .manage-nav a.on { color: #2e2a24; border-left-color: #8a7c63; }
@@ -72,6 +86,33 @@ input, textarea, select {
 .hint { font-size: 14px; color: #7a6e58; }
 .hint code, .plain code { font-family: Consolas, monospace; font-size: 13px; }
 .list tr.inactive td { color: #9a8f7a; font-style: italic; }
+
+/* paging (DataTables): its variables, matched to the list and bracketed buttons above */
+:root {
+  --dt-header_padding: 6px 8px;
+  --dt-body_padding: 9px 8px;
+  --dt-header_border: 1px solid #c9bda2;
+  --dt-order-arrow_color: #8a7c63;
+  --dt-order-arrow_color-current: #2e2a24;
+  --dt-order-header_outline-hover: none;
+  --dt-column-ordering_alpha: 0;
+  --dt-paging-button_padding: 2px 6px;
+  --dt-paging-button_background: transparent;
+  --dt-paging-button_border: 1px solid transparent;
+  --dt-paging-button_color: #6b5f4b;
+  --dt-paging-button_background-hover: transparent;
+  --dt-paging-button_border-hover: 1px solid transparent;
+  --dt-paging-button_color-hover: #2e2a24;
+  --dt-paging-button_background-current: transparent;
+  --dt-paging-button_border-current: 1px solid transparent;
+  --dt-paging-button_color-current: #2e2a24;
+  --dt-paging-button_background-current-hover: transparent;
+  --dt-paging-button_border-current-hover: 1px solid transparent;
+  --dt-paging-button_color-disabled: #c9bda2;
+  --dt-paging-button_box-shadow-active: none;
+}
+div.dt-container .dt-paging .dt-paging-button.current { font-weight: bold; border-bottom: 2px solid #8a7c63; }
+div.dt-container .dt-info, div.dt-container .dt-length label { font-variant: small-caps; color: #7a6e58; }
 .message { border-left: 3px solid #8a7c63; padding: 6px 12px; margin-top: 10px; color: #6b5f4b; }
 
 /* piece page and editor */

@@ -10,4 +10,6 @@
       <option value="{{ brand.id }}" {{ 'selected' if brand_id == brand.id }}>{{ brand.slug }}</option>
     {% endfor %}
   </select>
+  {# on the calendar, changing brand stays on the month being looked at #}
+  {% if view == 'calendar' %}<input type="hidden" name="month" value="{{ month.first.strftime('%Y-%m') }}">{% endif %}
 </form>

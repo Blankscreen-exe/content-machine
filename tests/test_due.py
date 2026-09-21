@@ -1,4 +1,4 @@
-"""Reminders: what is overdue or due soon shows on the Pieces tab and above the list."""
+"""Reminders: what is overdue or due soon is counted on the Calendar tab and listed above the month."""
 from __future__ import annotations
 
 from datetime import date, timedelta
@@ -45,18 +45,23 @@ def test_the_window_comes_from_settings(session: Session, dated):
     assert _titles(schedule.due(session, TODAY).soon) == ["Today"]
 
 
-def test_the_pieces_page_shows_the_panel_and_the_tab_count(client: TestClient, session: Session,
-                                                          brand):
+def test_the_calendar_shows_the_panel_and_its_tab_the_count(client: TestClient, session: Session,
+                                                            brand):
     crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Late one",
                       due_on=date.today() - timedelta(days=1))
-    page = client.get("/pieces").text
+    page = client.get("/calendar").text
 
     assert 'id="due" class="panel due">' in page and "Late one" in page
-    assert 'class="due-badge"' in page and ">1</span>" in page
+    calendar_tab = page[page.index('href="/calendar'):page.index(">Manage")]
+    assert 'class="due-badge"' in calendar_tab and ">1</span>" in calendar_tab
+
+
+def test_the_pieces_page_no_longer_lists_what_is_due(client: TestClient, brand):
+    assert 'id="due"' not in client.get("/pieces").text
 
 
 def test_nothing_due_hides_both(client: TestClient, brand):
-    page = client.get("/pieces").text
+    page = client.get("/calendar").text
     assert 'id="due" class="panel due" hidden>' in page
     assert '<span id="due-badge" class="due-badge" hidden' in page
 
@@ -68,7 +73,6 @@ def test_publishing_from_the_list_updates_the_count(client: TestClient, session:
     response = client.post(f"/pieces/{piece.id}/stage", data={"stage": "published", "brand_id": ""})
 
     assert '<span id="due-badge" class="due-badge" hx-swap-oob="true" hidden' in response.text
-    assert 'id="due" class="panel due" hx-swap-oob="true" hidden>' in response.text
 
 
 def test_the_window_is_checked_when_set(client: TestClient, session: Session):

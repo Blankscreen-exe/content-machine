@@ -7,7 +7,7 @@ from sqlmodel import Session
 from cm import crud
 from helpers import type_id
 
-TABS = (">Ideas", ">Pieces", ">Manage", ">Settings")     # Pieces may carry a due count
+TABS = (">Ideas", ">Pieces", ">Calendar", ">Manage", ">Settings")   # Calendar may carry a count
 
 
 def test_settings_page_shows_preferences_and_the_workspace(client: TestClient, brand):
@@ -19,7 +19,7 @@ def test_settings_page_shows_preferences_and_the_workspace(client: TestClient, b
 
 
 def test_every_page_offers_the_same_tabs(client: TestClient, brand):
-    for path in ("/", "/pieces", "/manage/brands", "/settings"):
+    for path in ("/", "/pieces", "/calendar", "/manage/brands", "/settings"):
         page = client.get(path).text
         assert page.count('class="tabs"') == 1
         for label in TABS:

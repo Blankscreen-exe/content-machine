@@ -1,12 +1,12 @@
 <div id="brand-list">
   {% if brands %}
-    <table class="list">
-      <thead><tr><th>Slug</th><th>Name</th><th>Status</th><th class="actions-head">Actions</th></tr></thead>
+    <table class="list" id="brands-table" data-table>
+      <thead><tr><th>Slug</th><th>Name</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
       <tbody>
         {% for brand in brands %}
           <tr class="{{ '' if brand.active else 'inactive' }}">
             <td data-label="Slug"><code>{{ brand.slug }}</code></td>
-            <td data-label="Name">
+            <td data-label="Name" data-order="{{ brand.name | lower }}">
               <form class="inline-form" hx-post="/manage/brands/{{ brand.id }}"
                     hx-target="#brand-list" hx-swap="outerHTML">
                 <input name="name" value="{{ brand.name }}" size="20" required>

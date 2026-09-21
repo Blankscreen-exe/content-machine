@@ -1,15 +1,15 @@
 <div id="pieces">
   {% if pieces %}
-    <table class="list">
+    <table class="list" id="pieces-table" data-table>
       <thead>
-        <tr><th>Title</th><th>Type</th><th>Stage</th><th class="num">Due</th><th class="actions-head">Actions</th></tr>
+        <tr><th>Title</th><th>Type</th><th>Stage</th><th class="num">Due</th><th class="actions-head no-sort">Actions</th></tr>
       </thead>
       <tbody>
         {% for piece in pieces %}
           <tr class="{{ 'overdue' if piece.due_on and piece.due_on < today and piece.stage.value != 'published' }}">
             <td class="title" data-label="Title"><a href="/pieces/{{ piece.id }}">{{ piece.title }}</a></td>
             <td data-label="Type">{{ piece.type.name }}</td>
-            <td data-label="Stage">
+            <td data-label="Stage" data-order="{{ stages.index(piece.stage.value) }}">
               {# changing stage is the most frequent action, so it happens in place #}
               <select name="stage" class="status {{ piece.stage.value | status_class }}"
                       hx-post="/pieces/{{ piece.id }}/stage"
@@ -19,7 +19,8 @@
                 {% endfor %}
               </select>
             </td>
-            <td class="num" data-label="Due">{{ piece.due_on.isoformat() if piece.due_on else "—" }}</td>
+            {# undated work sorts after everything dated, as the server orders it #}
+            <td class="num" data-label="Due" data-order="{{ piece.due_on.isoformat() if piece.due_on else '9999-12-31' }}">{{ piece.due_on.isoformat() if piece.due_on else "—" }}</td>
             <td class="actions-cell" data-label="Actions">
               <button class="btn" hx-get="/pieces/{{ piece.id }}/form" hx-include="#brand-scope"
                       hx-target="#piece-editor" hx-swap="innerHTML">Edit</button>
@@ -40,6 +41,5 @@
   <span id="piece-count" hx-swap-oob="true">{{ counts.get('total', 0) }} pieces &middot; {{ counts.get('published', 0) }} published</span>
   {% if close_editor %}<div id="piece-editor" hx-swap-oob="true"></div>{% endif %}
   {# a stage or date change can move a piece in or out of what is due #}
-  {% include "partials/due.html" %}
   {% include "partials/due_badge.html" %}
 {% endif %}

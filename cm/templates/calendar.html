@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{# What is due, then a month of pieces by due date. Plain links throughout: moving between
+   months is a new address, so a month can be bookmarked and the back button works. #}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+{% include "partials/brand_scope.html" %}
+
+{% include "partials/due.html" %}
+
+{% set brand_param = '&brand_id=' ~ brand_id if brand_id else '' %}
+<section class="panel calendar">
+  <div class="calendar-bar">
+    <h2>{{ month.title }}</h2>
+    <nav class="calendar-nav" aria-label="Month">
+      <a class="btn" href="/calendar?month={{ month.previous.strftime('%Y-%m') }}{{ brand_param }}" aria-label="Previous month">&lsaquo;</a>
+      <a class="btn" href="/calendar?month={{ today.strftime('%Y-%m') }}{{ brand_param }}">Today</a>
+      <a class="btn" href="/calendar?month={{ month.next.strftime('%Y-%m') }}{{ brand_param }}" aria-label="Next month">&rsaquo;</a>
+    </nav>
+  </div>
+
+  <table class="month">
+    <thead>
+      <tr>{% for name in weekdays %}<th scope="col">{{ name }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for week in month.weeks %}
+        <tr>
+          {% for day in week %}
+            <td class="day{% if not day.in_month %} other-month{% endif %}{% if day.is_today %} today{% endif %}{% if not day.pieces %} no-pieces{% endif %}">
+              <span class="day-number">
+                <span class="day-name">{{ day.on.strftime('%a') }}</span> {{ day.on.day }}
+              </span>
+              {% for piece in day.pieces %}
+                <a class="cal-piece status {{ piece.stage.value | status_class }}{% if day.on < today and piece.stage.value != 'published' %} overdue{% endif %}"
+                   href="/pieces/{{ piece.id }}" title="{{ piece.type.name }} · {{ piece.stage.value }}">{{ piece.title }}</a>
+              {% endfor %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if undated %}
+    <p class="hint">Not shown, as they have no due date: {{ undated }} unpublished
+      &middot; <a href="/pieces{{ '?brand_id=' ~ brand_id if brand_id }}">see the pieces list</a></p>
+  {% endif %}
+</section>
+
+{% endblock %}

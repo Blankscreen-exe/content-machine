@@ -1,15 +1,15 @@
 <div id="type-list">
   {% if types %}
-    <table class="list">
-      <thead><tr><th>Name</th><th>Main file</th><th>Status</th><th class="actions-head">Actions</th></tr></thead>
+    <table class="list" id="types-table" data-table>
+      <thead><tr><th>Name</th><th>Main file</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
       <tbody>
         {% for piece_type in types %}
           <tr class="{{ '' if piece_type.active else 'inactive' }}">
             {# one form per row, spread over the cells with the form attribute #}
-            <td data-label="Name">
+            <td data-label="Name" data-order="{{ piece_type.name | lower }}">
               <input name="name" value="{{ piece_type.name }}" size="16" required form="type-{{ piece_type.id }}">
             </td>
-            <td data-label="Main file">
+            <td data-label="Main file" data-order="{{ piece_type.main_file }}">
               <input name="main_file" value="{{ piece_type.main_file }}" size="16" required form="type-{{ piece_type.id }}">
             </td>
             <td data-label="Status">{{ 'on' if piece_type.active else 'off' }}</td>

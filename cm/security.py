@@ -23,7 +23,7 @@ COOKIE_NAME = "cm_token"
 
 
 def _token_file() -> Path:
-    return get_settings().workspace / ".cm" / "token"
+    return get_settings().state_dir / "token"
 
 
 @lru_cache

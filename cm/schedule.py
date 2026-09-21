@@ -1,7 +1,7 @@
 """What is due: pieces past their date, and pieces coming up soon.
 
 The app raises its own reminders by showing these where you already look — a count on the
-Pieces tab and a list above the pieces — rather than by running anything in the background.
+Calendar tab and a list above the month — rather than by running anything in the background.
 """
 from __future__ import annotations
 

@@ -5,6 +5,9 @@
 {% include "partials/brand_scope.html" %}
 
 <div class="bar">
+  <input class="search" type="search" name="q" placeholder="search drafts..." autocomplete="off"
+         hx-get="/pieces/search" hx-trigger="input changed delay:300ms, search"
+         hx-target="#search-results" hx-swap="outerHTML" hx-include="#brand-scope">
   <select name="stage"
           hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
           hx-include="[name='type_id'],#brand-scope">
@@ -26,7 +29,7 @@
           hx-target="#piece-editor" hx-swap="innerHTML">New piece</button>
 </div>
 
-{% include "partials/due.html" %}
+<div id="search-results"></div>
 {% include "partials/pieces.html" %}
 
 <div id="piece-editor"></div>

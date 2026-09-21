@@ -57,6 +57,18 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .tabs a { color: #0000ee; text-decoration: underline; }
 .tabs a.on { color: #000; font-weight: bold; text-decoration: none; background: #c0c0c0; border: 2px inset #fff; padding: 2px 10px; }
 
+/* draft search: the matched words */
+.snippet mark { background: #ffff00; color: #000; }
+
+/* calendar */
+.month { background: #fff; border: 2px outset #fff; }
+.month th { background: #000080; color: #fff; font-size: 14px; }
+.month td.day { border: 1px solid #c0c0c0; }
+.month td.other-month { background: #eeeeee; color: #808080; }
+.month td.today { background: #ffffcc; }
+.month td.today .day-number { font-weight: bold; }
+.cal-piece.overdue { outline: 2px solid #800000; }
+
 /* Manage sidebar and item cards */
 .manage-nav { background: #dcdcdc; border: 2px outset #fff; padding: 6px; }
 .manage-nav a { color: #0000ee; text-decoration: underline; }
@@ -76,6 +88,38 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .hint code, .plain code { font-family: "Courier New", monospace; font-size: 13px; background: #fff; padding: 1px 4px; }
 .plain th { font-size: 15px; }
 .list tr.inactive td { color: #666; font-style: italic; }
+
+/* paging (DataTables): its variables, matched to the list and buttons above */
+:root {
+  --dt-header_padding: 6px 9px;
+  --dt-body_padding: 7px 9px;
+  --dt-header_border: none;
+  --dt-order-arrow_color: #fff;
+  --dt-order-arrow_color-current: #fff;
+  --dt-order-arrow_opacity: 0.4;
+  --dt-order-arrow_opacity-current: 1;
+  --dt-order-header_outline-hover: none;
+  --dt-column-ordering_alpha: 0;
+  --dt-paging-button_padding: 3px 10px;
+  --dt-paging-button_border-radius: 0;
+  --dt-paging-button_background: #c0c0c0;
+  --dt-paging-button_border: 2px outset #fff;
+  --dt-paging-button_color: #000;
+  --dt-paging-button_background-hover: #d4d4d4;
+  --dt-paging-button_border-hover: 2px outset #fff;
+  --dt-paging-button_color-hover: #000;
+  --dt-paging-button_background-current: #dcdcdc;
+  --dt-paging-button_border-current: 2px inset #fff;
+  --dt-paging-button_color-current: #000;
+  --dt-paging-button_background-current-hover: #dcdcdc;
+  --dt-paging-button_border-current-hover: 2px inset #fff;
+  --dt-paging-button_background-disabled: #c0c0c0;
+  --dt-paging-button_border-disabled: 2px outset #fff;
+  --dt-paging-button_color-disabled: #808080;
+  --dt-paging-button_box-shadow-active: none;
+}
+div.dt-container .dt-paging .dt-paging-button.current { font-weight: bold; }
+div.dt-container .dt-info { font-family: "Courier New", monospace; font-size: 13px; }
 .message { background: #ffffcc; border: 2px inset #fff; padding: 8px 10px; font-size: 15px; margin-top: 10px; }
 
 /* piece page and editor */

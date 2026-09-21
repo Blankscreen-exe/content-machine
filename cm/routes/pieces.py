@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlmodel import Session
 
-from .. import choices, crud, files, schedule, terminals, workspace
+from .. import choices, crud, files, schedule, search, terminals, workspace
 from ..database import get_session
 from ..models import Piece, PieceType, Stage
 from ..templating import STAGES, page_context, templates
@@ -38,7 +38,7 @@ def _list_context(request: Request, session: Session, brand_id: int | None,
         # every type, turned off or not: the filter has to find old pieces too
         "types": choices.all_items(session, PieceType),
         "today": date.today(),
-        "due": schedule.due(session, date.today(), brand_id),
+        "due": schedule.due(session, date.today(), brand_id),     # for the Calendar tab's count
     }
 
 
@@ -71,16 +71,32 @@ def piece_new(request: Request, session: Session = Depends(get_session),
     )
 
 
+# Declared before `/{piece_id}` for the same reason as `/new`.
+@router.get("/search", response_class=HTMLResponse)
+def piece_search(request: Request, session: Session = Depends(get_session),
+                 q: str = "", brand_id: OptionalId = None):
+    """Drafts containing the words typed, within the brand being viewed."""
+    return templates.TemplateResponse(
+        request, "partials/search_results.html",
+        {"request": request, "q": q.strip(), "hits": search.search(session, q, brand_id)},
+    )
+
+
 @router.get("/{piece_id}", response_class=HTMLResponse)
-def piece_page(piece_id: int, request: Request, session: Session = Depends(get_session)):
-    """One piece: its details, its drafts, and the button that opens a session on it."""
+def piece_page(piece_id: int, request: Request, session: Session = Depends(get_session),
+               file: str | None = None):
+    """One piece: its details, its drafts, and the button that opens a session on it.
+
+    `file` opens a draft other than the main one, as a search result does.
+    """
     piece = crud.get_piece(session, piece_id)
     if not piece:
         raise HTTPException(404, "piece not found")
 
     folder = workspace.piece_folder(session, piece)
-    main = piece.type.main_file
-    text, fingerprint = files.read(folder, main)
+    drafts = files.list_drafts(folder, piece.type.main_file)
+    opened = file if file in drafts else piece.type.main_file
+    text, fingerprint = files.read(folder, opened)
 
     context = page_context(request, session, "pieces", piece.brand_id)
     context |= {
@@ -91,7 +107,7 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
         "stages": STAGES,
     }
     context |= publications_context(session, piece)
-    context |= pane_context(piece, folder, main, text, fingerprint)
+    context |= pane_context(piece, folder, opened, text, fingerprint)
     return templates.TemplateResponse(request, "piece.html", context)
 
 

@@ -51,6 +51,22 @@ body {
 .tabs a:hover { color: var(--text); }
 .tabs a.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 
+/* draft search: the matched words */
+.snippet { font-size: 14px; color: var(--text-muted); }
+.snippet mark { background: var(--accent-soft); color: var(--accent-strong); border-radius: 3px; padding: 0 2px; }
+
+/* calendar */
+.month { background: var(--surface); }
+.month th { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.04em; border-bottom: 1px solid var(--line); }
+.month td.day { border: 1px solid var(--line); }
+.month td.other-month { background: var(--surface-muted); color: var(--line-strong); }
+.month td.today .day-number { display: inline-block; min-width: 1.8em; text-align: center;
+                              border-radius: 999px; background: var(--accent); color: #fff; }
+.day-number { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.cal-piece { border-radius: 6px; font-weight: 500; }
+.cal-piece.overdue { box-shadow: inset 3px 0 0 var(--danger); }
+
 /* Manage sidebar and item cards */
 .manage-nav a { color: var(--text-muted); text-decoration: none; font-weight: 500; border-radius: var(--radius-small); }
 .manage-nav a:hover { color: var(--text); }
@@ -111,6 +127,37 @@ input:focus, textarea:focus, select:focus {
 .due-badge { background: var(--danger-soft); color: var(--danger); border-radius: 999px; font-weight: 600; }
 .due-list li.overdue { color: var(--danger); font-weight: 600; }
 .list tr.inactive td { color: var(--text-muted); font-style: italic; }
+
+/* paging (DataTables): its variables, matched to the list and buttons above */
+:root {
+  --dt-header_padding: 10px 14px;
+  --dt-body_padding: 12px 14px;
+  --dt-header_border: 1px solid var(--line);
+  --dt-order-arrow_color: var(--text-muted);
+  --dt-order-arrow_color-current: var(--accent);
+  --dt-order-header_outline-hover: none;
+  --dt-column-ordering_alpha: 0;
+  --dt-paging-button_padding: 5px 12px;
+  --dt-paging-button_border-radius: var(--radius-small);
+  --dt-paging-button_background: var(--surface);
+  --dt-paging-button_border: 1px solid var(--line-strong);
+  --dt-paging-button_color: var(--text);
+  --dt-paging-button_background-hover: var(--surface-muted);
+  --dt-paging-button_border-hover: 1px solid var(--line-strong);
+  --dt-paging-button_color-hover: var(--text);
+  --dt-paging-button_background-current: var(--accent);
+  --dt-paging-button_border-current: 1px solid var(--accent);
+  --dt-paging-button_color-current: #fff;
+  --dt-paging-button_background-current-hover: var(--accent-strong);
+  --dt-paging-button_border-current-hover: 1px solid var(--accent-strong);
+  --dt-paging-button_color-current-hover: #fff;
+  --dt-paging-button_background-disabled: var(--surface);
+  --dt-paging-button_border-disabled: 1px solid var(--line);
+  --dt-paging-button_color-disabled: var(--line-strong);
+  --dt-paging-button_box-shadow-active: none;
+}
+div.dt-container .dt-paging .dt-paging-button { font-size: 14px; font-weight: 500; }
+div.dt-container .dt-info, div.dt-container .dt-length label { font-size: 13px; color: var(--text-muted); }
 .empty {
   background: var(--surface); border: 1px dashed var(--line-strong);
   border-radius: var(--radius); color: var(--text-muted);

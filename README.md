@@ -35,9 +35,10 @@ The address printed on start carries a one-time token; the app refuses requests 
 | Pages | Jinja2 templates + htmx | Server-rendered fragments, no build step, no frontend framework for what is a CRUD screen |
 | CLI | Typer | Same operations as the UI, without a browser |
 | Editor | Toast UI Editor | Markdown and WYSIWYG in one component, with a toggle, and no build step |
+| Paged lists | DataTables 3 | Paging, rows per page and column sorting on the lists, with no dependencies of its own; it keeps its place when htmx redraws a list |
 | Tests | pytest + FastAPI TestClient | Covers the routes, the audit trail, file safety and the migrations |
 
-htmx and the editor are vendored in `cm/static/vendor/` so the app loads nothing from the
+htmx, the editor and DataTables are vendored in `cm/static/vendor/` so the app loads nothing from the
 internet. Use the editor's `-all` build: the plain one expects ProseMirror to be supplied
 separately.
 
@@ -68,6 +69,8 @@ cm/
   scaffold.py     starter files for `cm init`, and the text new brands and modes begin with
   database.py     engine, sessions, foreign keys, migrate-on-start
   schedule.py     what is overdue or due soon
+  month.py        a month laid out in weeks, with the pieces due on each day
+  search.py       full-text search over the drafts (SQLite FTS5), kept in step with the files
   workspace.py    a piece's folder: where it is, its brief, moving it to the trash
   files.py        reading and saving drafts inside a piece folder
   terminals.py    opening a terminal session in a piece folder
@@ -113,11 +116,25 @@ out. Making a piece from an idea promotes that idea out of the pool, because it 
 The pieces list sorts by due date with undated work last, and marks anything overdue that has not
 been published.
 
-## Reminders
+## Calendar and reminders
+
+The Calendar tab lays a month out in weeks, starting on Monday, with each piece on its due day in
+its stage's colour; published work stays on it. Months are plain addresses (`/calendar?month=2026-09`),
+so they can be bookmarked. On a phone the grid becomes a list of the days that have something on them.
 
 Unpublished pieces that are overdue, or due within a window set in Settings (a week by default),
-are listed above the pieces and counted on the Pieces tab. There is no background process: the
+are listed above the month on the Calendar tab and counted on that tab. There is no background process: the
 reminder is wherever you already look.
+
+## Searching drafts
+
+"Search drafts" on the Pieces tab finds pieces by the words in their draft files, with word forms
+("queue" finds "queues") and the last word allowed to be unfinished. A result opens the piece on
+the file that matched.
+
+Terminal sessions edit drafts directly, so the index catches up before every search, reading only
+files whose size or modification time changed. It lives in `.cm/search.db` in the workspace, apart
+from `content.db`: it holds nothing of its own, so deleting it only means the next search rebuilds it.
 
 ## Publishing
 

@@ -1,11 +1,11 @@
 <div id="platform-list">
   {% if platforms %}
-    <table class="list">
-      <thead><tr><th>Name</th><th>Status</th><th class="actions-head">Actions</th></tr></thead>
+    <table class="list" id="platforms-table" data-table>
+      <thead><tr><th>Name</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
       <tbody>
         {% for platform in platforms %}
           <tr class="{{ '' if platform.active else 'inactive' }}">
-            <td data-label="Name">
+            <td data-label="Name" data-order="{{ platform.name | lower }}">
               <form class="inline-form" hx-post="/manage/platforms/{{ platform.id }}"
                     hx-target="#platform-list" hx-swap="outerHTML">
                 <input name="name" value="{{ platform.name }}" size="18" required>

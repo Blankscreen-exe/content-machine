@@ -270,6 +270,23 @@ def list_publications(session: Session, piece_id: int) -> list[Publication]:
     ).all())
 
 
+def pieces_due_between(session: Session, first: date, last: date,
+                       brand_id: int | None = None) -> list[Piece]:
+    """Every piece due from `first` to `last`, published or not: a calendar shows both."""
+    query = select(Piece).where(Piece.due_on >= first, Piece.due_on <= last)
+    if brand_id:
+        query = query.where(Piece.brand_id == brand_id)
+    return list(session.exec(query.order_by(Piece.due_on, Piece.title)).all())
+
+
+def undated_count(session: Session, brand_id: int | None = None) -> int:
+    """Unpublished pieces with no due date, which a calendar cannot show."""
+    query = select(func.count()).select_from(Piece).where(Piece.due_on.is_(None),
+                                                          Piece.stage != Stage.published)
+    if brand_id:
+        query = query.where(Piece.brand_id == brand_id)
+    return session.exec(query).one()
+
 
 def piece_counts(session: Session, brand_id: int | None = None) -> dict[str, int]:
     query = select(Piece.stage, func.count(Piece.id)).group_by(Piece.stage)

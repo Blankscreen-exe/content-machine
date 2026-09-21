@@ -1,0 +1,22 @@
+{# Drafts that contain the words typed into "search drafts". Empty until something is typed. #}
+<div id="search-results">
+  {% if q %}
+    <section class="panel search-results">
+      <h2>Found in drafts</h2>
+      {% if hits %}
+        <ul class="hit-list">
+          {% for hit in hits %}
+            <li>
+              <a href="/pieces/{{ hit.piece.id }}?file={{ hit.name | urlencode }}">{{ hit.piece.title }}</a>
+              <span class="hint">{{ hit.piece.type.name }} &middot; {{ hit.name }}</span>
+              {# escaped in search._highlight, which only adds the <mark> tags around matches #}
+              <p class="snippet">{{ hit.snippet | safe }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-inline">No draft contains &ldquo;{{ q }}&rdquo;.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+</div>

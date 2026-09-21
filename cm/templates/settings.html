@@ -3,7 +3,7 @@
 
 {% include "partials/masthead.html" %}
 
-<section class="panel">
+<section class="panel" style="margin-top:10px;">
   <h2>Appearance</h2>
   <form class="inline-form" hx-post="/settings">
     <input type="hidden" name="key" value="theme">
@@ -48,7 +48,7 @@
              hx-post="/settings" hx-trigger="change" hx-include="closest form"> days
     </label>
   </form>
-  <p class="hint">They are listed above the pieces and counted on the Pieces tab, along with anything overdue.</p>
+  <p class="hint">They are listed above the month and counted on the Calendar tab, along with anything overdue.</p>
 </section>
 
 <section class="panel">

@@ -3,7 +3,8 @@
 
   <nav class="tabs">
     <a href="/{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'ideas' }}">Ideas</a>
-    <a href="/pieces{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'pieces' }}">Pieces {% include "partials/due_badge.html" %}</a>
+    <a href="/pieces{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'pieces' }}">Pieces</a>
+    <a href="/calendar{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'calendar' }}">Calendar {% include "partials/due_badge.html" %}</a>
     <a href="/manage" class="{{ 'on' if view == 'manage' }}">Manage</a>
     <a href="/settings" class="{{ 'on' if view == 'settings' }}">Settings</a>
   </nav>

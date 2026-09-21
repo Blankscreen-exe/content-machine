@@ -33,6 +33,11 @@ class Settings(BaseSettings):
         return self.workspace / "content"
 
     @property
+    def state_dir(self) -> Path:
+        """The app's own files: the access token and the search index. Not content."""
+        return self.workspace / ".cm"
+
+    @property
     def trash_dir(self) -> Path:
         """Where a deleted piece's folder goes, so deleting the entry never deletes the work."""
         return self.workspace / "trash"

@@ -1,10 +1,10 @@
 <div id="list">
   {% if ideas %}
-    <table class="list">
+    <table class="list" id="ideas-table" data-table>
       <thead>
         <tr>
           <th>Title</th><th>Mode</th><th>Status</th><th>Priority</th>
-          <th class="num">Updated</th><th class="actions-head">Actions</th>
+          <th class="num">Updated</th><th class="actions-head no-sort">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -13,8 +13,8 @@
             <td class="title" data-label="Title">{{ idea.title }}</td>
             <td data-label="Mode">{{ idea.mode.name if idea.mode else "—" }}</td>
             <td data-label="Status"><span class="status {{ idea.status.value | status_class }}">{{ idea.status.value }}</span></td>
-            <td data-label="Priority">{{ idea.priority | priority_name }}</td>
-            <td class="num" data-label="Updated">{{ idea.updated_at | local_date }}</td>
+            <td data-label="Priority" data-order="{{ idea.priority }}">{{ idea.priority | priority_name }}</td>
+            <td class="num" data-label="Updated" data-order="{{ idea.updated_at.isoformat() }}">{{ idea.updated_at | local_date }}</td>
             <td class="actions-cell" data-label="Actions">
               <button class="btn" hx-get="/ideas/{{ idea.id }}" hx-include="#brand-scope"
                       hx-target="#editor" hx-swap="innerHTML">Edit</button>
