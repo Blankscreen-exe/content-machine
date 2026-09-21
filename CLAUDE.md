@@ -9,6 +9,13 @@ This is not throwaway work. Someone — probably me — will be maintaining it i
 - **Obvious over clever.** The version a tired person can read at midnight wins.
 - **No temporary hacks.** If it is worth doing twice, do it properly the first time.
 
+## What goes in the repo
+
+Only the system and dummy starter material. No real brand's name, voice, handles, colours,
+logos, drafts or images ever goes in — not in code, templates, tests or commit messages. Real
+brands live in the workspace, which is never committed. Examples use made-up names like
+"Acme Co" and "Example Person".
+
 ## Standards
 
 Every decision in this codebase has to be one we can defend out loud.

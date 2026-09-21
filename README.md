@@ -13,10 +13,15 @@ raise its own reminders, and sit next to the files and generation steps that pro
 uv venv
 uv pip install -e ".[dev]"
 
+cm init           # create the workspace: rules, skills and a starter brand
 cm serve          # this machine only
 cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
 ```
+
+`cm init` copies `cm/starter/` into the workspace. The one brand in it, `example`, is a
+placeholder for a made-up company: copy its folder to `brands/<your-slug>/` and fill it in.
+Real brands only ever live in the workspace, never in this repository.
 
 The address printed on start carries a one-time token; the app refuses requests without it.
 
