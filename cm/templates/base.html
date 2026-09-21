@@ -13,7 +13,11 @@
   <script src="/static/vendor/datatables.min.js" defer></script>
   <script src="/static/tables.js" defer></script>
   <script src="/static/errors.js" defer></script>
+  {# the writing helpers do nothing on pages without a draft #}
+  <script src="/static/plain_text.js" defer></script>
   <script src="/static/copy.js" defer></script>
+  <script src="/static/unsaved.js" defer></script>
+  <script src="/static/count.js" defer></script>
   {% block head %}{% endblock %}
 </head>
 <body>

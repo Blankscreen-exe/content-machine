@@ -28,8 +28,8 @@ def session_fixture():
                                                 poolclass=StaticPool))
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
-        for name, main_file in STANDARD_TYPES:    # a real database gets these from its migration
-            choices.create(session, PieceType, name, main_file=main_file)
+        for name, main_file, char_limit in STANDARD_TYPES:   # a real database gets these from migrations
+            choices.create(session, PieceType, name, main_file=main_file, char_limit=char_limit)
         yield session
 
 

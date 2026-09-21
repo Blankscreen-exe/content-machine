@@ -8,6 +8,7 @@ from sqlmodel import Session
 from ... import choices
 from ...database import get_session
 from ...models import PieceType
+from ..params import OptionalInt
 from . import page
 
 router = APIRouter(prefix="/types")
@@ -20,17 +21,18 @@ def types(request: Request, session: Session = Depends(get_session)):
 
 @router.post("", response_class=HTMLResponse)
 def type_create(request: Request, name: str = Form(...), main_file: str = Form(...),
-                session: Session = Depends(get_session)):
-    choices.create(session, PieceType, name, main_file=main_file)
+                char_limit: OptionalInt = Form(None), session: Session = Depends(get_session)):
+    choices.create(session, PieceType, name, main_file=main_file, char_limit=char_limit)
     return _list(request, session)
 
 
 @router.post("/{type_id}", response_class=HTMLResponse)
 def type_update(type_id: int, request: Request, name: str = Form(...),
-                main_file: str = Form(...), session: Session = Depends(get_session)):
+                main_file: str = Form(...), char_limit: OptionalInt = Form(None),
+                session: Session = Depends(get_session)):
     """Renaming is safe: pieces point at the type, and their folders keep the name they got."""
     choices.update(session, page.item_or_404(session, PieceType, type_id),
-                   name=name, main_file=main_file)
+                   name=name, main_file=main_file, char_limit=char_limit)
     return _list(request, session)
 
 

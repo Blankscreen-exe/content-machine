@@ -97,3 +97,26 @@ def _fingerprint(html: str) -> str:
     marker = 'name="fingerprint" value="'
     start = html.index(marker) + len(marker)
     return html[start:html.index('"', start)]
+
+
+def test_the_pane_has_an_unsaved_marker_and_a_count(client: TestClient, piece):
+    pane = client.get(f"/pieces/{piece.id}/files/blog.md").text
+    assert '<span class="unsaved-marker" hidden>unsaved</span>' in pane
+    assert 'class="char-count"' in pane and "data-limit" not in pane     # blogs have no limit
+    assert 'data-unsaved="true"' not in pane
+
+
+def test_a_refused_save_is_still_unsaved(client: TestClient, session: Session, piece):
+    fingerprint = _fingerprint(client.get(f"/pieces/{piece.id}/files/blog.md").text)
+    (workspace.ensure_folder(session, piece) / "blog.md").write_text("from a session", encoding="utf-8")
+
+    response = client.post(f"/pieces/{piece.id}/files/blog.md",
+                           data={"text": "typed here", "fingerprint": fingerprint})
+
+    assert 'data-unsaved="true"' in response.text     # on screen, but not on disk
+
+
+def test_the_count_carries_the_types_limit(client: TestClient, session: Session, brand):
+    post = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "linkedin post"),
+                             title="A post")
+    assert 'data-limit="3000"' in client.get(f"/pieces/{post.id}").text

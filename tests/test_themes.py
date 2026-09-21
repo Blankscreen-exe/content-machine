@@ -58,3 +58,19 @@ def test_a_theme_draws_the_calendar(theme):
     css = theme.read_text(encoding="utf-8")
     for selector in (".month td.day", ".month td.today", ".cal-piece.overdue"):
         assert selector in css, f"{theme.name} has no rule for {selector}"
+
+
+@pytest.mark.parametrize("theme", THEMES, ids=lambda path: path.stem)
+def test_a_theme_shows_unsaved_work_and_an_overlong_draft(theme):
+    """Both are warnings; unstyled, they read as ordinary text and get missed."""
+    css = theme.read_text(encoding="utf-8")
+    for selector in (".unsaved-marker", ".char-count.over-limit"):
+        assert selector in css, f"{theme.name} has no rule for {selector}"
+
+
+@pytest.mark.parametrize("theme", THEMES, ids=lambda path: path.stem)
+def test_a_theme_draws_the_drop_zone(theme):
+    """An unmarked drop zone is invisible, and a drag over it would give no sign it will land."""
+    css = theme.read_text(encoding="utf-8")
+    for selector in (".drop-zone", ".drop-zone.dragging", ".asset-preview"):
+        assert selector in css, f"{theme.name} has no rule for {selector}"

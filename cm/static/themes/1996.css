@@ -57,6 +57,17 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .tabs a { color: #0000ee; text-decoration: underline; }
 .tabs a.on { color: #000; font-weight: bold; text-decoration: none; background: #c0c0c0; border: 2px inset #fff; padding: 2px 10px; }
 
+/* writing pane status */
+.unsaved-marker { color: #800000; font-weight: bold; }
+.char-count { font-family: "Courier New", monospace; color: #444; }
+.char-count.over-limit { color: #800000; font-weight: bold; background: #ffffcc; padding: 0 4px; }
+
+/* assets */
+.asset-preview { background: #fff; border: 2px inset #fff; }
+.asset-file { font-family: "Courier New", monospace; font-weight: bold; font-size: 22px; color: #000080; }
+.drop-zone { border: 2px dashed #808080; background: #eeeeee; }
+.drop-zone.dragging { border-color: #000080; background: #ffffcc; }
+
 /* draft search: the matched words */
 .snippet mark { background: #ffff00; color: #000; }
 
@@ -78,7 +89,7 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .subsection { border-top: 1px solid #808080; }
 .list tr.overdue td.num { color: #800000; font-weight: bold; }
 .due-badge { background: #800000; color: #fff; font-weight: bold; text-decoration: none; }
-.due-list li.overdue { color: #800000; font-weight: bold; }
+.due-list li.overdue, .dash-list li.overdue { color: #800000; font-weight: bold; }
 .empty-inline { font-size: 14px; color: #555; margin: 0 0 12px; }
 
 /* panels and settings */

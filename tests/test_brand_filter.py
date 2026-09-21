@@ -27,14 +27,14 @@ def test_the_current_brand_is_selected(client: TestClient, brand):
 
 def test_hidden_brands_are_not_offered(client: TestClient, session: Session, brand):
     crud.update_brand(session, brand, active=False)
-    assert f'<option value="{brand.id}"' not in client.get("/").text
+    assert f'<option value="{brand.id}"' not in client.get("/ideas").text
 
 
 def test_all_brands_sends_an_empty_value_and_that_is_accepted(client: TestClient, brand):
     """Browsers send `brand_id=` for "all brands"; that used to be a 422 on every list."""
-    assert client.get("/?brand_id=").status_code == 200
+    assert client.get("/ideas?brand_id=").status_code == 200
     assert client.get("/pieces?brand_id=").status_code == 200
-    assert client.get("/ideas?brand_id=&q=anything").status_code == 200
+    assert client.get("/ideas/list?brand_id=&q=anything").status_code == 200
     assert client.get("/pieces/list?brand_id=&stage=draft").status_code == 200
 
 

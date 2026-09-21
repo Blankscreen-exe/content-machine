@@ -76,7 +76,11 @@
 
     textarea.hidden = true;            // only once the editor is really there
     textarea.dataset.mounted = "true";
-    current.on("change", () => { textarea.value = current.getMarkdown(); });
+    current.on("change", () => {
+      textarea.value = current.getMarkdown();
+      // Report it the way typing into the textarea would, for the unsaved marker and the count.
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   }
 
   document.addEventListener("DOMContentLoaded", mount);

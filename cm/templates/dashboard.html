@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{# The landing page: four short lists, each linking to where the work is. #}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+{% include "partials/brand_scope.html" %}
+
+{% set brand_param = '?brand_id=' ~ brand_id if brand_id else '' %}
+<div class="dashboard">
+
+  <section class="panel dash-now">
+    <h2>Due now</h2>
+    {% if due_now %}
+      <ul class="dash-list">
+        {% for piece in due_now %}
+          <li class="{{ 'overdue' if piece.due_on < today }}">
+            <a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+            <span class="hint">{{ piece.type.name }} &middot;
+              {{ "due today" if piece.due_on == today else "was due " ~ piece.due_on.isoformat() }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-inline">Nothing overdue or due today.</p>
+    {% endif %}
+    <p class="hint"><a href="/calendar{{ brand_param }}">What is coming up</a></p>
+  </section>
+
+  <section class="panel">
+    <h2>In progress</h2>
+    {% if in_progress %}
+      <ul class="dash-list">
+        {% for piece in in_progress %}
+          <li>
+            <a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+            <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
+            <span class="hint">{{ piece.type.name }}{% if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-inline">Nothing started. Pick an idea below.</p>
+    {% endif %}
+    <p class="hint"><a href="/pieces{{ brand_param }}">All pieces</a></p>
+  </section>
+
+  <section class="panel">
+    <h2>Next up</h2>
+    {% if next_ideas %}
+      <ul class="dash-list">
+        {% for idea in next_ideas %}
+          <li>
+            <a href="/ideas{{ brand_param }}">{{ idea.title }}</a>
+            <span class="hint">{{ idea.priority | priority_name }} priority{% if idea.mode %} &middot; {{ idea.mode.name }}{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-inline">The idea pool is empty.</p>
+    {% endif %}
+    <p class="hint"><a href="/ideas{{ brand_param }}">The idea pool</a></p>
+  </section>
+
+  <section class="panel">
+    <h2>Recently published</h2>
+    {% if published %}
+      <ul class="dash-list">
+        {% for publication, piece in published %}
+          <li>
+            <a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+            <span class="hint">{{ publication.platform.name }} &middot; {{ publication.posted_at | local_date }}
+              {% if publication.url %}&middot; <a href="{{ publication.url }}">link</a>{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-inline">Nothing recorded as published yet.</p>
+    {% endif %}
+  </section>
+
+</div>
+
+{% endblock %}

@@ -7,11 +7,11 @@
 <div class="bar">
   <input class="search" type="search" name="q" value="{{ q }}" placeholder="search ideas..."
          autocomplete="off"
-         hx-get="/ideas" hx-trigger="input changed delay:250ms, search"
+         hx-get="/ideas/list" hx-trigger="input changed delay:250ms, search"
          hx-target="#list" hx-swap="outerHTML"
          hx-include="[name='status'],#brand-scope">
   <select name="status"
-          hx-get="/ideas" hx-trigger="change" hx-target="#list" hx-swap="outerHTML"
+          hx-get="/ideas/list" hx-trigger="change" hx-target="#list" hx-swap="outerHTML"
           hx-include="[name='q'],#brand-scope">
     <option value="">all statuses</option>
     {% for value in statuses %}

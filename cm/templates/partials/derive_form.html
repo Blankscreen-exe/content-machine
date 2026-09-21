@@ -1,0 +1,13 @@
+{# Make a piece of another type from this one: a LinkedIn post from a blog post, say.
+   The new piece keeps the idea and title, and its brief points back at this draft. #}
+{% if derive_types %}
+  <form class="inline-form derive-form" hx-post="/pieces/{{ piece.id }}/derive"
+        hx-target="#session-message" hx-swap="innerHTML">
+    <label class="inline">Make a
+      <select name="type_id">
+        {% for piece_type in derive_types %}<option value="{{ piece_type.id }}">{{ piece_type.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="btn" type="submit">from this</button>
+  </form>
+{% endif %}

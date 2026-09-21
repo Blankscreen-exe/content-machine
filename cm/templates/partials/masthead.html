@@ -2,7 +2,8 @@
   <h1>Content Machine</h1>
 
   <nav class="tabs">
-    <a href="/{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'ideas' }}">Ideas</a>
+    <a href="/{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'dashboard' }}">Dashboard</a>
+    <a href="/ideas{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'ideas' }}">Ideas</a>
     <a href="/pieces{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'pieces' }}">Pieces</a>
     <a href="/calendar{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'calendar' }}">Calendar {% include "partials/due_badge.html" %}</a>
     <a href="/manage" class="{{ 'on' if view == 'manage' }}">Manage</a>

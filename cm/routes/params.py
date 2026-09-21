@@ -11,5 +11,7 @@ def _blank_is_none(value: object) -> object:
 
 
 # A filter left on "all" arrives as `brand_id=` — an empty string, which is not an int.
-# Browsers send it that way for an empty <select> or hidden input, so accept it as "none".
-OptionalId = Annotated[int | None, BeforeValidator(_blank_is_none)]
+# Browsers send it that way for an empty <select>, hidden input or number field, so accept
+# it as "none".
+OptionalInt = Annotated[int | None, BeforeValidator(_blank_is_none)]
+OptionalId = OptionalInt           # the same rule, named for what most of them are

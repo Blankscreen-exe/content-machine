@@ -14,7 +14,7 @@ from helpers import type_id
 
 # (page, the table's id) for every list that is paged
 LISTS = [
-    ("/", "ideas-table"),
+    ("/ideas", "ideas-table"),
     ("/pieces", "pieces-table"),
     ("/manage/brands", "brands-table"),
     ("/manage/types", "types-table"),

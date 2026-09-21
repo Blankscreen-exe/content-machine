@@ -45,6 +45,7 @@ def pane_context(piece: Piece, folder: Path, name: str, text: str, fingerprint: 
         # pasted images are stored in the piece folder and served from there
         "upload_url": f"{base}/assets",
         "assets_url": f"{base}/assets/",
+        "char_limit": piece.type.char_limit,
     }}
 
 

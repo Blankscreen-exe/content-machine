@@ -94,3 +94,11 @@ def test_existing_types_platforms_modes_and_brand_files_carry_over(tmp_path: Pat
     with sqlite3.connect(db) as connection:
         assert connection.execute("SELECT type FROM piece").fetchone() == ("linkedin",)
         assert connection.execute("SELECT mode FROM idea WHERE id = 1").fetchone() == ("advisor",)
+
+
+def test_platform_limits_are_filled_in_for_the_seeded_types(tmp_path: Path):
+    db = tmp_path / "content.db"
+    command.upgrade(_config(db), "head")
+    with sqlite3.connect(db) as connection:
+        limits = dict(connection.execute("SELECT name, char_limit FROM piece_type").fetchall())
+    assert limits["linkedin post"] == 3000 and limits["x post"] == 280 and limits["blog"] is None

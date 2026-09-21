@@ -1,31 +1,33 @@
-// Copy the draft to the clipboard, as markdown or as plain text.
+// Copy the draft to the clipboard, as markdown or as plain text (see plain_text.js).
 //
-// LinkedIn and X show markdown as literal characters, so posting there needs the
-// syntax removed rather than rendered.
+// The clipboard API only exists on https or localhost. Opened from another device on the
+// local network (`cm serve --lan`), the page is plain http, so copying falls back to the
+// older select-and-copy command, which browsers still support for exactly this case.
 (function () {
-  function stripMarkdown(markdown) {
-    return markdown
-      .replace(/^---\n[\s\S]*?\n---\n/, "")          // frontmatter
-      .replace(/^#{1,6}\s+/gm, "")                    // headings
-      .replace(/^\s{0,3}>\s?/gm, "")                  // block quotes
-      .replace(/```[\s\S]*?```/g, (block) => block.replace(/```\w*\n?/g, ""))
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")           // images: nothing to paste
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)") // links: keep the address
-      .replace(/(\*\*|__)(.*?)\1/g, "$2")             // bold
-      .replace(/(\*|_)(.*?)\1/g, "$2")                // italic
-      .replace(/`([^`]+)`/g, "$1")                    // inline code
-      .replace(/^\s*[-*+]\s+/gm, "• ")                // bullets survive as a character
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+  function copyBySelection(text) {
+    const holder = document.createElement("textarea");
+    holder.value = text;
+    holder.setAttribute("readonly", "");
+    holder.style.position = "fixed";
+    holder.style.opacity = "0";
+    document.body.appendChild(holder);
+    holder.select();
+    const copied = document.execCommand("copy");
+    holder.remove();
+    if (!copied) throw new Error("copy refused");
   }
 
   async function copy(text, button) {
     const original = button.textContent;
     try {
-      await navigator.clipboard.writeText(text);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        copyBySelection(text);
+      }
       button.textContent = "Copied";
     } catch {
-      button.textContent = "Copy failed";          // clipboard needs a secure context
+      button.textContent = "Copy failed";
     }
     setTimeout(() => { button.textContent = original; }, 1500);
   }
@@ -35,6 +37,7 @@
     if (!button) return;
     const draft = document.getElementById("draft-text");
     if (!draft) return;
-    copy(button.dataset.copy === "plain" ? stripMarkdown(draft.value) : draft.value, button);
+    const text = button.dataset.copy === "plain" ? window.contentMachine.plainText(draft.value) : draft.value;
+    copy(text, button);
   });
 })();

@@ -68,6 +68,7 @@ def create(session: Session, kind: type[Choice], name: str, brand_id: int | None
     name = _clean_name(session, kind, name, brand_id)
     if kind is PieceType:
         fields["main_file"] = check_main_file(fields.get("main_file", "draft.md"))
+        fields["char_limit"] = check_char_limit(fields.get("char_limit"))
     if kind is Mode:
         fields["brand_id"] = brand_id
     item = kind(name=name, **fields)
@@ -83,6 +84,8 @@ def update(session: Session, item: Choice, **fields) -> Choice:
                                      getattr(item, "brand_id", None), keep=item)
     if "main_file" in fields:
         fields["main_file"] = check_main_file(fields["main_file"])
+    if "char_limit" in fields:
+        fields["char_limit"] = check_char_limit(fields["char_limit"])
     for key, value in fields.items():
         setattr(item, key, value)
     session.add(item)
@@ -115,6 +118,13 @@ def check_main_file(name: str) -> str:
     if name in GENERATED_FILES:
         raise ChoiceError(f"{name} is written by the app before every session; pick another name.")
     return name
+
+
+def check_char_limit(limit: int | None) -> int | None:
+    """A piece type's character limit: a positive number, or none at all."""
+    if limit is not None and limit < 1:
+        raise ChoiceError("A character limit is a number above zero, or left empty for none.")
+    return limit
 
 
 def _clean_name(session: Session, kind: type[Choice], name: str, brand_id: int | None,

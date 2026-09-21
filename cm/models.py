@@ -61,6 +61,8 @@ class PieceType(SQLModel, table=True):
     name: str = Field(unique=True)
     # The draft a piece of this type opens on and creates on its first save.
     main_file: str = "draft.md"
+    # The most characters it should run to once pasted (a platform's limit); None for no limit.
+    char_limit: int | None = None
     active: bool = True
 
 
@@ -108,6 +110,8 @@ class Piece(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     brand_id: int = Field(foreign_key="brand.id", index=True)
     idea_id: int | None = Field(default=None, foreign_key="idea.id", index=True)
+    # The piece this one was made from, such as the blog post a LinkedIn post repackages.
+    source_piece_id: int | None = Field(default=None, foreign_key="piece.id", index=True)
     type_id: int = Field(foreign_key="piece_type.id", index=True)
     title: str
     slug: str = ""          # fixed at creation: renaming a piece must not move its folder

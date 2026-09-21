@@ -47,10 +47,10 @@ def test_search_and_status_filters(client: TestClient, session: Session, brand):
     crud.create_idea(session, brand_id=brand.id, title="Legacy systems age badly")
     crud.create_idea(session, brand_id=brand.id, title="Automation before AI", status="parked")
 
-    assert "Legacy" in client.get("/ideas", params={"q": "legacy"}).text
-    assert "Automation" not in client.get("/ideas", params={"q": "legacy"}).text
-    assert "Automation" in client.get("/ideas", params={"status": "parked"}).text
-    assert "Legacy" not in client.get("/ideas", params={"status": "parked"}).text
+    assert "Legacy" in client.get("/ideas/list", params={"q": "legacy"}).text
+    assert "Automation" not in client.get("/ideas/list", params={"q": "legacy"}).text
+    assert "Automation" in client.get("/ideas/list", params={"status": "parked"}).text
+    assert "Legacy" not in client.get("/ideas/list", params={"status": "parked"}).text
 
 
 def test_missing_idea_returns_404(client: TestClient):

@@ -12,13 +12,13 @@ from .. import choices, crud, files, schedule, search, terminals, workspace
 from ..database import get_session
 from ..models import Piece, PieceType, Stage
 from ..templating import STAGES, page_context, templates
+from .assets import panel_context
 from .editor import pane_context
-from .publications import publications_context
+from .local import from_this_machine
 from .params import OptionalId
+from .publications import publications_context
 
 router = APIRouter(prefix="/pieces")
-
-LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
 
 # Where the details form was opened, which decides what saving it redraws.
 Origin = Literal["list", "page"]
@@ -102,10 +102,11 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
     context |= {
         "piece": piece,
         "idea": crud.get_idea(session, piece.idea_id) if piece.idea_id else None,
-        "folder": folder,
-        "images": files.images(folder),
         "stages": STAGES,
+        # what this piece can be turned into: any other type in use
+        "derive_types": [t for t in choices.options(session, PieceType) if t.id != piece.type_id],
     }
+    context |= panel_context(request, session, piece)
     context |= publications_context(session, piece)
     context |= pane_context(piece, folder, opened, text, fingerprint)
     return templates.TemplateResponse(request, "piece.html", context)
@@ -175,34 +176,57 @@ def piece_stage(piece_id: int, request: Request, session: Session = Depends(get_
 
 
 SESSION_PROMPT = "Read brief.md first, then help me with this piece."
+DERIVE_PROMPT = ("Read brief.md first, then use the derive skill to make this piece "
+                 "from the one it was made from.")
+REMOTE_SESSION = "Terminal sessions can only be started on the machine running the app."
 
 
 @router.post("/{piece_id}/session", response_class=HTMLResponse)
 def piece_session(piece_id: int, request: Request, session: Session = Depends(get_session)):
     """Open a terminal in the piece's folder with Claude running.
 
-    Refused unless the request came from this machine: the app can be served on the local
-    network, and nothing on the network should be able to start processes here.
+    Refused unless the request came from this machine (see local.py).
     """
-    if request.client is None or request.client.host not in LOCAL_HOSTS:
-        return _session_message(request, "Terminal sessions can only be started on this machine.")
-
+    if not from_this_machine(request):
+        return _session_message(request, REMOTE_SESSION)
     piece = crud.get_piece(session, piece_id)
     if not piece:
         raise HTTPException(404, "piece not found")
+    return _session_message(request, _open_session(session, piece, SESSION_PROMPT))
 
+
+@router.post("/{piece_id}/derive", response_class=HTMLResponse)
+def piece_derive(piece_id: int, request: Request, session: Session = Depends(get_session),
+                 type_id: int = Form(...)):
+    """Make a piece of another type from this one, and open a session on it to write it.
+
+    The piece is made from any device; the session only starts on this machine.
+    """
+    source = crud.get_piece(session, piece_id)
+    if not source:
+        raise HTTPException(404, "piece not found")
+    if not choices.get(session, PieceType, type_id):
+        raise choices.ChoiceError("That piece type does not exist.")
+    made = crud.derive_piece(session, source, type_id)
+    outcome = (_open_session(session, made, DERIVE_PROMPT) if from_this_machine(request)
+               else REMOTE_SESSION + " Open the new piece there and use Work on this.")
+    return templates.TemplateResponse(request, "partials/derived.html",
+                                      {"request": request, "made": made, "outcome": outcome})
+
+
+def _open_session(session: Session, piece: Piece, prompt: str) -> str:
+    """Write the brief and open a terminal on the piece. Returns what to tell the person."""
     folder = workspace.write_brief(session, piece).parent
     try:
         terminals.open_terminal(
             cwd=folder,
             title=f"{piece.title} ({piece.type.name})",
-            command=terminals.claude_command(SESSION_PROMPT),
+            command=terminals.claude_command(prompt),
             key=crud.get_settings_map(session).get("terminal"),
         )
     except terminals.TerminalError as exc:
-        return _session_message(request, str(exc))
-
-    return _session_message(request, f"Session opened in {folder}")
+        return str(exc)
+    return f"Session opened in {folder}"
 
 
 def _session_message(request: Request, message: str) -> HTMLResponse:

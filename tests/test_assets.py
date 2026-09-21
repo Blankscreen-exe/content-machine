@@ -1,15 +1,21 @@
-"""Images pasted into a draft: how they are stored, and what is refused."""
+"""A piece's assets: what is stored, what is refused, and that nothing is lost on the way."""
 from __future__ import annotations
 
+import io
+import os
 from base64 import b64decode
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from cm import crud, files, workspace
+from cm import assets, crud, desktop, workspace
+from cm.app import create_app
+from cm.database import get_session
 from cm.settings import get_settings
 from helpers import type_id
+
+TEST_TOKEN = os.environ["CM_TOKEN"]      # set by conftest before anything is imported
 
 # A 1x1 PNG, so these tests need no image library.
 PNG = b64decode(
@@ -28,7 +34,13 @@ def piece_fixture(session: Session, brand):
     return crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece")
 
 
-def test_upload_returns_a_relative_path(client: TestClient, session: Session, piece):
+def _assets_folder(session: Session, piece):
+    return assets.folder_of(workspace.piece_folder(session, piece))
+
+
+# --- pasting into the editor -------------------------------------------------------------
+
+def test_a_pasted_image_returns_a_relative_path(client: TestClient, session: Session, piece):
     response = client.post(f"/pieces/{piece.id}/assets",
                            files={"file": ("Coincidence Meme.png", PNG, "image/png")})
 
@@ -36,57 +48,127 @@ def test_upload_returns_a_relative_path(client: TestClient, session: Session, pi
     body = response.json()
     assert body["path"] == "assets/coincidence-meme.png"      # the markdown stays portable
     assert body["url"] == f"/pieces/{piece.id}/assets/coincidence-meme.png"
-
-    stored = workspace.piece_folder(session, piece) / "assets" / "coincidence-meme.png"
-    assert stored.read_bytes() == PNG
+    assert (_assets_folder(session, piece) / "coincidence-meme.png").read_bytes() == PNG
 
 
-def test_a_second_image_with_the_same_name_does_not_overwrite(client: TestClient, piece):
+def test_only_images_can_be_pasted_into_a_draft(client: TestClient, piece):
+    response = client.post(f"/pieces/{piece.id}/assets",
+                           files={"file": ("carousel.pdf", b"%PDF-1.7", "application/pdf")})
+    assert response.status_code == 400
+    assert "cannot be stored here" in response.json()["error"]
+
+
+def test_a_second_file_with_the_same_name_does_not_overwrite(client: TestClient, piece):
     first = client.post(f"/pieces/{piece.id}/assets", files={"file": ("meme.png", PNG, "image/png")})
     second = client.post(f"/pieces/{piece.id}/assets", files={"file": ("meme.png", PNG, "image/png")})
-
-    assert first.json()["name"] == "meme.png"
-    assert second.json()["name"] == "meme-2.png"
+    assert (first.json()["name"], second.json()["name"]) == ("meme.png", "meme-2.png")
 
 
-def test_non_images_are_refused(client: TestClient, piece):
-    response = client.post(f"/pieces/{piece.id}/assets",
-                           files={"file": ("notes.txt", b"hello", "text/plain")})
+# --- the rules every upload follows ----------------------------------------------------------
 
-    assert response.status_code == 400
-    assert "not an image" in response.json()["error"]
-
-
-def test_oversized_images_are_refused(client: TestClient, piece, monkeypatch):
-    monkeypatch.setattr(files, "MAX_IMAGE_BYTES", 10)
-
-    response = client.post(f"/pieces/{piece.id}/assets",
-                           files={"file": ("big.png", PNG, "image/png")})
-
-    assert response.status_code == 400
-    assert "limited to" in response.json()["error"]
+def test_types_outside_the_list_are_refused(tmp_path):
+    for name in ("page.html", "logo.svg", "notes.txt", "no-extension"):
+        with pytest.raises(assets.BadAsset, match="cannot be stored here"):
+            assets.save(tmp_path, name, io.BytesIO(b"x"))
 
 
-def test_stored_images_are_served_back(client: TestClient, piece):
-    client.post(f"/pieces/{piece.id}/assets", files={"file": ("meme.png", PNG, "image/png")})
+def test_each_type_has_its_own_size_limit(tmp_path, monkeypatch):
+    monkeypatch.setitem(assets.LIMITS, ".pdf", 10)
+    with pytest.raises(assets.BadAsset, match="limited to"):
+        assets.save(tmp_path, "carousel.pdf", io.BytesIO(b"x" * 11))
+    assert assets.save(tmp_path, "cover.png", io.BytesIO(PNG)) == "cover.png"   # images unaffected
 
-    served = client.get(f"/pieces/{piece.id}/assets/meme.png")
-    assert served.status_code == 200
-    assert served.content == PNG
+
+def test_a_refused_upload_leaves_nothing_behind(tmp_path, monkeypatch):
+    monkeypatch.setitem(assets.LIMITS, ".psd", 10)
+    monkeypatch.setattr(assets, "CHUNK", 4)                   # so it fails part-way through
+    with pytest.raises(assets.BadAsset):
+        assets.save(tmp_path, "working.psd", io.BytesIO(b"x" * 40))
+    assert list(assets.folder_of(tmp_path).iterdir()) == []   # no half-written file
+
+
+def test_an_empty_upload_is_refused(tmp_path):
+    with pytest.raises(assets.BadAsset, match="empty"):
+        assets.save(tmp_path, "cover.png", io.BytesIO(b""))
+
+
+def test_only_stored_types_are_listed_or_served(client: TestClient, session: Session, piece):
+    folder = _assets_folder(session, piece)
+    folder.mkdir(parents=True)
+    (folder / "cover.png").write_bytes(PNG)
+    (folder / "page.html").write_text("<script>alert(1)</script>", encoding="utf-8")
+
+    assert [a.name for a in assets.listing(workspace.piece_folder(session, piece))] == ["cover.png"]
+    assert client.get(f"/pieces/{piece.id}/assets/page.html").status_code == 404
+    assert client.get(f"/pieces/{piece.id}/assets/cover.png").content == PNG
 
 
 def test_serving_cannot_escape_the_assets_folder(client: TestClient, session: Session, piece):
     folder = workspace.ensure_folder(session, piece)
-    (folder / "brief.md").write_text("not an image", encoding="utf-8")
-
+    (folder / "brief.md").write_text("not an asset", encoding="utf-8")
     assert client.get(f"/pieces/{piece.id}/assets/..%2Fbrief.md").status_code in (400, 404)
     assert client.get(f"/pieces/{piece.id}/assets/brief.md").status_code == 404
 
 
-def test_the_piece_page_loads_the_editor(client: TestClient, piece):
+# --- the Assets panel ----------------------------------------------------------------------
+
+def test_several_files_can_be_added_at_once(client: TestClient, session: Session, piece):
+    response = client.post(f"/pieces/{piece.id}/assets/files", files=[
+        ("uploads", ("Cover.png", PNG, "image/png")),
+        ("uploads", ("Carousel.pdf", b"%PDF-1.7 slides", "application/pdf")),
+        ("uploads", ("Working File.psd", b"8BPS layers", "image/vnd.adobe.photoshop")),
+    ])
+
+    assert response.status_code == 200
+    assert "Added cover.png, carousel.pdf, working-file.psd." in response.text
+    assert sorted(p.name for p in _assets_folder(session, piece).iterdir()) == [
+        "carousel.pdf", "cover.png", "working-file.psd"]
+    assert ">PDF</a>" in response.text and ">PSD</a>" in response.text   # file cards, not thumbnails
+
+
+def test_one_wrong_file_does_not_stop_the_others(client: TestClient, session: Session, piece):
+    response = client.post(f"/pieces/{piece.id}/assets/files", files=[
+        ("uploads", ("notes.txt", b"hello", "text/plain")),
+        ("uploads", ("cover.png", PNG, "image/png")),
+    ])
+    assert "Added cover.png." in response.text
+    assert "notes.txt: .txt cannot be stored here" in response.text
+    assert [p.name for p in _assets_folder(session, piece).iterdir()] == ["cover.png"]
+
+
+def test_deleting_an_asset_moves_it_to_the_trash(client: TestClient, session: Session, piece, workspace_dir):
+    client.post(f"/pieces/{piece.id}/assets/files", files=[("uploads", ("cover.png", PNG, "image/png"))])
+
+    response = client.post(f"/pieces/{piece.id}/assets/cover.png/delete")
+
+    assert response.status_code == 200 and "Moved cover.png" in response.text
+    assert not (_assets_folder(session, piece) / "cover.png").exists()
+    trashed = list((workspace_dir / "trash").rglob("cover.png"))
+    assert len(trashed) == 1 and trashed[0].read_bytes() == PNG
+    assert trashed[0].parent.name == "assets"
+
+
+def test_the_piece_page_shows_the_panel_and_loads_the_editor(client: TestClient, piece):
     page = client.get(f"/pieces/{piece.id}").text
 
+    assert 'id="assets"' in page and 'name="uploads" multiple' in page
+    assert 'accept=".gif,.jpeg,.jpg,.pdf,.png,.psd,.webp"' in page
     assert "/static/vendor/toastui-editor-all.min.js" in page   # the self-contained build
-    assert "/static/editor.js" in page
     assert f'data-upload-url="/pieces/{piece.id}/assets"' in page
     assert "https://" not in page and "http://" not in page     # everything is local
+
+
+def test_open_folder_is_offered_only_on_this_machine(session: Session, piece, monkeypatch):
+    opened = []
+    monkeypatch.setattr(desktop, "open_folder", lambda path: opened.append(path))
+    app = create_app(run_migrations=False)
+    app.dependency_overrides[get_session] = lambda: session
+
+    with TestClient(app, cookies={"cm_token": TEST_TOKEN}, client=("192.168.1.20", 50000)) as remote:
+        assert "Open folder" not in remote.get(f"/pieces/{piece.id}").text
+        refused = remote.post(f"/pieces/{piece.id}/assets/open").text
+        assert "only be opened on the machine running the app" in refused
+    with TestClient(app, cookies={"cm_token": TEST_TOKEN}, client=("127.0.0.1", 50000)) as local:
+        assert "Open folder" in local.get(f"/pieces/{piece.id}").text
+        assert "Opened the folder." in local.post(f"/pieces/{piece.id}/assets/open").text
+    assert opened == [_assets_folder(session, piece)]

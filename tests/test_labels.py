@@ -19,7 +19,7 @@ def test_the_ideas_list_shows_priority_names(client: TestClient, session: Sessio
     crud.create_idea(session, brand_id=brand.id, title="Urgent one", priority=1)
     crud.create_idea(session, brand_id=brand.id, title="Someday one", priority=3)
 
-    page = client.get("/").text
+    page = client.get("/ideas").text
     assert ">high<" in page and ">low<" in page
     assert page.index("Urgent one") < page.index("Someday one")     # still sorted by the number
 
@@ -39,6 +39,6 @@ def test_statuses_and_stages_carry_their_colour_class(client: TestClient, sessio
     crud.create_idea(session, brand_id=brand.id, title="Parked one", status="parked")
     piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece", stage="wip")
 
-    assert 'class="status status-parked"' in client.get("/").text
+    assert 'class="status status-parked"' in client.get("/ideas").text
     assert 'class="status status-wip"' in client.get("/pieces").text           # the inline picker
     assert 'class="status status-wip"' in client.get(f"/pieces/{piece.id}").text  # the piece heading

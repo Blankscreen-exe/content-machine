@@ -54,6 +54,37 @@ terminal session read and write the same files, so there is no import or export.
 - Pasted images are stored in the piece's `assets/` folder. The markdown keeps a relative
   path so the folder stays self-contained; the app serves the image for display.
 - File routes only resolve names inside the piece's own folder.
+- Unsaved typing is marked next to Save, Ctrl+S saves, and leaving the page or switching to
+  another file asks first.
+- A piece type can carry a character limit (LinkedIn's 3,000, X's 280). The count under the
+  editor is of the text as "Copy as plain text" produces it, which is what the platform gets.
+- Copying falls back to the older select-and-copy command where the clipboard API is not
+  available, as on plain http from another device on the local network.
+
+## Assets
+
+A piece's images, PDFs (a LinkedIn carousel is posted as one) and Photoshop files live in
+its `assets/` folder. They are uploaded through the browser, so they reach the folder from
+any device: drop several files on the Assets panel, and download or delete them from there.
+
+- Only these types are stored or served; limits are 10 MB for images, 50 MB for PDFs and
+  200 MB for Photoshop files. An HTML or SVG file is never served from the app's address.
+- Each upload is written under a temporary name and renamed once complete, so a failed or
+  oversized upload leaves nothing behind.
+- Deleting moves the file to `trash/<brand>/<piece folder>/assets/`.
+- "Open folder" opens it in the file manager, and only appears on the machine running the app.
+
+## Dashboard
+
+The page the app opens on: what is due today or overdue, what is in progress, the pool ideas
+to start next, and what went out last, each linking through. It follows the brand filter.
+
+## Repurposing
+
+"Make a … from this" on a piece's page makes a piece of another type with the same idea and
+title, and remembers which piece it came from. Its brief names the source draft and asks the
+session to use the `derive` skill; on the machine running the app a session opens straight
+away.
 
 ## Layout
 
@@ -73,7 +104,9 @@ cm/
   search.py       full-text search over the drafts (SQLite FTS5), kept in step with the files
   workspace.py    a piece's folder: where it is, its brief, moving it to the trash
   files.py        reading and saving drafts inside a piece folder
+  assets.py       a piece's images, PDFs and Photoshop files: what is stored, and how
   terminals.py    opening a terminal session in a piece folder
+  desktop.py      opening a folder in the system's file manager
   dates.py        stored UTC times to local calendar dates
   security.py     access token
   settings.py     configuration and workspace location

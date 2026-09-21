@@ -67,7 +67,7 @@ def test_turning_a_brand_off_keeps_its_work(client: TestClient, session: Session
     session.refresh(brand)
     assert brand.active is False
     assert len(crud.list_ideas(session, brand_id=brand.id)) == 1
-    assert f'<option value="{brand.id}"' not in client.get("/").text     # gone from the filter only
+    assert f'<option value="{brand.id}"' not in client.get("/ideas").text     # gone from the filter only
 
 
 def test_the_brand_page_edits_voice_and_profile_without_image_uploads(client: TestClient,
@@ -236,4 +236,24 @@ def test_on_all_brands_the_mode_list_follows_the_brand_picked(client: TestClient
 def test_the_idea_list_shows_the_mode_by_name(client: TestClient, session: Session, brand):
     crud.create_idea(session, brand_id=brand.id, title="An idea",
                      mode_id=mode_id(session, brand.id, "advisor"))
-    assert ">advisor</td>" in client.get("/").text
+    assert ">advisor</td>" in client.get("/ideas").text
+
+
+def test_a_types_character_limit_can_be_set_and_cleared(client: TestClient, session: Session):
+    blog = choices.by_name(session, PieceType, "blog")
+
+    client.post(f"/manage/types/{blog.id}", data={"name": "blog", "main_file": "blog.md",
+                                                  "char_limit": "12000"})
+    session.refresh(blog)
+    assert blog.char_limit == 12000
+
+    client.post(f"/manage/types/{blog.id}", data={"name": "blog", "main_file": "blog.md",
+                                                  "char_limit": ""})
+    session.refresh(blog)
+    assert blog.char_limit is None
+
+
+def test_a_character_limit_must_be_above_zero(client: TestClient):
+    response = client.post("/manage/types", data={"name": "thread", "main_file": "thread.md",
+                                                  "char_limit": "0"})
+    assert response.status_code == 400 and "above zero" in response.json()["detail"]

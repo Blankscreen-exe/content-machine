@@ -61,11 +61,3 @@ def test_main_file_first_generated_last(tmp_path):
 
 def test_the_main_file_is_listed_before_it_exists(tmp_path):
     assert files.list_drafts(tmp_path, "blog.md") == ["blog.md"]
-
-
-def test_images_are_listed_from_assets(tmp_path):
-    (tmp_path / "assets").mkdir()
-    (tmp_path / "assets" / "meme.png").write_bytes(b"")
-    (tmp_path / "assets" / "notes.txt").write_text("", encoding="utf-8")
-
-    assert files.images(tmp_path) == ["meme.png"]

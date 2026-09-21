@@ -53,7 +53,7 @@ def test_remote_callers_are_refused(client: TestClient, session: Session, brand,
     response = client.post(f"/pieces/{piece.id}/session")     # default client host: "testclient"
 
     assert response.status_code == 200
-    assert "only be started on this machine" in response.text
+    assert "only be started on the machine running the app" in response.text
     assert launches == []
 
 

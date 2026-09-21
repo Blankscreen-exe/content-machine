@@ -6,7 +6,7 @@
     <p class="piece-meta">
       {{ piece.type.name }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
       &middot; due {{ piece.due_on.isoformat() if piece.due_on else "not scheduled" }}
-      {% if idea %}&middot; from <a href="/?brand_id={{ piece.brand_id }}">{{ idea.title }}</a>{% endif %}
+      {% if idea %}&middot; from <a href="/ideas?brand_id={{ piece.brand_id }}">{{ idea.title }}</a>{% endif %}
     </p>
   </div>
   <div class="piece-actions">

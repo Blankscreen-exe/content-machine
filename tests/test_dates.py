@@ -26,7 +26,7 @@ def test_the_ideas_list_shows_the_local_date(client: TestClient, session: Sessio
     idea = crud.create_idea(session, brand_id=brand.id, title="Dated idea")
     session.refresh(idea)                                      # read back the way the page does
 
-    assert f">{local_date(idea.updated_at).isoformat()}<" in client.get("/").text
+    assert f">{local_date(idea.updated_at).isoformat()}<" in client.get("/ideas").text
 
 
 def test_a_recorded_date_reads_back_as_that_date():

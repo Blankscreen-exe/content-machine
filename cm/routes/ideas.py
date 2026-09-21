@@ -56,15 +56,16 @@ def _mode_options(session: Session, brand_id: int | None, current_id: int | None
     return choices.options(session, Mode, brand_id=brand_id, current_id=current_id)
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/ideas", response_class=HTMLResponse)
 def index(request: Request, session: Session = Depends(get_session),
           brand_id: OptionalId = None, status: str | None = None, q: str | None = None):
     context = page_context(request, session, "ideas", brand_id)
     context |= _list_context(request, session, brand_id, status, q)
-    return templates.TemplateResponse(request, "index.html", context)
+    return templates.TemplateResponse(request, "ideas.html", context)
 
 
-@router.get("/ideas", response_class=HTMLResponse)
+# Declared before `/ideas/{idea_id}`, which would otherwise read "list" as an id.
+@router.get("/ideas/list", response_class=HTMLResponse)
 def idea_list(request: Request, session: Session = Depends(get_session),
               brand_id: OptionalId = None, status: str | None = None, q: str | None = None):
     context = _list_context(request, session, brand_id, status, q) | {"oob": True}

@@ -232,11 +232,22 @@ def delete_piece(session: Session, piece: Piece) -> None:
     """
     for publication in session.exec(select(Publication).where(Publication.piece_id == piece.id)).all():
         session.delete(publication)
-    session.flush()   # publications first, for the same reason as in delete_idea
+    # Pieces made from this one are their own work now; they only lose the pointer back.
+    for derived in session.exec(select(Piece).where(Piece.source_piece_id == piece.id)).all():
+        derived.source_piece_id = None
+        session.add(derived)
+    session.flush()   # before the delete, for the same reason as in delete_idea
     record(session, "piece", piece.id, to_state="deleted",
            from_state=piece.stage.value, note=piece.title)
     session.delete(piece)
     session.commit()
+
+
+def derive_piece(session: Session, source: Piece, type_id: int) -> Piece:
+    """A new piece of another type made from `source`: same brand, idea and title, and a
+    pointer back so its brief can say which draft to work from."""
+    return create_piece(session, brand_id=source.brand_id, type_id=type_id, title=source.title,
+                        idea_id=source.idea_id, source_piece_id=source.id)
 
 
 def record_publication(session: Session, piece: Piece, platform_id: int, url: str = "",
@@ -286,6 +297,36 @@ def undated_count(session: Session, brand_id: int | None = None) -> int:
     if brand_id:
         query = query.where(Piece.brand_id == brand_id)
     return session.exec(query).one()
+
+
+IN_PROGRESS = (Stage.draft, Stage.wip, Stage.ready)
+
+
+def pieces_in_progress(session: Session, brand_id: int | None = None, limit: int = 10) -> list[Piece]:
+    """Started and not yet out: soonest due first, undated after, most recently touched first."""
+    query = select(Piece).where(Piece.stage.in_(IN_PROGRESS))
+    if brand_id:
+        query = query.where(Piece.brand_id == brand_id)
+    query = query.order_by(Piece.due_on.is_(None), Piece.due_on, Piece.updated_at.desc())
+    return list(session.exec(query.limit(limit)).all())
+
+
+def top_pool_ideas(session: Session, brand_id: int | None = None, limit: int = 5) -> list[Idea]:
+    """What to start next: ideas still in the pool, highest priority first."""
+    query = select(Idea).where(Idea.status == IdeaStatus.pool)
+    if brand_id:
+        query = query.where(Idea.brand_id == brand_id)
+    query = query.order_by(Idea.priority, Idea.updated_at.desc())
+    return list(session.exec(query.limit(limit)).all())
+
+
+def recent_publications(session: Session, brand_id: int | None = None,
+                        limit: int = 5) -> list[tuple[Publication, Piece]]:
+    """The last things that went out, newest first, with the piece each one was."""
+    query = select(Publication, Piece).join(Piece, Piece.id == Publication.piece_id)
+    if brand_id:
+        query = query.where(Piece.brand_id == brand_id)
+    return list(session.exec(query.order_by(Publication.posted_at.desc()).limit(limit)).all())
 
 
 def piece_counts(session: Session, brand_id: int | None = None) -> dict[str, int]:

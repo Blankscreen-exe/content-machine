@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sqlmodel import Session
 
-from . import crud
+from . import assets, crud
 from .dates import local_date
 from .models import Idea, Piece
 from .settings import get_settings
@@ -66,6 +66,14 @@ def _move_to_trash(folder: Path, brand: str) -> Path:
     return target
 
 
+def trash_asset(session: Session, piece: Piece, name: str) -> Path:
+    """Move one of a piece's assets to `trash/<brand>/<piece folder>/assets/`, and say where."""
+    folder = piece_folder(session, piece)
+    target_dir = (get_settings().trash_dir / crud.brand_slug(session, piece.brand_id)
+                  / folder.name / "assets")
+    return assets.move(assets.path_of(folder, name), target_dir)
+
+
 def write_brief(session: Session, piece: Piece) -> Path:
     """Write `brief.md`: the facts a terminal session needs before it starts.
 
@@ -85,6 +93,11 @@ def write_brief(session: Session, piece: Piece) -> Path:
         "",
         "## This piece",
         f"- Type: {piece.type.name}",
+        f"- Main draft: `{piece.type.main_file}`",
+    ]
+    if piece.type.char_limit:
+        lines.append(f"- Character limit: {piece.type.char_limit:,}, counted as the text reads once pasted")
+    lines += [
         f"- Stage: {piece.stage.value}",
         f"- Due: {piece.due_on.isoformat() if piece.due_on else 'not scheduled'}",
         f"- Brand: {brand.name} ({brand.slug})",
@@ -105,6 +118,15 @@ def write_brief(session: Session, piece: Piece) -> Path:
                       or "This mode has no description yet. Ask me what it means before drafting."]
         if idea.notes:
             lines += ["", "### Idea notes", idea.notes]
+
+    source = crud.get_piece(session, piece.source_piece_id) if piece.source_piece_id else None
+    if source:
+        source_draft = piece_folder(session, source) / source.type.main_file
+        lines += ["", "## Made from",
+                  f"This piece repackages the {source.type.name} \"{source.title}\" "
+                  f"({source.stage.value}). Work from its draft:",
+                  "", f"`{source_draft}`",
+                  "", "Use the derive skill."]
 
     siblings = crud.list_pieces(session, idea_id=idea.id) if idea else []
     others = [p for p in siblings if p.id != piece.id]

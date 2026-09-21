@@ -4,9 +4,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from ..security import require_token
-from . import assets, calendar, editor, ideas, manage, pieces, publications, settings
+from . import assets, calendar, dashboard, editor, ideas, manage, pieces, publications, settings
 
 router = APIRouter(dependencies=[Depends(require_token)])
+router.include_router(dashboard.router)
 router.include_router(ideas.router)
 router.include_router(pieces.router)
 router.include_router(publications.router)

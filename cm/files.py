@@ -9,8 +9,6 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from .text import slugify
-
 # Written by the app before every session; editing it would be pointless.
 GENERATED_FILES = {"brief.md"}
 
@@ -91,55 +89,3 @@ def write(folder: Path, name: str, text: str, expected: str, force: bool = False
 
 def is_editable(name: str) -> bool:
     return name not in GENERATED_FILES
-
-
-IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
-MAX_IMAGE_BYTES = 10 * 1024 * 1024
-
-
-class BadImage(ValueError):
-    """The upload was not something we are willing to store."""
-
-
-def images(folder: Path) -> list[str]:
-    assets = folder / "assets"
-    if not assets.is_dir():
-        return []
-    return sorted(p.name for p in assets.iterdir()
-                  if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES)
-
-
-def save_image(folder: Path, filename: str, data: bytes) -> str:
-    """Store an image in the piece's `assets/` folder and return its file name.
-
-    The name comes from us, not from the upload: a slug of the original plus a counter if
-    it is taken. That removes any question of odd characters or paths in a file name.
-    """
-    suffix = Path(filename or "").suffix.lower()
-    if suffix not in IMAGE_SUFFIXES:
-        raise BadImage(f"{suffix or 'that file type'} is not an image we store "
-                       f"({', '.join(sorted(IMAGE_SUFFIXES))})")
-    if not data:
-        raise BadImage("the file was empty")
-    if len(data) > MAX_IMAGE_BYTES:
-        raise BadImage(f"images are limited to {MAX_IMAGE_BYTES // (1024 * 1024)} MB")
-
-    assets = folder / "assets"
-    assets.mkdir(parents=True, exist_ok=True)
-
-    stem = slugify(Path(filename).stem) or "image"
-    name, counter = f"{stem}{suffix}", 2
-    while (assets / name).exists():
-        name = f"{stem}-{counter}{suffix}"
-        counter += 1
-
-    (assets / name).write_bytes(data)
-    return name
-
-
-def image_path(folder: Path, name: str) -> Path:
-    """The path of one stored image, or an error if the name points elsewhere."""
-    path = resolve(folder / "assets", name)
-    if path.suffix.lower() not in IMAGE_SUFFIXES or not path.is_file():
-        raise UnsafePath(f"{name!r} is not a stored image")
-    return path

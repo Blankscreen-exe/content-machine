@@ -7,7 +7,7 @@ from sqlmodel import Session
 from cm import crud
 from helpers import type_id
 
-TABS = (">Ideas", ">Pieces", ">Calendar", ">Manage", ">Settings")   # Calendar may carry a count
+TABS = (">Dashboard", ">Ideas", ">Pieces", ">Calendar", ">Manage", ">Settings")   # Calendar may carry a count
 
 
 def test_settings_page_shows_preferences_and_the_workspace(client: TestClient, brand):
@@ -19,7 +19,7 @@ def test_settings_page_shows_preferences_and_the_workspace(client: TestClient, b
 
 
 def test_every_page_offers_the_same_tabs(client: TestClient, brand):
-    for path in ("/", "/pieces", "/calendar", "/manage/brands", "/settings"):
+    for path in ("/", "/ideas", "/pieces", "/calendar", "/manage/brands", "/settings"):
         page = client.get(path).text
         assert page.count('class="tabs"') == 1
         for label in TABS:
@@ -36,7 +36,7 @@ def test_rows_have_edit_and_delete_buttons(client: TestClient, session: Session,
     crud.create_idea(session, brand_id=brand.id, title="An idea")
     crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece")
 
-    ideas_page = client.get("/").text
+    ideas_page = client.get("/ideas").text
     assert ">Edit<" in ideas_page and ">Delete<" in ideas_page
 
     pieces_page = client.get("/pieces").text

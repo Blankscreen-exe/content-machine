@@ -10,6 +10,7 @@
      to be supplied separately #}
   <script src="/static/vendor/toastui-editor-all.min.js"></script>
   <script src="/static/editor.js" defer></script>
+  <script src="/static/drop.js" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -17,33 +18,14 @@
 {% include "partials/masthead.html" %}
 
 {% include "partials/piece_head.html" %}
+{% include "partials/derive_form.html" %}
 
 <div id="session-message"></div>
 <div id="piece-editor"></div>
 
 {% include "partials/editor_pane.html" %}
 
-<section class="panel">
-  <h2>Images</h2>
-  {% if images %}
-    <ul class="image-list">
-      {% for name in images %}
-        <li>
-          <a href="/pieces/{{ piece.id }}/assets/{{ name }}">
-            <img src="/pieces/{{ piece.id }}/assets/{{ name }}" alt="{{ name }}">
-          </a>
-          <code>assets/{{ name }}</code>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p class="hint">No images yet. Paste or drop one into the editor and it is saved here.</p>
-  {% endif %}
-  <p class="hint">
-    Images do not travel through copy and paste — upload them again on the platform.
-    Folder: <code>{{ folder }}</code>
-  </p>
-</section>
+{% include "partials/assets_panel.html" %}
 
 {% include "partials/publications.html" %}
 

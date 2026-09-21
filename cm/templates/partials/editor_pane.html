@@ -5,7 +5,8 @@
      tabs          [{label, url, on}]   what the tabs switch between
      save_url      where Save posts;    open_url  where Reload fetches the saved version
      text, fingerprint, editable, readonly_reason, message, conflict
-     upload_url, assets_url             only where pasted images have somewhere to go #}
+     upload_url, assets_url             only where pasted images have somewhere to go
+     char_limit                         the most characters the text should run to, if any #}
 <section class="editor-pane" id="editor-pane">
   <nav class="file-tabs">
     {% for tab in pane.tabs %}
@@ -20,11 +21,14 @@
     <input type="hidden" name="fingerprint" value="{{ pane.fingerprint }}">
     <textarea class="draft" name="text" id="draft-text" spellcheck="true"
               {% if pane.upload_url %}data-upload-url="{{ pane.upload_url }}" data-assets-url="{{ pane.assets_url }}"{% endif %}
+              {# a refused save sends the typed text back: it is on screen, and still not saved #}
+              {% if pane.conflict %}data-unsaved="true"{% endif %}
               {% if not pane.editable %}readonly{% endif %}>{{ pane.text }}</textarea>
 
     <div class="actions">
       {% if pane.editable %}
-        <button class="btn btn-primary" type="submit">Save</button>
+        <button class="btn btn-primary" type="submit" title="Ctrl+S">Save</button>
+        <span class="unsaved-marker" hidden>unsaved</span>
         {% if pane.conflict %}
           <button class="btn btn-danger" type="submit" name="force" value="true"
                   hx-confirm="Overwrite the saved version?">Save anyway</button>
@@ -39,6 +43,7 @@
       <button class="btn" type="button" data-copy="plain">Copy as plain text</button>
 
       {% if pane.message %}<span class="{{ 'message' if pane.conflict else 'saved' }}">{{ pane.message }}</span>{% endif %}
+      <span class="char-count" {% if pane.char_limit %}data-limit="{{ pane.char_limit }}"{% endif %}></span>
     </div>
   </form>
 </section>

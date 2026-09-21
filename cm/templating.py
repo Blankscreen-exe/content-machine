@@ -29,9 +29,19 @@ def priority_name(value: int) -> str:
     return PRIORITIES.get(value, str(value))
 
 
+def filesize(size: int) -> str:
+    """1536 -> '1.5 KB'. Binary units, as file managers show them; assets stay under a GB."""
+    if size < 1024:
+        return f"{size} bytes"
+    if size < 1024 * 1024:
+        return f"{size / 1024:.1f} KB"
+    return f"{size / (1024 * 1024):.1f} MB"
+
+
 # Available in every template without being passed in each context.
 templates.env.filters["status_class"] = status_class
 templates.env.filters["priority_name"] = priority_name
+templates.env.filters["filesize"] = filesize
 templates.env.filters["local_date"] = lambda moment: local_date(moment).isoformat()
 templates.env.globals["priorities"] = PRIORITIES
 
@@ -41,7 +51,7 @@ def page_context(request: Request, session: Session, view: str, brand_id: int | 
     return {
         "request": request,
         "view": view,
-        "base": "/" if view == "ideas" else f"/{view}",
+        "base": "/" if view == "dashboard" else f"/{view}",     # where the brand filter reloads
         "brand_id": brand_id,
         "brands": crud.list_brands(session),
         "settings": crud.get_settings_map(session),
