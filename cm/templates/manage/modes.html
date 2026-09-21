@@ -1,0 +1,31 @@
+{% extends "manage/layout.html" %}
+{% block section %}
+<section class="panel">
+  <h2>Modes</h2>
+  {% if brands %}
+    {# a plain GET form, like the brand filter, so the brand stays in the address bar #}
+    <form class="scope" method="get" action="/manage/modes" aria-label="Brand">
+      <label class="scope-label" for="mode-brand">Brand</label>
+      <select id="mode-brand" name="brand_id" hx-on:change="this.form.submit()">
+        {% for brand in brands %}
+          <option value="{{ brand.id }}" {% if brand.id == brand_id %}selected{% endif %}>{{ brand.name }}{% if not brand.active %} (off){% endif %}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    {% include "manage/mode_list.html" %}
+
+    <h3>Add a mode</h3>
+    <form class="stacked-form" hx-post="/manage/modes" hx-target="#mode-list" hx-swap="outerHTML">
+      <input type="hidden" name="brand_id" value="{{ brand_id }}">
+      <label>Name <input name="name" placeholder="advisor" required></label>
+      <label>Description <textarea name="description" rows="6">{{ starter }}</textarea></label>
+      <button class="btn btn-primary" type="submit">Add mode</button>
+    </form>
+    <p class="hint">A mode is a stance the brand writes in. Its description goes into the brief
+      of every piece whose idea uses it, so write it for the session that will read it.</p>
+  {% else %}
+    <p class="empty">Modes belong to a brand. <a href="/manage/brands">Add a brand</a> first.</p>
+  {% endif %}
+</section>
+{% endblock %}

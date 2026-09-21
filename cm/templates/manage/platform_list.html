@@ -1,0 +1,28 @@
+<div id="platform-list">
+  {% if platforms %}
+    <table class="list">
+      <thead><tr><th>Name</th><th>Status</th><th class="actions-head">Actions</th></tr></thead>
+      <tbody>
+        {% for platform in platforms %}
+          <tr class="{{ '' if platform.active else 'inactive' }}">
+            <td data-label="Name">
+              <form class="inline-form" hx-post="/manage/platforms/{{ platform.id }}"
+                    hx-target="#platform-list" hx-swap="outerHTML">
+                <input name="name" value="{{ platform.name }}" size="18" required>
+                <button class="btn" type="submit">Rename</button>
+              </form>
+            </td>
+            <td data-label="Status">{{ 'on' if platform.active else 'off' }}</td>
+            <td class="actions-cell" data-label="Actions">
+              {% with item = platform, base = "/manage/platforms", list_id = "platform-list" %}
+                {% include "manage/item_actions.html" %}
+              {% endwith %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No platforms yet. Add one below.</p>
+  {% endif %}
+</div>

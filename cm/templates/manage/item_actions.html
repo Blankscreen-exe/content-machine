@@ -1,0 +1,17 @@
+{# Turn off / on and delete, for one item of a managed list. Included with:
+     item     the mode, piece type or platform
+     base     its section's address, e.g. /manage/types
+     list_id  the id of the list to redraw
+   and `usage` (item id -> how many records use it) from the section.
+   Something in use cannot be deleted, so it only offers to be turned off. #}
+{% set used = usage.get(item.id, 0) %}
+<button class="btn" type="button"
+        hx-post="{{ base }}/{{ item.id }}/active" hx-vals='{"active": "{{ 'false' if item.active else 'true' }}"}'
+        hx-target="#{{ list_id }}" hx-swap="outerHTML">{{ 'Turn off' if item.active else 'Turn on' }}</button>
+{% if used %}
+  <span class="hint">used by {{ used }}</span>
+{% else %}
+  <button class="btn btn-danger" type="button"
+          hx-post="{{ base }}/{{ item.id }}/delete" hx-target="#{{ list_id }}" hx-swap="outerHTML"
+          hx-confirm="Delete &quot;{{ item.name }}&quot;?">Delete</button>
+{% endif %}

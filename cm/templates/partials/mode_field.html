@@ -1,0 +1,15 @@
+{# The stance an idea is written in, from its brand's own modes. Redrawn on its own when a
+   new idea's brand is picked, because until then there are no modes to offer. #}
+<label id="mode-field">Mode
+  <select name="mode_id">
+    <option value="">—</option>
+    {% for mode in modes %}
+      <option value="{{ mode.id }}" {% if idea and idea.mode_id == mode.id %}selected{% endif %}>{{ mode.name }}</option>
+    {% endfor %}
+  </select>
+  {% if not brand_id %}
+    <span class="hint">Pick a brand to see its modes.</span>
+  {% elif not modes %}
+    <span class="hint">This brand has no modes yet. Add them under <a href="/manage/modes?brand_id={{ brand_id }}">Manage</a>.</span>
+  {% endif %}
+</label>

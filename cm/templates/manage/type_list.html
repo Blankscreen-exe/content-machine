@@ -1,0 +1,32 @@
+<div id="type-list">
+  {% if types %}
+    <table class="list">
+      <thead><tr><th>Name</th><th>Main file</th><th>Status</th><th class="actions-head">Actions</th></tr></thead>
+      <tbody>
+        {% for piece_type in types %}
+          <tr class="{{ '' if piece_type.active else 'inactive' }}">
+            {# one form per row, spread over the cells with the form attribute #}
+            <td data-label="Name">
+              <input name="name" value="{{ piece_type.name }}" size="16" required form="type-{{ piece_type.id }}">
+            </td>
+            <td data-label="Main file">
+              <input name="main_file" value="{{ piece_type.main_file }}" size="16" required form="type-{{ piece_type.id }}">
+            </td>
+            <td data-label="Status">{{ 'on' if piece_type.active else 'off' }}</td>
+            <td class="actions-cell" data-label="Actions">
+              <form id="type-{{ piece_type.id }}" class="inline-form" hx-post="/manage/types/{{ piece_type.id }}"
+                    hx-target="#type-list" hx-swap="outerHTML">
+                <button class="btn btn-primary" type="submit">Save</button>
+              </form>
+              {% with item = piece_type, base = "/manage/types", list_id = "type-list" %}
+                {% include "manage/item_actions.html" %}
+              {% endwith %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No piece types yet. Add one below.</p>
+  {% endif %}
+</div>

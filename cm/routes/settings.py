@@ -1,4 +1,7 @@
-"""Settings: appearance, terminal, and the brands you write for."""
+"""Settings: preferences — appearance, terminal, reminders — and where the workspace is.
+
+Brands and the lists you pick from are data, not preferences; they live under Manage.
+"""
 from __future__ import annotations
 
 import shutil
@@ -55,35 +58,3 @@ def setting_set(key: str = Form(...), value: str = Form(...),
     crud.set_setting(session, key, value)
     return Response(status_code=204, headers={"HX-Refresh": "true"} if key == "theme" else {})
 
-
-@router.post("/brands", response_class=HTMLResponse)
-def brand_create(request: Request, slug: str = Form(...), name: str = Form(""),
-                 session: Session = Depends(get_session)):
-    crud.create_brand(session, slug.strip(), name.strip() or slug.strip())
-    return _brand_list(request, session)
-
-
-@router.post("/brands/{brand_id}", response_class=HTMLResponse)
-def brand_update(brand_id: int, request: Request, name: str = Form(...),
-                 session: Session = Depends(get_session)):
-    brand = crud.get_brand(session, brand_id)
-    if not brand:
-        raise HTTPException(404, "brand not found")
-    crud.update_brand(session, brand, name=name.strip())
-    return _brand_list(request, session)
-
-
-@router.post("/brands/{brand_id}/active", response_class=HTMLResponse)
-def brand_active(brand_id: int, request: Request, active: bool = Form(...),
-                 session: Session = Depends(get_session)):
-    """Deactivating hides a brand from the filters; its ideas and pieces stay."""
-    brand = crud.get_brand(session, brand_id)
-    if not brand:
-        raise HTTPException(404, "brand not found")
-    crud.update_brand(session, brand, active=active)
-    return _brand_list(request, session)
-
-
-def _brand_list(request: Request, session: Session) -> HTMLResponse:
-    return templates.TemplateResponse(request, "partials/brand_list.html",
-                                      {"request": request, "brands": crud.list_brands(session)})

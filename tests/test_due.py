@@ -9,6 +9,7 @@ from sqlmodel import Session
 
 from cm import crud, schedule
 from cm.models import Stage
+from helpers import type_id
 
 TODAY = date(2026, 9, 21)
 
@@ -17,7 +18,7 @@ TODAY = date(2026, 9, 21)
 def dated_fixture(session: Session, brand):
     """One piece each: overdue, due today, inside the window, beyond it, and published."""
     def piece(title, days, stage=Stage.draft):
-        return crud.create_piece(session, brand_id=brand.id, type="blog", title=title,
+        return crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title=title,
                                  due_on=TODAY + timedelta(days=days), stage=stage)
     return {
         "overdue": piece("Overdue", -2),
@@ -46,7 +47,7 @@ def test_the_window_comes_from_settings(session: Session, dated):
 
 def test_the_pieces_page_shows_the_panel_and_the_tab_count(client: TestClient, session: Session,
                                                           brand):
-    crud.create_piece(session, brand_id=brand.id, type="blog", title="Late one",
+    crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Late one",
                       due_on=date.today() - timedelta(days=1))
     page = client.get("/pieces").text
 
@@ -61,7 +62,7 @@ def test_nothing_due_hides_both(client: TestClient, brand):
 
 
 def test_publishing_from_the_list_updates_the_count(client: TestClient, session: Session, brand):
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title="Late one",
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Late one",
                               due_on=date.today() - timedelta(days=1))
 
     response = client.post(f"/pieces/{piece.id}/stage", data={"stage": "published", "brand_id": ""})

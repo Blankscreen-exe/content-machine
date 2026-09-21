@@ -1,7 +1,7 @@
-# Voice: Acme Co
+# Voice: [Brand name]
 
-A starter voice file. Replace everything in square brackets. Claude reads this before
-drafting anything for the brand, so the more specific it is, the less you rewrite.
+A starter voice. Replace everything in square brackets. It is handed to every session
+for this brand in `brief.md`, so the more specific it is, the less you rewrite.
 
 ## Positioning
 [Who this brand is and what it does, in two or three sentences. What makes it different.]
@@ -14,21 +14,6 @@ drafting anything for the brand, so the more specific it is, the less you rewrit
 ## Audience
 1. **Primary:** [who they are, and what they are trying to get done]
 2. **Secondary:** [who else reads and shares it]
-
-## Modes
-Delete this section if the brand only has one register.
-
-### [Mode one — e.g. advisor]
-- **The reader is** [who you are talking to in this mode]
-- **Register:** [calm, diagnostic, ...]
-- **Devices:** [client quotes, checklists, ...]
-- **Ends with** [a checklist and one call to action]
-
-### [Mode two — e.g. commentator]
-- **The reader is** [...]
-- **Register:** [wry, argumentative, ...]
-- **Devices:** [...]
-- **Ends with** [...]
 
 ## Always
 - [e.g. first person, direct "you" address]

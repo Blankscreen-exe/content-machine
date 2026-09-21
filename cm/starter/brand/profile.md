@@ -1,7 +1,7 @@
-# Brand: Acme Co
+# Brand: [Brand name]
 
-A starter brand. Copy this folder to `brands/<your-slug>/`, where the slug matches the one
-you add under Settings → Brands, and replace everything in square brackets.
+A starter profile. Replace everything in square brackets. It is handed to every session
+for this brand in `brief.md`, next to the voice.
 
 ## Identity
 
@@ -26,7 +26,7 @@ The facts a design spec needs. You do the design; these keep it consistent.
 | Secondary accent | [#f2994a] |
 | Headline font | [Font name, weight] |
 | Body font | [Font name] |
-| Logo file | [assets/logo.svg — keep it in this brand folder, not in a piece] |
+| Logo file | [where you keep it] |
 
 ## Recurring visual elements
 

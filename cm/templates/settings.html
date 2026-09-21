@@ -52,22 +52,10 @@
 </section>
 
 <section class="panel">
-  <h2>Brands</h2>
-  {% include "partials/brand_list.html" %}
-
-  <form class="inline-form" hx-post="/brands" hx-target="#brand-list" hx-swap="outerHTML">
-    <label class="inline">Slug <input name="slug" placeholder="acme" size="14" required></label>
-    <label class="inline">Name <input name="name" placeholder="Acme Co" size="18"></label>
-    <button class="btn btn-primary" type="submit">Add brand</button>
-  </form>
-</section>
-
-<section class="panel">
   <h2>Workspace</h2>
   <table class="plain">
     <tr><th>Folder</th><td><code>{{ paths.workspace }}</code></td></tr>
     <tr><th>Database</th><td><code>{{ paths.db_path }}</code></td></tr>
-    <tr><th>Brands</th><td><code>{{ paths.brands_dir }}</code></td></tr>
     <tr><th>Content</th><td><code>{{ paths.content_dir }}</code></td></tr>
     <tr><th>Trash</th><td><code>{{ paths.trash_dir }}</code></td></tr>
   </table>

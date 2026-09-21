@@ -1,0 +1,19 @@
+<div id="mode-list">
+  {% for mode in modes %}
+    <article class="item-card {{ '' if mode.active else 'inactive' }}">
+      <form class="stacked-form" hx-post="/manage/modes/{{ mode.id }}"
+            hx-target="#mode-list" hx-swap="outerHTML">
+        <label>Name <input name="name" value="{{ mode.name }}" required></label>
+        <label>Description <textarea name="description" rows="6">{{ mode.description }}</textarea></label>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Save</button>
+          {% with item = mode, base = "/manage/modes", list_id = "mode-list" %}
+            {% include "manage/item_actions.html" %}
+          {% endwith %}
+        </div>
+      </form>
+    </article>
+  {% else %}
+    <p class="empty">This brand has no modes yet.</p>
+  {% endfor %}
+</div>

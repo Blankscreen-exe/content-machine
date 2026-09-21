@@ -7,6 +7,7 @@ from sqlmodel import Session
 
 from cm import crud, workspace
 from cm.settings import get_settings
+from helpers import type_id
 
 
 @pytest.fixture(autouse=True)
@@ -17,7 +18,7 @@ def workspace_dir(tmp_path, monkeypatch):
 
 @pytest.fixture(name="piece")
 def piece_fixture(session: Session, brand):
-    return crud.create_piece(session, brand_id=brand.id, type="blog",
+    return crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"),
                              title="The cheapest technical decision")
 
 
@@ -52,7 +53,7 @@ def test_a_session_writing_underneath_you_is_caught(client: TestClient, session:
                            data={"text": "written in the browser", "fingerprint": fingerprint})
 
     assert "changed on disk" in response.text
-    assert "Save anyway" in response.text and "Reload from disk" in response.text
+    assert "Save anyway" in response.text and "Reload saved version" in response.text
     assert (folder / "blog.md").read_text(encoding="utf-8") == "written in the terminal"
 
     forced = client.post(f"/pieces/{piece.id}/files/blog.md",

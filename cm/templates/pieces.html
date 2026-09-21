@@ -7,18 +7,18 @@
 <div class="bar">
   <select name="stage"
           hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
-          hx-include="[name='type'],#brand-scope">
+          hx-include="[name='type_id'],#brand-scope">
     <option value="">all stages</option>
     {% for value in stages %}
       <option value="{{ value }}" {{ 'selected' if stage == value }}>{{ value }}</option>
     {% endfor %}
   </select>
-  <select name="type"
+  <select name="type_id"
           hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
           hx-include="[name='stage'],#brand-scope">
     <option value="">all types</option>
-    {% for value in types %}
-      <option value="{{ value }}" {{ 'selected' if type == value }}>{{ value }}</option>
+    {% for piece_type in types %}
+      <option value="{{ piece_type.id }}" {% if type_id == piece_type.id %}selected{% endif %}>{{ piece_type.name }}</option>
     {% endfor %}
   </select>
   <span class="count" id="piece-count">{{ counts.get('total', 0) }} pieces &middot; {{ counts.get('published', 0) }} published</span>

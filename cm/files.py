@@ -9,20 +9,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from .models import PieceType
 from .text import slugify
-
-# What a piece of each type is mainly written in. Everything else in the folder still
-# shows up as a tab; this is only what opens first and gets created on the first save.
-MAIN_FILE: dict[PieceType, str] = {
-    PieceType.blog: "blog.md",
-    PieceType.linkedin: "linkedin.md",
-    PieceType.x: "x.md",
-    PieceType.infographic: "spec.md",
-    PieceType.carousel: "spec.md",
-    PieceType.quote: "quotes.md",
-    PieceType.other: "draft.md",
-}
 
 # Written by the app before every session; editing it would be pointless.
 GENERATED_FILES = {"brief.md"}
@@ -58,7 +45,11 @@ def resolve(folder: Path, name: str) -> Path:
 
 
 def list_drafts(folder: Path, main: str) -> list[str]:
-    """Markdown files in the folder, the main draft first, generated files last."""
+    """Markdown files in the folder, the main draft first, generated files last.
+
+    `main` is the piece type's main file: what opens first and is created on the first
+    save. Everything else in the folder still shows up as a tab.
+    """
     if not folder.is_dir():
         return [main]
     names = sorted(p.name for p in folder.glob("*.md"))

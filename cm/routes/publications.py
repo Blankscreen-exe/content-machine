@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from sqlmodel import Session
 
-from .. import crud, schedule
+from .. import choices, crud, schedule
 from ..database import get_session
 from ..dates import moment_on
-from ..models import Piece
+from ..models import Piece, Platform
 from ..templating import templates
 
 router = APIRouter(prefix="/pieces/{piece_id}/publications")
@@ -20,17 +20,19 @@ def publications_context(session: Session, piece: Piece) -> dict:
     """What the Published panel needs; the piece page uses it for its first render too."""
     return {
         "publications": crud.list_publications(session, piece.id),
-        "platforms": crud.known_platforms(session),
+        "platforms": choices.options(session, Platform),
         "today": date.today(),
     }
 
 
 @router.post("", response_class=HTMLResponse)
 def publication_create(piece_id: int, request: Request, session: Session = Depends(get_session),
-                       platform: str = Form(...), url: str = Form(""),
+                       platform_id: int = Form(...), url: str = Form(""),
                        posted_on: date = Form(...)):
     piece = _piece(session, piece_id)
-    crud.record_publication(session, piece, platform=platform, url=url,
+    if not choices.get(session, Platform, platform_id):
+        raise choices.ChoiceError("That platform does not exist.")
+    crud.record_publication(session, piece, platform_id=platform_id, url=url,
                             posted_at=moment_on(posted_on))
     # recording moves the piece to published, which the heading and the due count show
     return _panel(request, session, piece, redraw_head=True)

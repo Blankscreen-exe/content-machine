@@ -7,6 +7,7 @@ from sqlmodel import Session
 
 from cm import crud, workspace
 from cm.settings import get_settings
+from helpers import type_id
 
 
 @pytest.fixture(autouse=True)
@@ -16,7 +17,7 @@ def workspace_dir(tmp_path, monkeypatch):
 
 
 def _piece_with_a_draft(session: Session, brand, title="Legacy systems"):
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title=title)
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title=title)
     folder = workspace.ensure_folder(session, piece)
     (folder / "blog.md").write_text("words worth keeping", encoding="utf-8")
     return piece, folder
@@ -34,7 +35,7 @@ def test_the_folder_goes_to_the_trash_with_its_files(session: Session, brand):
 
 
 def test_a_piece_without_a_folder_is_simply_deleted(session: Session, brand):
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title="Never opened")
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Never opened")
     assert workspace.delete_piece(session, piece) is None
     assert crud.get_piece(session, piece.id) is None
 

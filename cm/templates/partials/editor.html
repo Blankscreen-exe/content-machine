@@ -5,7 +5,11 @@
         hx-target="#list" hx-swap="outerHTML">
     {# the brand the list is showing, so saving redraws that same list #}
     <input type="hidden" name="view_brand_id" value="{{ view_brand_id or '' }}">
-    {% if not idea %}{% include "partials/brand_field.html" %}{% endif %}
+    {% if not idea %}
+      {# picking the brand redraws the mode dropdown with that brand's modes #}
+      {% set brand_picks_modes = true %}
+      {% include "partials/brand_field.html" %}
+    {% endif %}
 
     <label>Title <input name="title" value="{{ idea.title if idea else '' }}" required autofocus></label>
     <label>Angle <input name="angle" value="{{ idea.angle if idea else '' }}"></label>
@@ -13,13 +17,7 @@
     <label>Notes <textarea name="notes" rows="2">{{ idea.notes if idea else '' }}</textarea></label>
 
     <div class="row">
-      <label>Mode
-        <select name="mode">
-          {% for value in ["", "consultant", "commentator"] %}
-            <option value="{{ value }}" {{ 'selected' if idea and idea.mode == value }}>{{ value or "—" }}</option>
-          {% endfor %}
-        </select>
-      </label>
+      {% include "partials/mode_field.html" %}
       <label>Status
         <select name="status">
           {% for value in statuses %}
@@ -56,7 +54,7 @@
       {% if pieces %}
         <ul class="pieces-of-idea">
           {% for piece in pieces %}
-            <li>{{ piece.type.value }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>{% if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}</li>
+            <li>{{ piece.type.name }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>{% if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}</li>
           {% endfor %}
         </ul>
       {% else %}
@@ -67,8 +65,8 @@
             hx-target="#editor" hx-swap="innerHTML">
         <input type="hidden" name="view_brand_id" value="{{ view_brand_id or '' }}">
         <label class="inline">Type
-          <select name="type">
-            {% for value in types %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+          <select name="type_id">
+            {% for piece_type in types %}<option value="{{ piece_type.id }}">{{ piece_type.name }}</option>{% endfor %}
           </select>
         </label>
         <label class="inline">Due <input type="date" name="due_on"></label>

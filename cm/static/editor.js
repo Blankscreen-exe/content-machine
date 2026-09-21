@@ -3,16 +3,19 @@
 // The textarea stays in the form and stays the thing that gets submitted; the editor just
 // keeps it up to date. So saving, the fingerprint check and the conflict handling work
 // exactly as they do without JavaScript, and a failure here degrades to a plain textarea.
+//
+// The page says where pasted images go with data-upload-url and data-assets-url. Where it
+// does not (a brand's voice has no folder of its own), images are simply not accepted.
 (function () {
   let current = null;
 
-  function pasteImage(pieceId) {
+  function pasteImage(uploadUrl) {
     // Toast UI hands us the pasted or dropped file and expects a URL back.
     return async function (blob, callback) {
       const body = new FormData();
       body.append("file", blob, blob.name || "pasted.png");
       try {
-        const response = await fetch(`/pieces/${pieceId}/assets`, { method: "POST", body });
+        const response = await fetch(uploadUrl, { method: "POST", body });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || "upload failed");
         // The markdown keeps the relative path; the renderer below resolves it for display.
@@ -23,12 +26,12 @@
     };
   }
 
-  function resolveImages(pieceId) {
+  function resolveImages(assetsUrl) {
     return {
       image(node, context) {
         const { destination, firstChild } = node;
         const source = destination.startsWith("assets/")
-          ? `/pieces/${pieceId}/assets/${destination.slice("assets/".length)}`
+          ? `${assetsUrl}${destination.slice("assets/".length)}`
           : destination;
         return {
           type: context.entering ? "openTag" : "closeTag",
@@ -40,12 +43,16 @@
     };
   }
 
+  function refuseImage() {
+    window.alert("Images cannot be added here. They belong in a piece's draft.");
+  }
+
   function mount() {
     const textarea = document.getElementById("draft-text");
     if (!textarea || textarea.dataset.mounted || typeof toastui === "undefined") return;
     if (textarea.hasAttribute("readonly")) return;      // generated files stay plain
 
-    const pieceId = textarea.dataset.pieceId;
+    const { uploadUrl, assetsUrl } = textarea.dataset;
     const holder = document.createElement("div");
     textarea.parentNode.insertBefore(holder, textarea);
 
@@ -57,8 +64,8 @@
         previewStyle: "tab",
         usageStatistics: false,        // nothing phones home
         initialValue: textarea.value,
-        hooks: { addImageBlobHook: pasteImage(pieceId) },
-        customHTMLRenderer: resolveImages(pieceId),
+        hooks: uploadUrl ? { addImageBlobHook: pasteImage(uploadUrl) } : { addImageBlobHook: refuseImage },
+        customHTMLRenderer: assetsUrl ? resolveImages(assetsUrl) : {},
       });
     } catch (error) {
       // Leave the textarea in place: a plain editor beats no editor.

@@ -1,36 +1,44 @@
+{# The writing pane: tabs, a markdown editor, save with a "changed since you opened it"
+   check. It edits whatever the caller points it at — a piece's draft files, or a brand's
+   voice and profile — through `pane`, built by the route:
+
+     tabs          [{label, url, on}]   what the tabs switch between
+     save_url      where Save posts;    open_url  where Reload fetches the saved version
+     text, fingerprint, editable, readonly_reason, message, conflict
+     upload_url, assets_url             only where pasted images have somewhere to go #}
 <section class="editor-pane" id="editor-pane">
   <nav class="file-tabs">
-    {% for other in names %}
-      <a class="{{ 'on' if other == name }}"
-         hx-get="/pieces/{{ piece.id }}/files/{{ other }}"
-         hx-target="#editor-pane" hx-swap="outerHTML">{{ other }}</a>
+    {% for tab in pane.tabs %}
+      <a class="{{ 'on' if tab.on }}"
+         hx-get="{{ tab.url }}"
+         hx-target="#editor-pane" hx-swap="outerHTML">{{ tab.label }}</a>
     {% endfor %}
   </nav>
 
-  <form hx-post="/pieces/{{ piece.id }}/files/{{ name }}"
+  <form hx-post="{{ pane.save_url }}"
         hx-target="#editor-pane" hx-swap="outerHTML">
-    <input type="hidden" name="fingerprint" value="{{ fingerprint }}">
+    <input type="hidden" name="fingerprint" value="{{ pane.fingerprint }}">
     <textarea class="draft" name="text" id="draft-text" spellcheck="true"
-              data-piece-id="{{ piece.id }}"
-              {{ 'readonly' if not editable }}>{{ text }}</textarea>
+              {% if pane.upload_url %}data-upload-url="{{ pane.upload_url }}" data-assets-url="{{ pane.assets_url }}"{% endif %}
+              {% if not pane.editable %}readonly{% endif %}>{{ pane.text }}</textarea>
 
     <div class="actions">
-      {% if editable %}
+      {% if pane.editable %}
         <button class="btn btn-primary" type="submit">Save</button>
-        {% if conflict %}
+        {% if pane.conflict %}
           <button class="btn btn-danger" type="submit" name="force" value="true"
-                  hx-confirm="Overwrite the version on disk?">Save anyway</button>
-          <a class="btn" hx-get="/pieces/{{ piece.id }}/files/{{ name }}"
-             hx-target="#editor-pane" hx-swap="outerHTML">Reload from disk</a>
+                  hx-confirm="Overwrite the saved version?">Save anyway</button>
+          <a class="btn" hx-get="{{ pane.open_url }}"
+             hx-target="#editor-pane" hx-swap="outerHTML">Reload saved version</a>
         {% endif %}
       {% else %}
-        <span class="hint">{{ name }} is generated before every session and cannot be edited here.</span>
+        <span class="hint">{{ pane.readonly_reason }}</span>
       {% endif %}
 
       <button class="btn" type="button" data-copy="markdown">Copy as markdown</button>
       <button class="btn" type="button" data-copy="plain">Copy as plain text</button>
 
-      {% if message %}<span class="{{ 'message' if conflict else 'saved' }}">{{ message }}</span>{% endif %}
+      {% if pane.message %}<span class="{{ 'message' if pane.conflict else 'saved' }}">{{ pane.message }}</span>{% endif %}
     </div>
   </form>
 </section>

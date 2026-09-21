@@ -11,6 +11,7 @@ from cm import crud, terminals
 from cm.app import create_app
 from cm.database import get_session
 from cm.settings import get_settings
+from helpers import type_id
 
 TEST_TOKEN = os.environ["CM_TOKEN"]      # set by conftest before anything is imported
 
@@ -47,7 +48,7 @@ def launches_fixture(monkeypatch):
 
 def test_remote_callers_are_refused(client: TestClient, session: Session, brand, launches):
     """The app can be served on the LAN; only this machine may start processes on it."""
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title="Legacy systems")
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Legacy systems")
 
     response = client.post(f"/pieces/{piece.id}/session")     # default client host: "testclient"
 
@@ -60,7 +61,7 @@ def test_local_call_writes_the_brief_and_opens_a_terminal(local_client: TestClie
                                                           session: Session, brand, launches):
     idea = crud.create_idea(session, brand_id=brand.id, title="Cheap decisions compound",
                             angle="cheap now, expensive later")
-    piece = crud.create_piece(session, brand_id=brand.id, type="carousel",
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "carousel"),
                               title="Cheap decisions compound", idea_id=idea.id)
 
     response = local_client.post(f"/pieces/{piece.id}/session")
@@ -77,7 +78,7 @@ def test_local_call_writes_the_brief_and_opens_a_terminal(local_client: TestClie
 def test_chosen_terminal_is_passed_through(local_client: TestClient, session: Session,
                                            brand, launches):
     crud.set_setting(session, "terminal", "kitty")
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title="A piece")
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece")
 
     local_client.post(f"/pieces/{piece.id}/session")
     assert launches[0]["key"] == "kitty"
@@ -85,7 +86,7 @@ def test_chosen_terminal_is_passed_through(local_client: TestClient, session: Se
 
 def test_a_missing_terminal_is_reported_not_swallowed(local_client: TestClient, session: Session,
                                                       brand, monkeypatch):
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title="A piece")
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece")
 
     def boom(*args, **kwargs):
         raise terminals.TerminalError("No supported terminal found.")

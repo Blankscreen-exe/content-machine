@@ -19,8 +19,8 @@ publishing. You never do those.
   `[MY STORY: what goes here]` and move on.
 - **Never state a fact without a source.** Mark anything unverified clearly.
 - **Drafts are clay.** Write them so I can rewrite them. Don't defend your phrasing.
-- **Match the brand voice** in `brands/<brand>/voice.md`. If there is no voice file for a
-  brand, ask me before drafting.
+- **Match the brand voice** in the Voice section of `brief.md`, and the mode's description
+  when the idea has one. If the brief says there is no voice yet, ask me before drafting.
 
 ## Files in a piece folder
 

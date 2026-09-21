@@ -1,10 +1,11 @@
-"""Starter files for a new workspace.
+"""Starter material: files for a new workspace, and the text a new brand or mode begins with.
 
-Everything under `cm/starter/` is copied into the workspace by `cm init`: the standing
-rules a terminal session reads, the skills for jobs that repeat, and one dummy brand to
-copy from. The starter never contains a real brand; real brands live only in the
-workspace. Files are copied once and then belong to you — `cm init` never overwrites a
-file that already exists unless told to.
+`cm init` copies the standing rules a terminal session reads and the skills for jobs that
+repeat into the workspace. Files are copied once and then belong to you — `cm init` never
+overwrites a file that already exists unless told to.
+
+`cm/starter/brand/` holds the templates a new brand's voice and profile, and a new mode's
+description, start from. They are placeholders in square brackets, never a real brand.
 """
 from __future__ import annotations
 
@@ -21,8 +22,10 @@ STARTER = Path(__file__).resolve().parent / "starter"
 LAYOUT = {
     "CLAUDE.md": "CLAUDE.md",
     "skills": ".claude/skills",
-    "brands": "brands",
 }
+
+BRAND_TEMPLATES = STARTER / "brand"
+BRAND_NAME_PLACEHOLDER = "[Brand name]"
 
 
 def _files(source: Path, target: Path) -> list[tuple[Path, Path]]:
@@ -36,8 +39,7 @@ def _files(source: Path, target: Path) -> list[tuple[Path, Path]]:
 def init_workspace(force: bool = False) -> list[Path]:
     """Create the workspace folders and copy in the starter files. Returns what was written."""
     settings = get_settings()
-    for folder in (settings.brands_dir, settings.content_dir):
-        folder.mkdir(parents=True, exist_ok=True)
+    settings.content_dir.mkdir(parents=True, exist_ok=True)
 
     written: list[Path] = []
     for source_name, target_name in LAYOUT.items():
@@ -48,3 +50,15 @@ def init_workspace(force: bool = False) -> list[Path]:
             shutil.copyfile(source, destination)
             written.append(destination)
     return written
+
+
+def brand_starter(name: str) -> dict[str, str]:
+    """The voice and profile a new brand starts with, headed with its name."""
+    return {field: (BRAND_TEMPLATES / f"{field}.md").read_text(encoding="utf-8")
+            .replace(BRAND_NAME_PLACEHOLDER, name)
+            for field in ("voice", "profile")}
+
+
+def mode_starter() -> str:
+    """The description a new mode starts with: the questions a mode has to answer."""
+    return (BRAND_TEMPLATES / "mode.md").read_text(encoding="utf-8")

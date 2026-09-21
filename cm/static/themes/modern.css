@@ -51,6 +51,13 @@ body {
 .tabs a:hover { color: var(--text); }
 .tabs a.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 
+/* Manage sidebar and item cards */
+.manage-nav a { color: var(--text-muted); text-decoration: none; font-weight: 500; border-radius: var(--radius-small); }
+.manage-nav a:hover { color: var(--text); }
+.manage-nav a.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.item-card { background: var(--surface-muted); border: 1px solid var(--line); border-radius: var(--radius-small); }
+.item-card.inactive { opacity: .65; }
+
 /* brand filter: a labelled dropdown */
 .scope { margin-top: 0; }
 .scope-label {

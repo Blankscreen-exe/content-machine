@@ -4,11 +4,13 @@ Both the web app and the CLI call these, so the rules live in one place.
 """
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
 
 from sqlmodel import Session, func, or_, select
 
-from .models import (Brand, Event, Idea, IdeaStatus, Piece, PieceType, Publication,
+from .choices import ChoiceError
+from .models import (Brand, Event, Idea, IdeaStatus, Mode, Piece, PieceType, Publication,
                      Setting, Stage, now)
 from .text import slugify
 
@@ -67,11 +69,17 @@ def update_brand(session: Session, brand: Brand, **fields) -> Brand:
     return brand
 
 
-def create_brand(session: Session, slug: str, name: str | None = None) -> Brand:
-    existing = get_brand_by_slug(session, slug)
-    if existing:
-        return existing
-    brand = Brand(slug=slug.strip(), name=(name or slug).strip())
+BRAND_SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
+
+
+def create_brand(session: Session, slug: str, name: str | None = None, **fields) -> Brand:
+    """Add a brand. The slug names its folders, so it has to be folder-safe and unique."""
+    slug = slug.strip()
+    if not BRAND_SLUG.fullmatch(slug):
+        raise ChoiceError("A slug is lowercase letters, numbers and dashes, like acme-co.")
+    if get_brand_by_slug(session, slug):
+        raise ChoiceError(f"There is already a brand with the slug {slug}.")
+    brand = Brand(slug=slug, name=" ".join((name or slug).split()), **fields)
     session.add(brand)
     session.commit()
     session.refresh(brand)
@@ -100,7 +108,17 @@ def get_idea(session: Session, idea_id: int) -> Idea | None:
     return session.get(Idea, idea_id)
 
 
+def _check_mode(session: Session, brand_id: int, mode_id: int | None) -> None:
+    """A mode belongs to one brand; an idea can only use one of its own brand's."""
+    if mode_id is None:
+        return
+    mode = session.get(Mode, mode_id)
+    if not mode or mode.brand_id != brand_id:
+        raise ChoiceError("That mode belongs to another brand.")
+
+
 def create_idea(session: Session, brand_id: int, **fields) -> Idea:
+    _check_mode(session, brand_id, fields.get("mode_id"))
     idea = Idea(brand_id=brand_id, **fields)
     session.add(idea)
     session.commit()
@@ -111,6 +129,8 @@ def create_idea(session: Session, brand_id: int, **fields) -> Idea:
 
 
 def update_idea(session: Session, idea: Idea, **fields) -> Idea:
+    if "mode_id" in fields:
+        _check_mode(session, idea.brand_id, fields["mode_id"])
     previous = idea.status
     for key, value in fields.items():
         setattr(idea, key, value)
@@ -141,14 +161,14 @@ def delete_idea(session: Session, idea: Idea) -> None:
 # ---------- pieces ----------
 
 def list_pieces(session: Session, brand_id: int | None = None, stage: Stage | None = None,
-                piece_type: PieceType | None = None, idea_id: int | None = None) -> list[Piece]:
+                type_id: int | None = None, idea_id: int | None = None) -> list[Piece]:
     query = select(Piece)
     if brand_id:
         query = query.where(Piece.brand_id == brand_id)
     if stage:
         query = query.where(Piece.stage == stage)
-    if piece_type:
-        query = query.where(Piece.type == piece_type)
+    if type_id:
+        query = query.where(Piece.type_id == type_id)
     if idea_id:
         query = query.where(Piece.idea_id == idea_id)
     # Dated work first, oldest due date at the top; undated work after it.
@@ -160,14 +180,14 @@ def get_piece(session: Session, piece_id: int) -> Piece | None:
     return session.get(Piece, piece_id)
 
 
-def unique_slug(session: Session, brand_id: int, title: str, piece_type: PieceType) -> str:
+def unique_slug(session: Session, brand_id: int, title: str, type_name: str) -> str:
     """A slug no other piece of this brand has.
 
     The slug names the piece's folder, and pieces made from one idea share its title, so
     the type goes into the slug and a counter settles any remaining clash. Without this,
     two pieces could write into the same folder and overwrite each other's files.
     """
-    base = f"{slugify(title)}-{slugify(PieceType(piece_type).value)}"
+    base = f"{slugify(title)}-{slugify(type_name)}"
     taken = set(session.exec(select(Piece.slug).where(Piece.brand_id == brand_id)).all())
     slug, counter = base, 2
     while slug in taken:
@@ -176,13 +196,16 @@ def unique_slug(session: Session, brand_id: int, title: str, piece_type: PieceTy
     return slug
 
 
-def create_piece(session: Session, brand_id: int, type: PieceType, title: str, **fields) -> Piece:
-    fields["slug"] = unique_slug(session, brand_id, title, type)
-    piece = Piece(brand_id=brand_id, type=type, title=title.strip(), **fields)
+def create_piece(session: Session, brand_id: int, type_id: int, title: str, **fields) -> Piece:
+    piece_type = session.get(PieceType, type_id)
+    if not piece_type:
+        raise ChoiceError("That piece type does not exist.")
+    fields["slug"] = unique_slug(session, brand_id, title, piece_type.name)
+    piece = Piece(brand_id=brand_id, type_id=type_id, title=title.strip(), **fields)
     session.add(piece)
     session.commit()
     session.refresh(piece)
-    record(session, "piece", piece.id, to_state=piece.stage.value, note=f"created ({piece.type.value})")
+    record(session, "piece", piece.id, to_state=piece.stage.value, note=f"created ({piece_type.name})")
     session.commit()
     return piece
 
@@ -216,13 +239,13 @@ def delete_piece(session: Session, piece: Piece) -> None:
     session.commit()
 
 
-def record_publication(session: Session, piece: Piece, platform: str, url: str = "",
+def record_publication(session: Session, piece: Piece, platform_id: int, url: str = "",
                        notes: str = "", posted_at: datetime | None = None) -> Publication:
     """Record where a piece went out, and move it to published.
 
     `posted_at` is for recording a post after the fact; left out, it is now.
     """
-    publication = Publication(piece_id=piece.id, platform=platform.strip(), url=url.strip(),
+    publication = Publication(piece_id=piece.id, platform_id=platform_id, url=url.strip(),
                               notes=notes, posted_at=posted_at or now())
     session.add(publication)
     session.commit()
@@ -246,10 +269,6 @@ def list_publications(session: Session, piece_id: int) -> list[Publication]:
         select(Publication).where(Publication.piece_id == piece_id).order_by(Publication.posted_at)
     ).all())
 
-
-def known_platforms(session: Session) -> list[str]:
-    """Platforms used before, offered as suggestions so the same one is spelled the same way."""
-    return sorted(session.exec(select(Publication.platform).distinct()).all())
 
 
 def piece_counts(session: Session, brand_id: int | None = None) -> dict[str, int]:

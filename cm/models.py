@@ -3,13 +3,18 @@
 An idea is the unit of thinking. A piece is a single thing that gets published — a blog
 post, a LinkedIn post, a carousel — and one idea can produce several. Stages belong to
 pieces, because a piece is what actually moves.
-"""
-from __future__ import annotations
 
+Piece types, platforms and modes are lists you manage from the app. Idea statuses, piece
+stages and priorities stay in code, because the app's own behaviour depends on them.
+
+No `from __future__ import annotations` here: SQLModel reads the relationship types at
+class creation, and postponed annotations would hide them from it.
+"""
 from datetime import date, datetime, timezone
 from enum import Enum
+from typing import Optional
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 
 def now() -> datetime:
@@ -35,22 +40,49 @@ class Stage(str, Enum):
     published = "published"
 
 
-class PieceType(str, Enum):
-    blog = "blog"
-    linkedin = "linkedin post"
-    x = "x post"
-    infographic = "infographic"
-    carousel = "carousel"
-    quote = "quote"
-    other = "other"
-
-
 class Brand(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    slug: str = Field(index=True, unique=True)
+    slug: str = Field(index=True, unique=True)      # names the brand's folders; fixed at creation
     name: str
     active: bool = True
+    # What a session needs to write as this brand. Handed over in brief.md, so the database
+    # is the only copy.
+    voice: str = ""
+    profile: str = ""                               # identity and visual constants
     created_at: datetime = Field(default_factory=now)
+
+
+class PieceType(SQLModel, table=True):
+    """blog, linkedin post, carousel... shared by every brand."""
+
+    __tablename__ = "piece_type"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True)
+    # The draft a piece of this type opens on and creates on its first save.
+    main_file: str = "draft.md"
+    active: bool = True
+
+
+class Platform(SQLModel, table=True):
+    """Where pieces get published, so each one is always spelled the same way."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(unique=True)
+    active: bool = True
+
+
+class Mode(SQLModel, table=True):
+    """A stance a brand writes in. The description goes into the brief of every piece whose
+    idea uses it, so a session knows what the mode means without looking anything up."""
+
+    __table_args__ = (UniqueConstraint("brand_id", "name"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    brand_id: int = Field(foreign_key="brand.id", index=True)
+    name: str
+    description: str = ""
+    active: bool = True
 
 
 class Idea(SQLModel, table=True):
@@ -59,13 +91,15 @@ class Idea(SQLModel, table=True):
     title: str
     angle: str = ""
     talking_points: str = ""
-    mode: str = ""
+    mode_id: int | None = Field(default=None, foreign_key="mode.id", index=True)
     notes: str = ""
     source: str = ""
     status: IdeaStatus = Field(default=IdeaStatus.pool, index=True)
     priority: int = 2
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)
+
+    mode: Optional["Mode"] = Relationship()
 
 
 class Piece(SQLModel, table=True):
@@ -74,7 +108,7 @@ class Piece(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     brand_id: int = Field(foreign_key="brand.id", index=True)
     idea_id: int | None = Field(default=None, foreign_key="idea.id", index=True)
-    type: PieceType
+    type_id: int = Field(foreign_key="piece_type.id", index=True)
     title: str
     slug: str = ""          # fixed at creation: renaming a piece must not move its folder
     stage: Stage = Field(default=Stage.not_started, index=True)
@@ -83,14 +117,18 @@ class Piece(SQLModel, table=True):
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)
 
+    type: "PieceType" = Relationship()
+
 
 class Publication(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     piece_id: int = Field(foreign_key="piece.id", index=True)
-    platform: str
+    platform_id: int = Field(foreign_key="platform.id", index=True)
     url: str = ""
     posted_at: datetime = Field(default_factory=now)
     notes: str = ""
+
+    platform: "Platform" = Relationship()
 
 
 class Event(SQLModel, table=True):

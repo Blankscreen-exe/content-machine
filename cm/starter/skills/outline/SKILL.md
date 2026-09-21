@@ -9,7 +9,7 @@ Use when a piece needs structure before anyone writes prose.
 
 ## Steps
 
-1. Read `brief.md` and the brand's `voice.md`.
+1. Read `brief.md`, including its Voice section.
 2. Ask what the reader should believe or do by the end. One sentence. If the brief does
    not answer it, ask me.
 3. Propose three hooks. Do not pick one for me.

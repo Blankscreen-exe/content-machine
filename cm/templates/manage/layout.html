@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{# Every Manage page: the sidebar of sections on the left, the chosen section beside it.
+   On a phone the sidebar becomes a row of tabs above the section. #}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<div class="manage">
+  <nav class="manage-nav" aria-label="What to manage">
+    {% for key, label in sections %}
+      <a href="/manage/{{ key }}" {% if key == section %}class="on" aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+
+  <div class="manage-main">
+    {% block section %}{% endblock %}
+  </div>
+</div>
+
+{% endblock %}

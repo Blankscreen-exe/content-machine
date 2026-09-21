@@ -7,7 +7,7 @@
       {% for publication in publications %}
         <tr>
           <th>{{ publication.posted_at | local_date }}</th>
-          <td>{{ publication.platform }}
+          <td>{{ publication.platform.name }}
             {% if publication.url %}— <a href="{{ publication.url }}">{{ publication.url }}</a>{% endif %}
           </td>
           <td class="row-action">
@@ -23,16 +23,19 @@
     <p class="hint">Not published anywhere yet.</p>
   {% endif %}
 
+  {% if platforms %}
   <form class="inline-form" hx-post="/pieces/{{ piece.id }}/publications"
         hx-target="#publications" hx-swap="outerHTML">
     <label class="inline">Platform
-      <input name="platform" list="known-platforms" size="14" required>
+      <select name="platform_id" required>
+        {% for platform in platforms %}<option value="{{ platform.id }}">{{ platform.name }}</option>{% endfor %}
+      </select>
     </label>
-    <datalist id="known-platforms">
-      {% for platform in platforms %}<option value="{{ platform }}">{% endfor %}
-    </datalist>
     <label class="inline">Link <input type="url" name="url" size="30" placeholder="link to the post"></label>
     <label class="inline">On <input type="date" name="posted_on" value="{{ today.isoformat() }}" required></label>
     <button class="btn btn-primary" type="submit">Record publish</button>
   </form>
+  {% else %}
+    <p class="hint">To record where this went out, add a platform under <a href="/manage/platforms">Manage</a> first.</p>
+  {% endif %}
 </section>

@@ -29,10 +29,6 @@ class Settings(BaseSettings):
         return f"sqlite:///{self.db_path}"
 
     @property
-    def brands_dir(self) -> Path:
-        return self.workspace / "brands"
-
-    @property
     def content_dir(self) -> Path:
         return self.workspace / "content"
 

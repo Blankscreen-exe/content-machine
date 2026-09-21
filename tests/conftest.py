@@ -12,9 +12,11 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlmodel import Session, SQLModel, create_engine  # noqa: E402
 from sqlmodel.pool import StaticPool  # noqa: E402
 
-from cm import crud  # noqa: E402
+from cm import choices, crud  # noqa: E402
 from cm.app import create_app  # noqa: E402
 from cm.database import enforce_foreign_keys, get_session  # noqa: E402
+from cm.models import PieceType  # noqa: E402
+from helpers import STANDARD_TYPES  # noqa: E402
 
 TEST_TOKEN = os.environ["CM_TOKEN"]
 
@@ -26,6 +28,8 @@ def session_fixture():
                                                 poolclass=StaticPool))
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
+        for name, main_file in STANDARD_TYPES:    # a real database gets these from its migration
+            choices.create(session, PieceType, name, main_file=main_file)
         yield session
 
 

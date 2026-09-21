@@ -9,7 +9,7 @@ Use for a carousel, an infographic, or any piece I will build in my own design t
 
 ## Steps
 
-1. Read `brief.md`, the draft, and the brand's `voice.md` and `brand.md`.
+1. Read `brief.md`, including its Voice and Brand profile sections, and the draft.
 2. Write `spec.md` with:
    - Canvas sizes and export format.
    - A few brand constants: colours, fonts, margins.

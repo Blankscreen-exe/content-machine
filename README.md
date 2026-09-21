@@ -18,9 +18,10 @@ cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
 ```
 
-`cm init` copies `cm/starter/` into the workspace. The one brand in it, `example`, is a
-placeholder for a made-up company: copy its folder to `brands/<your-slug>/` and fill it in.
-Real brands only ever live in the workspace, never in this repository.
+`cm init` copies the session rules and skills from `cm/starter/` into the workspace. Brands
+are added under Manage in the app; a new brand's voice and profile start from the
+placeholder templates in `cm/starter/brand/`. Real brands only ever live in the workspace
+database, never in this repository.
 
 The address printed on start carries a one-time token; the app refuses requests without it.
 
@@ -60,8 +61,11 @@ cm/
   app.py          application factory
   cli.py          the `cm` command
   routes/         page routes, one module per screen; htmx swaps the fragments
+    manage/       the Manage tab, one module per section
   crud.py         database operations, shared by the web app and the CLI
-  models.py       tables: brands, ideas, pieces, publications, events, settings
+  choices.py      the rules the managed lists share: unique names, turn off, delete if unused
+  models.py       tables: brands, modes, piece types, platforms, ideas, pieces, publications
+  scaffold.py     starter files for `cm init`, and the text new brands and modes begin with
   database.py     engine, sessions, foreign keys, migrate-on-start
   schedule.py     what is overdue or due soon
   workspace.py    a piece's folder: where it is, its brief, moving it to the trash
@@ -92,6 +96,16 @@ due date. An idea can also stand alone as a single piece.
 
 Stages: not started → draft → wip → ready → published.
 
+**Piece types**, **platforms** and each brand's **modes** are lists you manage under the Manage
+tab, not values in the code. Records point at them by id, so renaming one renames it everywhere.
+Turning one off hides it from new choices while the records that use it keep it; one that is in
+use cannot be deleted. Idea statuses, piece stages and priorities stay in code, because the app's
+own behaviour depends on them.
+
+A brand's **voice** and **profile** are stored on the brand and edited on its Manage page. A
+mode has a description. All three are copied into `brief.md` when a session starts, so the
+database is their only home and a session still reads everything from one file.
+
 Every status and stage change is written to the **events** table, so the history of a piece is a
 record rather than a single current value: when it was drafted, when it became ready, when it went
 out. Making a piece from an idea promotes that idea out of the pool, because it is now in motion.
@@ -107,9 +121,9 @@ reminder is wherever you already look.
 
 ## Publishing
 
-Recording a publish on a piece's page (platform, link, date) moves the piece to published.
-Platforms used before are suggested, so the same one is always spelled the same way. `cm published`
-does the same from a terminal session.
+Recording a publish on a piece's page (platform, link, date) moves the piece to published. The
+platform comes from the managed list, so the same one is always spelled the same way.
+`cm published <id> --platform <name>` does the same from a terminal session.
 
 ## Deleting
 

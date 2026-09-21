@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlmodel import Session
 
-from .. import crud, files, schedule, terminals, workspace
+from .. import choices, crud, files, schedule, terminals, workspace
 from ..database import get_session
-from ..models import PieceType, Stage
-from ..templating import STAGES, TYPES, page_context, templates
+from ..models import Piece, PieceType, Stage
+from ..templating import STAGES, page_context, templates
 from .editor import pane_context
 from .publications import publications_context
 from .params import OptionalId
@@ -25,18 +25,18 @@ Origin = Literal["list", "page"]
 
 
 def _list_context(request: Request, session: Session, brand_id: int | None,
-                  stage: str | None, type: str | None) -> dict:
+                  stage: str | None, type_id: int | None) -> dict:
     return {
         "request": request,
         "pieces": crud.list_pieces(session, brand_id=brand_id,
-                                   stage=Stage(stage) if stage else None,
-                                   piece_type=PieceType(type) if type else None),
+                                   stage=Stage(stage) if stage else None, type_id=type_id),
         "counts": crud.piece_counts(session, brand_id),
         "brand_id": brand_id,
         "stage": stage or "",
-        "type": type or "",
+        "type_id": type_id,
         "stages": STAGES,
-        "types": TYPES,
+        # every type, turned off or not: the filter has to find old pieces too
+        "types": choices.all_items(session, PieceType),
         "today": date.today(),
         "due": schedule.due(session, date.today(), brand_id),
     }
@@ -44,16 +44,16 @@ def _list_context(request: Request, session: Session, brand_id: int | None,
 
 @router.get("", response_class=HTMLResponse)
 def index(request: Request, session: Session = Depends(get_session),
-          brand_id: OptionalId = None, stage: str | None = None, type: str | None = None):
+          brand_id: OptionalId = None, stage: str | None = None, type_id: OptionalId = None):
     context = page_context(request, session, "pieces", brand_id)
-    context |= _list_context(request, session, brand_id, stage, type)
+    context |= _list_context(request, session, brand_id, stage, type_id)
     return templates.TemplateResponse(request, "pieces.html", context)
 
 
 @router.get("/list", response_class=HTMLResponse)
 def piece_list(request: Request, session: Session = Depends(get_session),
-               brand_id: OptionalId = None, stage: str | None = None, type: str | None = None):
-    context = _list_context(request, session, brand_id, stage, type) | {"oob": True}
+               brand_id: OptionalId = None, stage: str | None = None, type_id: OptionalId = None):
+    context = _list_context(request, session, brand_id, stage, type_id) | {"oob": True}
     return templates.TemplateResponse(request, "partials/pieces.html", context)
 
 
@@ -66,7 +66,8 @@ def piece_new(request: Request, session: Session = Depends(get_session),
         request, "partials/piece_editor.html",
         {"request": request, "piece": None, "origin": "list", "brand_id": brand_id,
          "view_brand_id": brand_id, "idea_id": idea_id, "idea_title": title,
-         "brands": crud.list_brands(session), "stages": STAGES, "types": TYPES},
+         "brands": crud.list_brands(session), "stages": STAGES,
+         "types": choices.options(session, PieceType)},
     )
 
 
@@ -78,7 +79,7 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
         raise HTTPException(404, "piece not found")
 
     folder = workspace.piece_folder(session, piece)
-    main = files.MAIN_FILE[piece.type]
+    main = piece.type.main_file
     text, fingerprint = files.read(folder, main)
 
     context = page_context(request, session, "pieces", piece.brand_id)
@@ -88,7 +89,6 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
         "folder": folder,
         "images": files.images(folder),
         "stages": STAGES,
-        "types": TYPES,
     }
     context |= publications_context(session, piece)
     context |= pane_context(piece, folder, main, text, fingerprint)
@@ -108,31 +108,33 @@ def piece_form(piece_id: int, request: Request, session: Session = Depends(get_s
     return templates.TemplateResponse(
         request, "partials/piece_editor.html",
         {"request": request, "piece": piece, "origin": origin, "brand_id": piece.brand_id,
-         "view_brand_id": brand_id, "stages": STAGES, "types": TYPES},
+         "view_brand_id": brand_id, "stages": STAGES, "types": _type_options(session, piece)},
     )
 
 
 @router.post("", response_class=HTMLResponse)
 def piece_create(request: Request, session: Session = Depends(get_session),
-                 brand_id: int = Form(...), title: str = Form(...), type: PieceType = Form(...),
+                 brand_id: int = Form(...), title: str = Form(...), type_id: int = Form(...),
                  stage: Stage = Form(Stage.not_started), due_on: date | None = Form(None),
                  notes: str = Form(""), idea_id: OptionalId = Form(None),
                  view_brand_id: OptionalId = Form(None)):
-    crud.create_piece(session, brand_id=brand_id, type=type, title=title, stage=stage,
+    crud.create_piece(session, brand_id=brand_id, type_id=type_id, title=title, stage=stage,
                       due_on=due_on, notes=notes, idea_id=idea_id)
     return _refresh(request, session, view_brand_id)
 
 
 @router.post("/{piece_id}", response_class=HTMLResponse)
 def piece_update(piece_id: int, request: Request, session: Session = Depends(get_session),
-                 title: str = Form(...), type: PieceType = Form(...),
+                 title: str = Form(...), type_id: int = Form(...),
                  stage: Stage = Form(Stage.not_started), due_on: date | None = Form(None),
                  notes: str = Form(""), origin: Origin = Form("list"),
                  view_brand_id: OptionalId = Form(None)):
     piece = crud.get_piece(session, piece_id)
     if not piece:
         raise HTTPException(404, "piece not found")
-    crud.update_piece(session, piece, title=title.strip(), type=type, stage=stage,
+    if not choices.get(session, PieceType, type_id):
+        raise choices.ChoiceError("That piece type does not exist.")
+    crud.update_piece(session, piece, title=title.strip(), type_id=type_id, stage=stage,
                       due_on=due_on, notes=notes)
     if origin == "page":
         return templates.TemplateResponse(
@@ -177,7 +179,7 @@ def piece_session(piece_id: int, request: Request, session: Session = Depends(ge
     try:
         terminals.open_terminal(
             cwd=folder,
-            title=f"{piece.title} ({piece.type.value})",
+            title=f"{piece.title} ({piece.type.name})",
             command=terminals.claude_command(SESSION_PROMPT),
             key=crud.get_settings_map(session).get("terminal"),
         )
@@ -211,6 +213,10 @@ def piece_delete(piece_id: int, request: Request, session: Session = Depends(get
         return Response(status_code=204,
                         headers={"HX-Redirect": f"/pieces?brand_id={own_brand_id}"})
     return _refresh(request, session, brand_id)
+
+
+def _type_options(session: Session, piece: Piece) -> list[PieceType]:
+    return choices.options(session, PieceType, current_id=piece.type_id)
 
 
 def _refresh(request: Request, session: Session, brand_id: int | None) -> HTMLResponse:

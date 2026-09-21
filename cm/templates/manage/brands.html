@@ -1,0 +1,15 @@
+{% extends "manage/layout.html" %}
+{% block section %}
+<section class="panel">
+  <h2>Brands</h2>
+  {% include "manage/brand_list.html" %}
+
+  <form class="inline-form" hx-post="/manage/brands" hx-target="#brand-list" hx-swap="outerHTML">
+    <label class="inline">Slug <input name="slug" placeholder="acme-co" size="14" required></label>
+    <label class="inline">Name <input name="name" placeholder="Acme Co" size="18"></label>
+    <button class="btn btn-primary" type="submit">Add brand</button>
+  </form>
+  <p class="hint">The slug names the brand's folders, so it cannot change later; the name can.
+    A new brand starts with a placeholder voice and profile to fill in.</p>
+</section>
+{% endblock %}

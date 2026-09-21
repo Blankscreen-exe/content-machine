@@ -11,7 +11,7 @@
         {% for idea in ideas %}
           <tr>
             <td class="title" data-label="Title">{{ idea.title }}</td>
-            <td data-label="Mode">{{ idea.mode or "—" }}</td>
+            <td data-label="Mode">{{ idea.mode.name if idea.mode else "—" }}</td>
             <td data-label="Status"><span class="status {{ idea.status.value | status_class }}">{{ idea.status.value }}</span></td>
             <td data-label="Priority">{{ idea.priority | priority_name }}</td>
             <td class="num" data-label="Updated">{{ idea.updated_at | local_date }}</td>

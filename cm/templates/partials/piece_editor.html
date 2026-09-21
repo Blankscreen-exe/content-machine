@@ -19,9 +19,9 @@
 
     <div class="row">
       <label>Type
-        <select name="type">
-          {% for value in types %}
-            <option value="{{ value }}" {{ 'selected' if piece and piece.type.value == value }}>{{ value }}</option>
+        <select name="type_id">
+          {% for piece_type in types %}
+            <option value="{{ piece_type.id }}" {% if piece and piece.type_id == piece_type.id %}selected{% endif %}>{{ piece_type.name }}</option>
           {% endfor %}
         </select>
       </label>

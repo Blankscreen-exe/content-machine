@@ -12,9 +12,9 @@ import typer
 import uvicorn
 from sqlmodel import Session
 
-from . import crud, scaffold, workspace
+from . import choices, crud, scaffold, workspace
 from .database import engine, migrate
-from .models import Stage
+from .models import Platform, Stage
 from .security import rotate_token, token
 from .settings import get_settings
 
@@ -57,7 +57,7 @@ def pieces(brand: str = typer.Option(None, help="limit to one brand slug")) -> N
             raise typer.BadParameter(f"no brand with slug {brand!r}")
         for piece in crud.list_pieces(session, brand_id=brand_row.id if brand_row else None):
             due = piece.due_on.isoformat() if piece.due_on else "-"
-            typer.echo(f"{piece.id:>4}  {piece.stage.value:<12} {piece.type.value:<14} {due:<12} {piece.title}")
+            typer.echo(f"{piece.id:>4}  {piece.stage.value:<12} {piece.type.name:<14} {due:<12} {piece.title}")
 
 
 @app.command()
@@ -91,15 +91,21 @@ def note(piece_id: int, text: str) -> None:
 
 
 @app.command()
-def published(piece_id: int, url: str = typer.Option("", help="link to the published post"),
-              platform: str = typer.Option(None, help="defaults to the piece type")) -> None:
+def published(piece_id: int,
+              platform: str = typer.Option(..., help="one of the platforms under Manage"),
+              url: str = typer.Option("", help="link to the published post")) -> None:
     """Mark a piece published and record where it went."""
     migrate()
     with Session(engine) as session:
         piece = crud.get_piece(session, piece_id)
         if not piece:
             raise typer.BadParameter(f"no piece with id {piece_id}")
-        crud.record_publication(session, piece, platform=platform or piece.type.value, url=url)
+        found = choices.by_name(session, Platform, platform)
+        if not found or not found.active:
+            known = ", ".join(p.name for p in choices.options(session, Platform)) or "none yet"
+            raise typer.BadParameter(f"no platform called {platform!r} (known: {known}). "
+                                     "Add it under Manage in the app.")
+        crud.record_publication(session, piece, platform_id=found.id, url=url)
         typer.echo(f"{piece.title}: published {url}".strip())
 
 
@@ -116,7 +122,7 @@ def brief(piece_id: int) -> None:
 
 @app.command()
 def init(force: bool = typer.Option(False, "--force", help="overwrite the starter files")) -> None:
-    """Create the workspace folders, CLAUDE.md and the starter skills."""
+    """Create the workspace folder, CLAUDE.md and the starter skills."""
     written = scaffold.init_workspace(force=force)
     if not written:
         typer.echo("workspace already set up (use --force to rewrite the starter files)")
@@ -137,7 +143,6 @@ def where() -> None:
     settings = get_settings()
     typer.echo(f"workspace: {settings.workspace}")
     typer.echo(f"database:  {settings.db_path}")
-    typer.echo(f"brands:    {settings.brands_dir}")
     typer.echo(f"content:   {settings.content_dir}")
     typer.echo(f"trash:     {settings.trash_dir}")
 

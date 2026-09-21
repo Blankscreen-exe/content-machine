@@ -28,17 +28,24 @@ def _piece_and_folder(session: Session, piece_id: int) -> tuple[Piece, Path]:
 
 def pane_context(piece: Piece, folder: Path, name: str, text: str, fingerprint: str,
                  message: str = "", conflict: bool = False) -> dict:
-    """Everything the editor pane needs. The piece page includes the same partial."""
-    return {
-        "piece": piece,
-        "names": files.list_drafts(folder, files.MAIN_FILE[piece.type]),
-        "name": name,
+    """The editor pane pointed at one of a piece's draft files. The piece page includes
+    the same partial, so this is used for its first render too."""
+    base = f"/pieces/{piece.id}"
+    return {"pane": {
+        "tabs": [{"label": other, "url": f"{base}/files/{other}", "on": other == name}
+                 for other in files.list_drafts(folder, piece.type.main_file)],
+        "save_url": f"{base}/files/{name}",
+        "open_url": f"{base}/files/{name}",
         "text": text,
         "fingerprint": fingerprint,
         "editable": files.is_editable(name),
+        "readonly_reason": f"{name} is generated before every session and cannot be edited here.",
         "message": message,
         "conflict": conflict,
-    }
+        # pasted images are stored in the piece folder and served from there
+        "upload_url": f"{base}/assets",
+        "assets_url": f"{base}/assets/",
+    }}
 
 
 def editor_pane(request: Request, piece: Piece, folder: Path, name: str, text: str,

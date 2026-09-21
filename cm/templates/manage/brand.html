@@ -1,0 +1,29 @@
+{% extends "manage/layout.html" %}
+
+{# the only Manage page with the rich editor, so only it loads the editor #}
+{% block vendor_css %}
+  <link rel="stylesheet" href="/static/vendor/toastui-editor.min.css">
+{% endblock %}
+
+{% block head %}
+  <script src="/static/vendor/toastui-editor-all.min.js"></script>
+  <script src="/static/editor.js" defer></script>
+{% endblock %}
+
+{% block section %}
+<section class="piece-head">
+  <div>
+    <h2>{{ brand.name }}</h2>
+    <p class="piece-meta"><code>{{ brand.slug }}</code> &middot; {{ 'on' if brand.active else 'off' }}</p>
+  </div>
+  <div class="piece-actions">
+    <a class="btn" href="/manage/modes?brand_id={{ brand.id }}">Modes</a>
+    <a class="btn" href="/manage/brands">Back to brands</a>
+  </div>
+</section>
+
+{% include "partials/editor_pane.html" %}
+
+<p class="hint">Both are handed to every session for this brand in <code>brief.md</code>.
+  The voice is how the brand writes; the profile is its identity and visual constants.</p>
+{% endblock %}

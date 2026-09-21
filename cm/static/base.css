@@ -100,6 +100,15 @@ span.status { display: inline-block; padding: 1px 8px; white-space: nowrap; }
 .editor .row label { flex: 1 1 150px; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
+/* Manage: a sidebar of sections, then the section over the other four fifths */
+.manage { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; margin-top: 14px; }
+.manage-nav { grid-column: 1; display: flex; flex-direction: column; gap: 4px; align-self: start; }
+.manage-nav a { display: block; padding: 8px 12px; }
+.manage-main { grid-column: 2 / span 4; min-width: 0; }
+.actions-cell .inline-form { display: inline-flex; }
+.stacked-form label { display: block; margin-bottom: 12px; }
+.item-card { margin-bottom: 14px; padding: 12px 14px; }
+
 /* controls: 16px stops iOS zooming on focus */
 input, textarea, select, button { font: inherit; font-size: 16px; max-width: 100%; }
 input, textarea, select { width: 100%; }
@@ -136,4 +145,9 @@ textarea { resize: vertical; }
   .actions-cell .btn { min-height: 40px; padding: 8px 14px; }
   .plain th, .plain td { display: block; padding: 2px 0; }
   .editor .row label { flex: 1 1 100%; }
+
+  /* Manage: the sidebar becomes a row of tabs above the section */
+  .manage { grid-template-columns: minmax(0, 1fr); }
+  .manage-nav, .manage-main { grid-column: 1; }
+  .manage-nav { flex-direction: row; flex-wrap: wrap; }
 }

@@ -9,7 +9,7 @@ from sqlmodel import Session
 
 from . import crud, schedule
 from .dates import local_date
-from .models import PRIORITIES, IdeaStatus, PieceType, Stage
+from .models import PRIORITIES, IdeaStatus, Stage
 from .paths import TEMPLATES_DIR, THEMES_DIR
 from .terminals import available_terminals
 from .text import slugify
@@ -18,7 +18,6 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 STATUSES = [s.value for s in IdeaStatus]
 STAGES = [s.value for s in Stage]
-TYPES = [t.value for t in PieceType]
 
 
 def status_class(value: str) -> str:
@@ -50,6 +49,5 @@ def page_context(request: Request, session: Session, view: str, brand_id: int | 
         "terminals": available_terminals(),
         "statuses": STATUSES,
         "stages": STAGES,
-        "types": TYPES,
         "due": schedule.due(session, date.today(), brand_id),
     }

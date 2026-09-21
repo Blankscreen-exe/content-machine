@@ -7,6 +7,7 @@ from sqlmodel import Session
 from cm import crud
 from cm.models import PRIORITIES
 from cm.templating import status_class
+from helpers import type_id
 
 
 def test_status_class_names_are_css_safe():
@@ -36,7 +37,7 @@ def test_the_editor_offers_names_but_submits_numbers(client: TestClient, session
 
 def test_statuses_and_stages_carry_their_colour_class(client: TestClient, session: Session, brand):
     crud.create_idea(session, brand_id=brand.id, title="Parked one", status="parked")
-    piece = crud.create_piece(session, brand_id=brand.id, type="blog", title="A piece", stage="wip")
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece", stage="wip")
 
     assert 'class="status status-parked"' in client.get("/").text
     assert 'class="status status-wip"' in client.get("/pieces").text           # the inline picker

@@ -8,7 +8,7 @@
         {% for piece in pieces %}
           <tr class="{{ 'overdue' if piece.due_on and piece.due_on < today and piece.stage.value != 'published' }}">
             <td class="title" data-label="Title"><a href="/pieces/{{ piece.id }}">{{ piece.title }}</a></td>
-            <td data-label="Type">{{ piece.type.value }}</td>
+            <td data-label="Type">{{ piece.type.name }}</td>
             <td data-label="Stage">
               {# changing stage is the most frequent action, so it happens in place #}
               <select name="stage" class="status {{ piece.stage.value | status_class }}"

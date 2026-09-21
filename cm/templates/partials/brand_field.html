@@ -6,7 +6,8 @@
   {% set choices = brands | selectattr("active") | list %}
   {% if choices %}
     <label>Brand
-      <select name="brand_id" required>
+      <select name="brand_id" required
+              {% if brand_picks_modes %}hx-get="/ideas/mode-field" hx-target="#mode-field" hx-swap="outerHTML"{% endif %}>
         <option value="" disabled selected>choose a brand</option>
         {% for brand in choices %}<option value="{{ brand.id }}">{{ brand.slug }}</option>{% endfor %}
       </select>

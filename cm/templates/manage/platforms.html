@@ -1,0 +1,14 @@
+{% extends "manage/layout.html" %}
+{% block section %}
+<section class="panel">
+  <h2>Platforms</h2>
+  {% include "manage/platform_list.html" %}
+
+  <form class="inline-form" hx-post="/manage/platforms" hx-target="#platform-list" hx-swap="outerHTML">
+    <label class="inline">Name <input name="name" placeholder="newsletter" size="18" required></label>
+    <button class="btn btn-primary" type="submit">Add platform</button>
+  </form>
+  <p class="hint">Offered when you record where a piece was published, so each platform is
+    always spelled the same way.</p>
+</section>
+{% endblock %}

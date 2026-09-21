@@ -7,17 +7,19 @@
           <tr class="{{ '' if brand.active else 'inactive' }}">
             <td data-label="Slug"><code>{{ brand.slug }}</code></td>
             <td data-label="Name">
-              <form class="inline-form" hx-post="/brands/{{ brand.id }}"
+              <form class="inline-form" hx-post="/manage/brands/{{ brand.id }}"
                     hx-target="#brand-list" hx-swap="outerHTML">
-                <input name="name" value="{{ brand.name }}" size="20">
+                <input name="name" value="{{ brand.name }}" size="20" required>
                 <button class="btn" type="submit">Rename</button>
               </form>
             </td>
-            <td data-label="Status">{{ 'active' if brand.active else 'hidden' }}</td>
+            <td data-label="Status">{{ 'on' if brand.active else 'off' }}</td>
             <td class="actions-cell" data-label="Actions">
-              <form hx-post="/brands/{{ brand.id }}/active" hx-target="#brand-list" hx-swap="outerHTML">
+              <a class="btn" href="/manage/brands/{{ brand.id }}">Voice &amp; profile</a>
+              <form class="inline-form" hx-post="/manage/brands/{{ brand.id }}/active"
+                    hx-target="#brand-list" hx-swap="outerHTML">
                 <input type="hidden" name="active" value="{{ 'false' if brand.active else 'true' }}">
-                <button class="btn" type="submit">{{ 'Hide' if brand.active else 'Show' }}</button>
+                <button class="btn" type="submit">{{ 'Turn off' if brand.active else 'Turn on' }}</button>
               </form>
             </td>
           </tr>

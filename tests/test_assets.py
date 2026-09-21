@@ -9,6 +9,7 @@ from sqlmodel import Session
 
 from cm import crud, files, workspace
 from cm.settings import get_settings
+from helpers import type_id
 
 # A 1x1 PNG, so these tests need no image library.
 PNG = b64decode(
@@ -24,7 +25,7 @@ def workspace_dir(tmp_path, monkeypatch):
 
 @pytest.fixture(name="piece")
 def piece_fixture(session: Session, brand):
-    return crud.create_piece(session, brand_id=brand.id, type="blog", title="A piece")
+    return crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="A piece")
 
 
 def test_upload_returns_a_relative_path(client: TestClient, session: Session, piece):
@@ -87,5 +88,5 @@ def test_the_piece_page_loads_the_editor(client: TestClient, piece):
 
     assert "/static/vendor/toastui-editor-all.min.js" in page   # the self-contained build
     assert "/static/editor.js" in page
-    assert f'data-piece-id="{piece.id}"' in page
+    assert f'data-upload-url="/pieces/{piece.id}/assets"' in page
     assert "https://" not in page and "http://" not in page     # everything is local

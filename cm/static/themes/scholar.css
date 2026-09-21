@@ -54,6 +54,12 @@ input, textarea, select {
 .tabs { justify-content: center; font-variant: small-caps; letter-spacing: 1px; margin-bottom: 6px; }
 .tabs a { color: #6b5f4b; text-decoration: none; }
 .tabs a.on { color: #2e2a24; border-bottom: 2px solid #8a7c63; }
+
+/* Manage sidebar and item cards */
+.manage-nav a { color: #6b5f4b; text-decoration: none; font-variant: small-caps; letter-spacing: 1px; border-left: 2px solid transparent; }
+.manage-nav a.on { color: #2e2a24; border-left-color: #8a7c63; }
+.item-card { border: 1px solid #e4dbc6; background: #fffdf7; }
+.item-card.inactive { opacity: .65; }
 .subsection { border-top: 1px solid #c9bda2; }
 .list tr.overdue td.num { color: #8c2f2a; }
 .due-badge { color: #8c2f2a; border: 1px solid #8c2f2a; border-radius: 8px; font-variant: normal; letter-spacing: 0; }

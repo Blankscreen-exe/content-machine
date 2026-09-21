@@ -4,7 +4,6 @@ from __future__ import annotations
 import pytest
 
 from cm import files
-from cm.models import PieceType
 
 
 def test_resolve_stays_inside_the_folder(tmp_path):
@@ -62,10 +61,6 @@ def test_main_file_first_generated_last(tmp_path):
 
 def test_the_main_file_is_listed_before_it_exists(tmp_path):
     assert files.list_drafts(tmp_path, "blog.md") == ["blog.md"]
-
-
-def test_every_piece_type_has_a_main_file():
-    assert set(files.MAIN_FILE) == set(PieceType)
 
 
 def test_images_are_listed_from_assets(tmp_path):

@@ -1,0 +1,4 @@
+- **The reader is** [who you are talking to in this mode]
+- **Register:** [calm, diagnostic, wry, argumentative...]
+- **Devices:** [client quotes, checklists, analogies...]
+- **Ends with** [a checklist and one call to action...]

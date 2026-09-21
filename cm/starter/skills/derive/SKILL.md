@@ -9,7 +9,7 @@ Use once a blog draft exists and I have done the voice pass on it.
 
 ## Steps
 
-1. Read the blog draft in this folder, plus `voice.md`.
+1. Read the blog draft in this folder, plus the Voice section of `brief.md`.
 2. Produce, as separate files:
    - `linkedin.md` — the post, with the hook in the first two lines, short paragraphs,
      no markdown headings (LinkedIn strips them), 3-5 hashtags at the end.
