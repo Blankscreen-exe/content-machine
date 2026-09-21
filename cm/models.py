@@ -23,6 +23,10 @@ class IdeaStatus(str, Enum):
     dropped = "dropped"
 
 
+# Priority is stored as a number so lists sort by it; people see the name.
+PRIORITIES: dict[int, str] = {1: "high", 2: "normal", 3: "low"}
+
+
 class Stage(str, Enum):
     not_started = "not started"
     draft = "draft"

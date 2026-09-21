@@ -3,7 +3,7 @@
     <table class="list">
       <thead>
         <tr>
-          <th>Title</th><th>Mode</th><th>Status</th><th class="num">Pri</th>
+          <th>Title</th><th>Mode</th><th>Status</th><th>Priority</th>
           <th class="num">Updated</th><th class="actions-head">Actions</th>
         </tr>
       </thead>
@@ -12,8 +12,8 @@
           <tr>
             <td class="title" data-label="Title">{{ idea.title }}</td>
             <td data-label="Mode">{{ idea.mode or "—" }}</td>
-            <td data-label="Status">{{ idea.status.value }}</td>
-            <td class="num" data-label="Priority">{{ idea.priority }}</td>
+            <td data-label="Status"><span class="status {{ idea.status.value | status_class }}">{{ idea.status.value }}</span></td>
+            <td data-label="Priority">{{ idea.priority | priority_name }}</td>
             <td class="num" data-label="Updated">{{ idea.updated_at.strftime("%Y-%m-%d") }}</td>
             <td class="actions-cell" data-label="Actions">
               <button class="btn" hx-get="/ideas/{{ idea.id }}"

@@ -3,7 +3,7 @@
 
   <form hx-post="{{ '/ideas/' ~ idea.id if idea else '/ideas' }}"
         hx-target="#list" hx-swap="outerHTML">
-    {% if not idea %}<input type="hidden" name="brand_id" value="{{ brand_id }}">{% endif %}
+    {% if not idea %}{% include "partials/brand_field.html" %}{% endif %}
 
     <label>Title <input name="title" value="{{ idea.title if idea else '' }}" required autofocus></label>
     <label>Angle <input name="angle" value="{{ idea.angle if idea else '' }}"></label>
@@ -27,8 +27,8 @@
       </label>
       <label>Priority
         <select name="priority">
-          {% for value in [1, 2, 3] %}
-            <option value="{{ value }}" {{ 'selected' if (idea.priority if idea else 2) == value }}>{{ value }}</option>
+          {% for value, name in priorities.items() %}
+            <option value="{{ value }}" {{ 'selected' if (idea.priority if idea else 2) == value }}>{{ name }}</option>
           {% endfor %}
         </select>
       </label>
@@ -53,7 +53,7 @@
       {% if pieces %}
         <ul class="pieces-of-idea">
           {% for piece in pieces %}
-            <li>{{ piece.type.value }} &middot; {{ piece.stage.value }}{% if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}</li>
+            <li>{{ piece.type.value }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>{% if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}</li>
           {% endfor %}
         </ul>
       {% else %}

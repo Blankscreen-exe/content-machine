@@ -25,8 +25,8 @@ def test_every_page_offers_the_same_three_tabs(client: TestClient, brand):
 
 def test_settings_page_has_no_brand_filter(client: TestClient, brand):
     """The brand filter applies to ideas and pieces, not to settings."""
-    assert 'class="brands"' not in client.get("/settings").text
-    assert 'class="brands"' in client.get("/").text
+    assert 'class="scope"' not in client.get("/settings").text
+    assert 'class="scope"' in client.get("/").text
 
 
 def test_adding_a_brand_returns_the_updated_list(client: TestClient, session: Session):

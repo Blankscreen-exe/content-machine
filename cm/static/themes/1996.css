@@ -15,15 +15,11 @@ body {
   font-size: 24px;
   padding: 8px 12px;
 }
-.brands {
-  background: #dcdcdc;
-  border: 2px inset #fff;
-  border-top: none;
-  padding: 7px 12px;
-  font-size: 16px;
-}
-.brands a { color: #0000ee; text-decoration: underline; }
-.brands a.on { color: #551a8b; font-weight: bold; }
+/* brand filter: a group box, so it reads as a control and not as part of the title */
+.scope { background: #dcdcdc; border: 2px groove #fff; padding: 8px 12px; }
+.scope-label { font-weight: bold; }
+.scope-label::after { content: ":"; }
+.scope select { font-weight: bold; }
 
 /* toolbar */
 .bar { margin-top: 12px; }
@@ -35,7 +31,6 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .btn:active { border-style: inset; }
 .btn-primary { font-weight: bold; }
 .btn-danger { color: #800000; }
-.saved { font-family: "Courier New", monospace; font-size: 12px; color: #006600; }
 
 /* list */
 .list { background: #fff; border: 2px outset #fff; }
@@ -51,26 +46,14 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .editor h2 { font-size: 19px; border-bottom: 1px solid #808080; padding-bottom: 5px; }
 .editor label { font-size: 15px; }
 
-/* footer */
-.footer {
-  background: #dcdcdc; border: 2px outset #fff; padding: 10px 12px;
-  font-size: 14px;
-}
-.footer::after {
-  content: "best viewed at 800 x 600";
-  font-family: "Courier New", monospace; font-size: 11px; color: #555;
-  margin-left: auto;
-}
-
 @media (max-width: 760px) {
   .list { border: none; background: none; }
   .list tr { background: #fff; border: 2px outset #fff; }
   .list tr.sel { background: #ffffcc; }
-  .footer::after { display: none; }
 }
 
 /* tabs: the active view looks pressed in */
-.tabs { background: #dcdcdc; border: 2px inset #fff; border-top: none; border-bottom: none; padding: 6px 12px; font-size: 16px; }
+.tabs { background: #dcdcdc; border: 2px inset #fff; border-top: none; padding: 6px 12px; font-size: 16px; }
 .tabs a { color: #0000ee; text-decoration: underline; }
 .tabs a.on { color: #000; font-weight: bold; text-decoration: none; background: #c0c0c0; border: 2px inset #fff; padding: 2px 10px; }
 .subsection { border-top: 1px solid #808080; }
@@ -141,3 +124,16 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 
 /* error banner: the classic alert box */
 .error-banner { background: #ffffcc; color: #800000; border-bottom: 3px solid #800000; font-weight: bold; }
+
+/* status and stage colours: the old web's highlight palette */
+span.status { border: 1px solid #808080; font-size: 14px; }
+select.status { border: 2px inset #fff; }
+.status-pool        { background: #e0e0ff; color: #000080; }
+.status-promoted    { background: #ccffcc; color: #006600; }
+.status-parked      { background: #ffffcc; color: #806000; }
+.status-dropped     { background: #e0e0e0; color: #666666; text-decoration: line-through; }
+.status-not-started { background: #e0e0e0; color: #444444; }
+.status-draft       { background: #e0e0ff; color: #000080; }
+.status-wip         { background: #ffe0c0; color: #804000; }
+.status-ready       { background: #ffe0ff; color: #660066; }
+.status-published   { background: #ccffcc; color: #006600; font-weight: bold; }

@@ -2,9 +2,9 @@
   <h2>{{ "Edit piece" if piece else "New piece" }}</h2>
 
   <form hx-post="{{ '/pieces/' ~ piece.id if piece else '/pieces' }}"
-        hx-target="#pieces" hx-swap="outerHTML" hx-include="[name='brand_id']">
+        hx-target="#pieces" hx-swap="outerHTML">
     {% if not piece %}
-      <input type="hidden" name="brand_id" value="{{ brand_id }}">
+      {% include "partials/brand_field.html" %}
       {% if idea_id %}<input type="hidden" name="idea_id" value="{{ idea_id }}">{% endif %}
     {% endif %}
 
@@ -40,7 +40,6 @@
                 hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
         <button class="btn btn-danger" type="button"
                 hx-post="/pieces/{{ piece.id }}/delete" hx-target="#pieces" hx-swap="outerHTML"
-                hx-include="[name='brand_id']"
                 hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
       {% endif %}
     </div>

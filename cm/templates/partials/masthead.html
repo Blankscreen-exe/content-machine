@@ -6,13 +6,4 @@
     <a href="/pieces{{ '?brand_id=' ~ brand_id if brand_id }}" class="{{ 'on' if view == 'pieces' }}">Pieces</a>
     <a href="/settings" class="{{ 'on' if view == 'settings' }}">Settings</a>
   </nav>
-
-  {% if view != 'settings' %}
-    <nav class="brands">
-      <a href="{{ base }}" class="{{ 'on' if not brand_id }}">all brands</a>
-      {% for brand in brands if brand.active %}
-        <a href="{{ base }}?brand_id={{ brand.id }}" class="{{ 'on' if brand_id == brand.id }}">{{ brand.slug }}</a>
-      {% endfor %}
-    </nav>
-  {% endif %}
 </header>

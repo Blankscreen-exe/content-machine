@@ -1,0 +1,13 @@
+{# Which brand the list below is showing. It sits apart from the header, with a label,
+   because it changes what the whole list contains — it is a filter, not navigation.
+   A plain GET form, so the brand being viewed stays in the address bar. The list's own
+   filters include this select by its id to stay within the same brand. #}
+<form class="scope" method="get" action="{{ base }}" aria-label="Brand filter">
+  <label class="scope-label" for="brand-scope">Showing</label>
+  <select id="brand-scope" name="brand_id" hx-on:change="this.form.submit()">
+    <option value="" {{ 'selected' if not brand_id }}>all brands</option>
+    {% for brand in brands if brand.active %}
+      <option value="{{ brand.id }}" {{ 'selected' if brand_id == brand.id }}>{{ brand.slug }}</option>
+    {% endfor %}
+  </select>
+</form>

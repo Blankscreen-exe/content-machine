@@ -11,6 +11,7 @@ from .. import crud
 from ..database import get_session
 from ..models import IdeaStatus, PieceType
 from ..templating import STATUSES, TYPES, page_context, templates
+from .params import OptionalId
 
 router = APIRouter()
 
@@ -34,6 +35,7 @@ def _editor_context(request: Request, session: Session, idea) -> dict:
         "idea": idea,
         "brand_id": idea.brand_id if idea else None,
         "pieces": crud.list_pieces(session, idea_id=idea.id) if idea else [],
+        "brands": crud.list_brands(session),
         "statuses": STATUSES,
         "types": TYPES,
     }
@@ -41,7 +43,7 @@ def _editor_context(request: Request, session: Session, idea) -> dict:
 
 @router.get("/", response_class=HTMLResponse)
 def index(request: Request, session: Session = Depends(get_session),
-          brand_id: int | None = None, status: str | None = None, q: str | None = None):
+          brand_id: OptionalId = None, status: str | None = None, q: str | None = None):
     context = page_context(request, session, "ideas", brand_id)
     context |= _list_context(request, session, brand_id, status, q)
     return templates.TemplateResponse(request, "index.html", context)
@@ -49,13 +51,13 @@ def index(request: Request, session: Session = Depends(get_session),
 
 @router.get("/ideas", response_class=HTMLResponse)
 def idea_list(request: Request, session: Session = Depends(get_session),
-              brand_id: int | None = None, status: str | None = None, q: str | None = None):
+              brand_id: OptionalId = None, status: str | None = None, q: str | None = None):
     context = _list_context(request, session, brand_id, status, q) | {"oob": True}
     return templates.TemplateResponse(request, "partials/list.html", context)
 
 
 @router.get("/ideas/new", response_class=HTMLResponse)
-def idea_new(request: Request, session: Session = Depends(get_session), brand_id: int | None = None):
+def idea_new(request: Request, session: Session = Depends(get_session), brand_id: OptionalId = None):
     context = _editor_context(request, session, None) | {"brand_id": brand_id}
     return templates.TemplateResponse(request, "partials/editor.html", context)
 

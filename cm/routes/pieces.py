@@ -12,6 +12,7 @@ from ..database import get_session
 from ..models import PieceType, Stage
 from ..templating import STAGES, TYPES, page_context, templates
 from .editor import pane_context
+from .params import OptionalId
 
 router = APIRouter(prefix="/pieces")
 
@@ -37,7 +38,7 @@ def _list_context(request: Request, session: Session, brand_id: int | None,
 
 @router.get("", response_class=HTMLResponse)
 def index(request: Request, session: Session = Depends(get_session),
-          brand_id: int | None = None, stage: str | None = None, type: str | None = None):
+          brand_id: OptionalId = None, stage: str | None = None, type: str | None = None):
     context = page_context(request, session, "pieces", brand_id)
     context |= _list_context(request, session, brand_id, stage, type)
     return templates.TemplateResponse(request, "pieces.html", context)
@@ -45,9 +46,22 @@ def index(request: Request, session: Session = Depends(get_session),
 
 @router.get("/list", response_class=HTMLResponse)
 def piece_list(request: Request, session: Session = Depends(get_session),
-               brand_id: int | None = None, stage: str | None = None, type: str | None = None):
+               brand_id: OptionalId = None, stage: str | None = None, type: str | None = None):
     context = _list_context(request, session, brand_id, stage, type) | {"oob": True}
     return templates.TemplateResponse(request, "partials/pieces.html", context)
+
+
+# `/new` has to be declared before `/{piece_id}`: FastAPI takes the first path that
+# matches, and would read "new" as a piece id and reject it.
+@router.get("/new", response_class=HTMLResponse)
+def piece_new(request: Request, session: Session = Depends(get_session),
+              brand_id: OptionalId = None, idea_id: OptionalId = None, title: str = ""):
+    return templates.TemplateResponse(
+        request, "partials/piece_editor.html",
+        {"request": request, "piece": None, "brand_id": brand_id, "idea_id": idea_id,
+         "idea_title": title, "brands": crud.list_brands(session),
+         "stages": STAGES, "types": TYPES},
+    )
 
 
 @router.get("/{piece_id}", response_class=HTMLResponse)
@@ -73,16 +87,6 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
     }
     context |= pane_context(piece, folder, main, text, fingerprint)
     return templates.TemplateResponse(request, "piece.html", context)
-
-
-@router.get("/new", response_class=HTMLResponse)
-def piece_new(request: Request, brand_id: int | None = None, idea_id: int | None = None,
-              title: str = ""):
-    return templates.TemplateResponse(
-        request, "partials/piece_editor.html",
-        {"request": request, "piece": None, "brand_id": brand_id, "idea_id": idea_id,
-         "idea_title": title, "stages": STAGES, "types": TYPES},
-    )
 
 
 @router.get("/{piece_id}/form", response_class=HTMLResponse)

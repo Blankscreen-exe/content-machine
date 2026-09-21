@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import pytest
 
+from cm.models import IdeaStatus, Stage
 from cm.paths import THEMES_DIR
+from cm.templating import status_class
 
 THEMES = sorted(THEMES_DIR.glob("*.css"))
 
@@ -32,3 +34,11 @@ def test_a_theme_keeps_the_toolbar_icons(theme):
 def test_a_theme_loads_nothing_from_the_internet(theme):
     assert "http://" not in theme.read_text(encoding="utf-8")
     assert "https://" not in theme.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("theme", THEMES, ids=lambda path: path.stem)
+def test_a_theme_colours_every_status_and_stage(theme):
+    """A status with no colour would look like the others and lose its meaning."""
+    css = theme.read_text(encoding="utf-8")
+    missing = [value.value for value in (*IdeaStatus, *Stage) if f".{status_class(value.value)}" not in css]
+    assert not missing, f"{theme.name} has no colour for: {', '.join(missing)}"

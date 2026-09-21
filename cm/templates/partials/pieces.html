@@ -11,8 +11,9 @@
             <td data-label="Type">{{ piece.type.value }}</td>
             <td data-label="Stage">
               {# changing stage is the most frequent action, so it happens in place #}
-              <select name="stage" hx-post="/pieces/{{ piece.id }}/stage"
-                      hx-target="#pieces" hx-swap="outerHTML" hx-include="[name='brand_id']">
+              <select name="stage" class="status {{ piece.stage.value | status_class }}"
+                      hx-post="/pieces/{{ piece.id }}/stage"
+                      hx-target="#pieces" hx-swap="outerHTML" hx-include="#brand-scope">
                 {% for value in stages %}
                   <option value="{{ value }}" {{ 'selected' if piece.stage.value == value }}>{{ value }}</option>
                 {% endfor %}
@@ -23,7 +24,7 @@
               <button class="btn" hx-get="/pieces/{{ piece.id }}/form"
                       hx-target="#piece-editor" hx-swap="innerHTML">Edit</button>
               <button class="btn btn-danger" hx-post="/pieces/{{ piece.id }}/delete"
-                      hx-target="#pieces" hx-swap="outerHTML" hx-include="[name='brand_id']"
+                      hx-target="#pieces" hx-swap="outerHTML"
                       hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
             </td>
           </tr>

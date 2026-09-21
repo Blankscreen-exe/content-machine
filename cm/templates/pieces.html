@@ -2,12 +2,12 @@
 {% block body %}
 
 {% include "partials/masthead.html" %}
+{% include "partials/brand_scope.html" %}
 
 <div class="bar">
-  <input type="hidden" name="brand_id" value="{{ brand_id or '' }}">
   <select name="stage"
           hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
-          hx-include="[name='type'],[name='brand_id']">
+          hx-include="[name='type'],#brand-scope">
     <option value="">all stages</option>
     {% for value in stages %}
       <option value="{{ value }}" {{ 'selected' if stage == value }}>{{ value }}</option>
@@ -15,7 +15,7 @@
   </select>
   <select name="type"
           hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
-          hx-include="[name='stage'],[name='brand_id']">
+          hx-include="[name='stage'],#brand-scope">
     <option value="">all types</option>
     {% for value in types %}
       <option value="{{ value }}" {{ 'selected' if type == value }}>{{ value }}</option>

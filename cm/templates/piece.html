@@ -20,7 +20,7 @@
   <div>
     <h2>{{ piece.title }}</h2>
     <p class="piece-meta">
-      {{ piece.type.value }} &middot; {{ piece.stage.value }}
+      {{ piece.type.value }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
       &middot; due {{ piece.due_on.isoformat() if piece.due_on else "not scheduled" }}
       {% if idea %}&middot; from <a href="/?brand_id={{ piece.brand_id }}">{{ idea.title }}</a>{% endif %}
     </p>
