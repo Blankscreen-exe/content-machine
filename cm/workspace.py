@@ -5,12 +5,12 @@ live there, and the folder is self-contained so it can be moved or backed up on 
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
 from pathlib import Path
 
 from sqlmodel import Session
 
 from . import crud
+from .dates import local_date
 from .models import Idea, Piece
 from .settings import get_settings
 
@@ -18,22 +18,11 @@ from .settings import get_settings
 def piece_folder(session: Session, piece: Piece) -> Path:
     """`content/<brand>/<created date>-<slug>/`.
 
-    Built from the creation date and the slug fixed at creation, so renaming a piece
-    later never moves files out from under an open terminal session.
+    Built from the creation date (on your calendar, not UTC's) and the slug fixed at
+    creation, so renaming a piece later never moves files out from under an open session.
     """
-    name = f"{_local_date(piece.created_at).isoformat()}-{piece.slug}"
+    name = f"{local_date(piece.created_at).isoformat()}-{piece.slug}"
     return get_settings().content_dir / crud.brand_slug(session, piece.brand_id) / name
-
-
-def _local_date(moment: datetime) -> date:
-    """Folder names use your calendar date, not UTC's.
-
-    Times are stored as UTC; SQLite hands them back without a timezone, so one is attached
-    before converting.
-    """
-    if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=timezone.utc)
-    return moment.astimezone().date()
 
 
 def ensure_folder(session: Session, piece: Piece) -> Path:

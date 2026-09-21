@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
 
 from . import crud
+from .dates import local_date
 from .models import PRIORITIES, IdeaStatus, PieceType, Stage
 from .paths import TEMPLATES_DIR, THEMES_DIR
 from .terminals import available_terminals
@@ -30,6 +31,7 @@ def priority_name(value: int) -> str:
 # Available in every template without being passed in each context.
 templates.env.filters["status_class"] = status_class
 templates.env.filters["priority_name"] = priority_name
+templates.env.filters["local_date"] = lambda moment: local_date(moment).isoformat()
 templates.env.globals["priorities"] = PRIORITIES
 
 

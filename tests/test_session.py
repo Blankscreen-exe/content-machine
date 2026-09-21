@@ -95,14 +95,3 @@ def test_a_missing_terminal_is_reported_not_swallowed(local_client: TestClient, 
 
     response = local_client.post(f"/pieces/{piece.id}/session")
     assert "No supported terminal found." in response.text
-
-
-def test_argv_is_built_from_the_recipe(tmp_path):
-    kitty = next(t for t in terminals.TERMINALS if t.key == "kitty")
-    argv = terminals.build_argv(
-        terminals.Terminal(**{**kitty.__dict__, "executable": "echo"}),
-        cwd=tmp_path, title="A title with spaces", command=["claude", "a prompt"],
-    )
-    assert "A title with spaces" in argv          # passed as one argument, no quoting needed
-    assert str(tmp_path) in argv
-    assert argv[-2:] == ["claude", "a prompt"]

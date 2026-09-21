@@ -125,6 +125,13 @@ def update_idea(session: Session, idea: Idea, **fields) -> Idea:
 
 
 def delete_idea(session: Session, idea: Idea) -> None:
+    """Delete an idea. Its pieces are real work, so they stay, as standalone pieces."""
+    for piece in session.exec(select(Piece).where(Piece.idea_id == idea.id)).all():
+        piece.idea_id = None
+        session.add(piece)
+    # Write the detachment before the delete: with no relationships declared, SQLAlchemy
+    # does not know the order matters, and the foreign key would reject the reverse.
+    session.flush()
     record(session, "idea", idea.id, to_state="deleted",
            from_state=idea.status.value, note=idea.title)
     session.delete(idea)
@@ -195,6 +202,13 @@ def update_piece(session: Session, piece: Piece, **fields) -> Piece:
 
 
 def delete_piece(session: Session, piece: Piece) -> None:
+    """Delete a piece and the record of where it was published, which only describes it.
+
+    Its folder of drafts is left on disk: deleting the entry is not deleting the work.
+    """
+    for publication in session.exec(select(Publication).where(Publication.piece_id == piece.id)).all():
+        session.delete(publication)
+    session.flush()   # publications first, for the same reason as in delete_idea
     record(session, "piece", piece.id, to_state="deleted",
            from_state=piece.stage.value, note=piece.title)
     session.delete(piece)

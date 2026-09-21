@@ -14,12 +14,12 @@
             <td data-label="Mode">{{ idea.mode or "—" }}</td>
             <td data-label="Status"><span class="status {{ idea.status.value | status_class }}">{{ idea.status.value }}</span></td>
             <td data-label="Priority">{{ idea.priority | priority_name }}</td>
-            <td class="num" data-label="Updated">{{ idea.updated_at.strftime("%Y-%m-%d") }}</td>
+            <td class="num" data-label="Updated">{{ idea.updated_at | local_date }}</td>
             <td class="actions-cell" data-label="Actions">
-              <button class="btn" hx-get="/ideas/{{ idea.id }}"
+              <button class="btn" hx-get="/ideas/{{ idea.id }}" hx-include="#brand-scope"
                       hx-target="#editor" hx-swap="innerHTML">Edit</button>
               <button class="btn btn-danger" hx-post="/ideas/{{ idea.id }}/delete"
-                      hx-target="#list" hx-swap="outerHTML"
+                      hx-target="#list" hx-swap="outerHTML" hx-include="#brand-scope"
                       hx-confirm="Delete &quot;{{ idea.title }}&quot;?">Delete</button>
             </td>
           </tr>

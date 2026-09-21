@@ -1,8 +1,15 @@
+{# Opened from the pieces list (origin "list") or from a piece's own page (origin "page").
+   Saving redraws whichever it came from: the list, or just the page's heading so an open
+   draft below it is left alone. #}
+{% set on_page = origin == "page" %}
 <section class="editor">
   <h2>{{ "Edit piece" if piece else "New piece" }}</h2>
 
   <form hx-post="{{ '/pieces/' ~ piece.id if piece else '/pieces' }}"
-        hx-target="#pieces" hx-swap="outerHTML">
+        hx-target="{{ '#piece-head' if on_page else '#pieces' }}" hx-swap="outerHTML">
+    <input type="hidden" name="origin" value="{{ origin }}">
+    {# the brand the list is showing, so saving redraws that same list #}
+    <input type="hidden" name="view_brand_id" value="{{ view_brand_id or '' }}">
     {% if not piece %}
       {% include "partials/brand_field.html" %}
       {% if idea_id %}<input type="hidden" name="idea_id" value="{{ idea_id }}">{% endif %}
@@ -35,15 +42,19 @@
       <button class="btn" type="button"
               hx-on:click="document.getElementById('piece-editor').innerHTML = ''">Cancel</button>
       {% if piece %}
-        <button class="btn" type="button"
-                hx-post="/pieces/{{ piece.id }}/session"
-                hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
+        {# the piece's page already has its own "Work on this" and message area #}
+        {% if not on_page %}
+          <button class="btn" type="button"
+                  hx-post="/pieces/{{ piece.id }}/session"
+                  hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
+        {% endif %}
         <button class="btn btn-danger" type="button"
                 hx-post="/pieces/{{ piece.id }}/delete" hx-target="#pieces" hx-swap="outerHTML"
+                hx-include="#brand-scope"
                 hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
       {% endif %}
     </div>
   </form>
 
-  <div id="session-message"></div>
+  {% if not on_page %}<div id="session-message"></div>{% endif %}
 </section>

@@ -21,10 +21,10 @@
             </td>
             <td class="num" data-label="Due">{{ piece.due_on.isoformat() if piece.due_on else "—" }}</td>
             <td class="actions-cell" data-label="Actions">
-              <button class="btn" hx-get="/pieces/{{ piece.id }}/form"
+              <button class="btn" hx-get="/pieces/{{ piece.id }}/form" hx-include="#brand-scope"
                       hx-target="#piece-editor" hx-swap="innerHTML">Edit</button>
               <button class="btn btn-danger" hx-post="/pieces/{{ piece.id }}/delete"
-                      hx-target="#pieces" hx-swap="outerHTML"
+                      hx-target="#pieces" hx-swap="outerHTML" hx-include="#brand-scope"
                       hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
             </td>
           </tr>

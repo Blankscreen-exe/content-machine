@@ -3,6 +3,8 @@
 
   <form hx-post="{{ '/ideas/' ~ idea.id if idea else '/ideas' }}"
         hx-target="#list" hx-swap="outerHTML">
+    {# the brand the list is showing, so saving redraws that same list #}
+    <input type="hidden" name="view_brand_id" value="{{ view_brand_id or '' }}">
     {% if not idea %}{% include "partials/brand_field.html" %}{% endif %}
 
     <label>Title <input name="title" value="{{ idea.title if idea else '' }}" required autofocus></label>
@@ -42,6 +44,7 @@
       {% if idea %}
         <button class="btn btn-danger" type="button"
                 hx-post="/ideas/{{ idea.id }}/delete" hx-target="#list" hx-swap="outerHTML"
+                hx-include="#brand-scope"
                 hx-confirm="Delete &quot;{{ idea.title }}&quot;?">Delete</button>
       {% endif %}
     </div>
@@ -62,6 +65,7 @@
 
       <form class="inline-form" hx-post="/ideas/{{ idea.id }}/pieces"
             hx-target="#editor" hx-swap="innerHTML">
+        <input type="hidden" name="view_brand_id" value="{{ view_brand_id or '' }}">
         <label class="inline">Type
           <select name="type">
             {% for value in types %}<option value="{{ value }}">{{ value }}</option>{% endfor %}

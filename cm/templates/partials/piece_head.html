@@ -1,0 +1,20 @@
+{# The top of a piece's page. Saving its details redraws only this, so an open draft
+   below it is never reloaded or lost. #}
+<section class="piece-head" id="piece-head">
+  <div>
+    <h2>{{ piece.title }}</h2>
+    <p class="piece-meta">
+      {{ piece.type.value }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
+      &middot; due {{ piece.due_on.isoformat() if piece.due_on else "not scheduled" }}
+      {% if idea %}&middot; from <a href="/?brand_id={{ piece.brand_id }}">{{ idea.title }}</a>{% endif %}
+    </p>
+  </div>
+  <div class="piece-actions">
+    <button class="btn" hx-get="/pieces/{{ piece.id }}/form?origin=page"
+            hx-target="#piece-editor" hx-swap="innerHTML">Edit details</button>
+    <button class="btn btn-primary" hx-post="/pieces/{{ piece.id }}/session"
+            hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
+    <a class="btn" href="/pieces?brand_id={{ piece.brand_id }}">Back to pieces</a>
+  </div>
+</section>
+{% if oob %}<div id="piece-editor" hx-swap-oob="true"></div>{% endif %}

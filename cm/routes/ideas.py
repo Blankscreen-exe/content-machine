@@ -29,11 +29,14 @@ def _list_context(request: Request, session: Session, brand_id: int | None,
     }
 
 
-def _editor_context(request: Request, session: Session, idea) -> dict:
+def _editor_context(request: Request, session: Session, idea,
+                    view_brand_id: int | None) -> dict:
+    """`view_brand_id` is the brand the list is showing, so saving can redraw that same view."""
     return {
         "request": request,
         "idea": idea,
         "brand_id": idea.brand_id if idea else None,
+        "view_brand_id": view_brand_id,
         "pieces": crud.list_pieces(session, idea_id=idea.id) if idea else [],
         "brands": crud.list_brands(session),
         "statuses": STATUSES,
@@ -58,17 +61,18 @@ def idea_list(request: Request, session: Session = Depends(get_session),
 
 @router.get("/ideas/new", response_class=HTMLResponse)
 def idea_new(request: Request, session: Session = Depends(get_session), brand_id: OptionalId = None):
-    context = _editor_context(request, session, None) | {"brand_id": brand_id}
+    context = _editor_context(request, session, None, brand_id) | {"brand_id": brand_id}
     return templates.TemplateResponse(request, "partials/editor.html", context)
 
 
 @router.get("/ideas/{idea_id}", response_class=HTMLResponse)
-def idea_edit(idea_id: int, request: Request, session: Session = Depends(get_session)):
+def idea_edit(idea_id: int, request: Request, session: Session = Depends(get_session),
+              brand_id: OptionalId = None):
     idea = crud.get_idea(session, idea_id)
     if not idea:
         raise HTTPException(404, "idea not found")
     return templates.TemplateResponse(request, "partials/editor.html",
-                                      _editor_context(request, session, idea))
+                                      _editor_context(request, session, idea, brand_id))
 
 
 @router.post("/ideas", response_class=HTMLResponse)
@@ -76,39 +80,42 @@ def idea_create(request: Request, session: Session = Depends(get_session),
                 brand_id: int = Form(...), title: str = Form(...), angle: str = Form(""),
                 talking_points: str = Form(""), notes: str = Form(""), mode: str = Form(""),
                 source: str = Form(""), status: IdeaStatus = Form(IdeaStatus.pool),
-                priority: int = Form(2)):
+                priority: int = Form(2), view_brand_id: OptionalId = Form(None)):
     crud.create_idea(session, brand_id=brand_id, title=title.strip(), angle=angle,
                      talking_points=talking_points, notes=notes, mode=mode, source=source,
                      status=status, priority=priority)
-    return _refresh(request, session, brand_id)
+    return _refresh(request, session, view_brand_id)
 
 
 @router.post("/ideas/{idea_id}", response_class=HTMLResponse)
 def idea_update(idea_id: int, request: Request, session: Session = Depends(get_session),
                 title: str = Form(...), angle: str = Form(""), talking_points: str = Form(""),
                 notes: str = Form(""), mode: str = Form(""), source: str = Form(""),
-                status: IdeaStatus = Form(IdeaStatus.pool), priority: int = Form(2)):
+                status: IdeaStatus = Form(IdeaStatus.pool), priority: int = Form(2),
+                view_brand_id: OptionalId = Form(None)):
     idea = crud.get_idea(session, idea_id)
     if not idea:
         raise HTTPException(404, "idea not found")
     crud.update_idea(session, idea, title=title.strip(), angle=angle, talking_points=talking_points,
                      notes=notes, mode=mode, source=source, status=status, priority=priority)
-    return _refresh(request, session, idea.brand_id)
+    return _refresh(request, session, view_brand_id)
 
 
 @router.post("/ideas/{idea_id}/delete", response_class=HTMLResponse)
-def idea_delete(idea_id: int, request: Request, session: Session = Depends(get_session)):
+def idea_delete(idea_id: int, request: Request, session: Session = Depends(get_session),
+                brand_id: OptionalId = Form(None)):
+    """`brand_id` is the brand the list is showing, not the idea's own."""
     idea = crud.get_idea(session, idea_id)
     if not idea:
         raise HTTPException(404, "idea not found")
-    brand_id = idea.brand_id
     crud.delete_idea(session, idea)
     return _refresh(request, session, brand_id)
 
 
 @router.post("/ideas/{idea_id}/pieces", response_class=HTMLResponse)
 def piece_from_idea(idea_id: int, request: Request, session: Session = Depends(get_session),
-                    type: PieceType = Form(...), due_on: date | None = Form(None)):
+                    type: PieceType = Form(...), due_on: date | None = Form(None),
+                    view_brand_id: OptionalId = Form(None)):
     """Make a piece from an idea, and promote the idea while we are at it."""
     idea = crud.get_idea(session, idea_id)
     if not idea:
@@ -118,7 +125,7 @@ def piece_from_idea(idea_id: int, request: Request, session: Session = Depends(g
     if idea.status == IdeaStatus.pool:
         crud.update_idea(session, idea, status=IdeaStatus.promoted)
     return templates.TemplateResponse(request, "partials/editor.html",
-                                      _editor_context(request, session, idea))
+                                      _editor_context(request, session, idea, view_brand_id))
 
 
 def _refresh(request: Request, session: Session, brand_id: int | None) -> HTMLResponse:
