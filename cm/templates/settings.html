@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<section class="panel">
+  <h2>Appearance</h2>
+  <form class="inline-form" hx-post="/settings">
+    <input type="hidden" name="key" value="theme">
+    <label class="inline">Theme
+      <select name="value" hx-post="/settings" hx-trigger="change" hx-include="closest form">
+        {% for name in themes %}
+          <option value="{{ name }}" {{ 'selected' if settings.theme == name }}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  <p class="hint">A theme is one stylesheet in <code>cm/static/themes/</code>. Drop another in and it appears here.</p>
+</section>
+
+<section class="panel">
+  <h2>Terminal</h2>
+  <form class="inline-form" hx-post="/settings">
+    <input type="hidden" name="key" value="terminal">
+    <label class="inline">Open sessions in
+      <select name="value" hx-post="/settings" hx-trigger="change" hx-include="closest form">
+        {% for terminal in terminals %}
+          <option value="{{ terminal.key }}" {{ 'selected' if settings.terminal == terminal.key }}>{{ terminal.label }}</option>
+        {% else %}
+          <option value="">none detected</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  <p class="hint">
+    Detected: {{ terminals | map(attribute='label') | join(', ') or 'none' }}.
+    Claude Code {{ 'is on PATH' if claude_installed else 'was not found on PATH — sessions will not start' }}.
+  </p>
+</section>
+
+<section class="panel">
+  <h2>Brands</h2>
+  {% include "partials/brand_list.html" %}
+
+  <form class="inline-form" hx-post="/brands" hx-target="#brand-list" hx-swap="outerHTML">
+    <label class="inline">Slug <input name="slug" placeholder="acme" size="14" required></label>
+    <label class="inline">Name <input name="name" placeholder="Acme Co" size="18"></label>
+    <button class="btn btn-primary" type="submit">Add brand</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Workspace</h2>
+  <table class="plain">
+    <tr><th>Folder</th><td><code>{{ paths.workspace }}</code></td></tr>
+    <tr><th>Database</th><td><code>{{ paths.db_path }}</code></td></tr>
+    <tr><th>Brands</th><td><code>{{ paths.brands_dir }}</code></td></tr>
+    <tr><th>Content</th><td><code>{{ paths.content_dir }}</code></td></tr>
+  </table>
+  <p class="hint">Set a different one with the <code>CM_WORKSPACE</code> environment variable, then restart.</p>
+</section>
+
+{% endblock %}

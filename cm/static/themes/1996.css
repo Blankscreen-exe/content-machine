@@ -1,0 +1,143 @@
+/* Theme: 1996 — grey chrome, navy title bars, blue links, beveled buttons.
+   Colours, fonts and borders only. Layout lives in base.css. */
+
+body {
+  background: #c0c0c0;
+  color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 17px;
+}
+
+/* masthead */
+.masthead h1 {
+  background: #000080;
+  color: #fff;
+  font-size: 24px;
+  padding: 8px 12px;
+}
+.brands {
+  background: #dcdcdc;
+  border: 2px inset #fff;
+  border-top: none;
+  padding: 7px 12px;
+  font-size: 16px;
+}
+.brands a { color: #0000ee; text-decoration: underline; }
+.brands a.on { color: #551a8b; font-weight: bold; }
+
+/* toolbar */
+.bar { margin-top: 12px; }
+.count { font-family: "Courier New", monospace; font-size: 13px; }
+
+/* controls */
+input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px 6px; color: #000; }
+.btn { border: 2px outset #fff; background: #c0c0c0; color: #000; }
+.btn:active { border-style: inset; }
+.btn-primary { font-weight: bold; }
+.btn-danger { color: #800000; }
+.saved { font-family: "Courier New", monospace; font-size: 12px; color: #006600; }
+
+/* list */
+.list { background: #fff; border: 2px outset #fff; }
+.list th { background: #000080; color: #fff; padding: 6px 9px; font-size: 15px; }
+.list td { padding: 7px 9px; border-bottom: 1px solid #c0c0c0; }
+.list td.title a { color: #0000ee; text-decoration: underline; }
+.list tr.sel td { background: #ffffcc; }
+.list tr:hover td { background: #f0f0d0; }
+.empty { background: #fff; border: 2px inset #fff; font-size: 15px; }
+
+/* editor */
+.editor { background: #dcdcdc; border: 2px outset #fff; padding: 14px 16px; }
+.editor h2 { font-size: 19px; border-bottom: 1px solid #808080; padding-bottom: 5px; }
+.editor label { font-size: 15px; }
+
+/* footer */
+.footer {
+  background: #dcdcdc; border: 2px outset #fff; padding: 10px 12px;
+  font-size: 14px;
+}
+.footer::after {
+  content: "best viewed at 800 x 600";
+  font-family: "Courier New", monospace; font-size: 11px; color: #555;
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .list { border: none; background: none; }
+  .list tr { background: #fff; border: 2px outset #fff; }
+  .list tr.sel { background: #ffffcc; }
+  .footer::after { display: none; }
+}
+
+/* tabs: the active view looks pressed in */
+.tabs { background: #dcdcdc; border: 2px inset #fff; border-top: none; border-bottom: none; padding: 6px 12px; font-size: 16px; }
+.tabs a { color: #0000ee; text-decoration: underline; }
+.tabs a.on { color: #000; font-weight: bold; text-decoration: none; background: #c0c0c0; border: 2px inset #fff; padding: 2px 10px; }
+.subsection { border-top: 1px solid #808080; }
+.list tr.overdue td.num { color: #800000; font-weight: bold; }
+.empty-inline { font-size: 14px; color: #555; margin: 0 0 12px; }
+
+/* panels and settings */
+.panel { background: #dcdcdc; border: 2px outset #fff; }
+.panel h2 { font-size: 18px; border-bottom: 1px solid #808080; padding-bottom: 4px; }
+.hint { font-size: 13px; color: #444; }
+.hint code, .plain code { font-family: "Courier New", monospace; font-size: 13px; background: #fff; padding: 1px 4px; }
+.plain th { font-size: 15px; }
+.list tr.inactive td { color: #666; font-style: italic; }
+.message { background: #ffffcc; border: 2px inset #fff; padding: 8px 10px; font-size: 15px; margin-top: 10px; }
+
+/* piece page and editor */
+.piece-head h2 { font-size: 22px; }
+.piece-meta { font-size: 14px; color: #333; }
+.editor-pane { background: #dcdcdc; border: 2px outset #fff; padding: 10px 12px; }
+.file-tabs a { background: #c0c0c0; border: 2px outset #fff; color: #0000ee; text-decoration: underline; font-size: 14px; }
+.file-tabs a.on { background: #fff; border-style: inset; color: #000; font-weight: bold; text-decoration: none; }
+.draft { border: 2px inset #fff; background: #fff; font-size: 15px; padding: 6px; }
+.saved { font-family: "Courier New", monospace; font-size: 13px; color: #006600; }
+
+/* ---------- Toast UI editor, wearing 1996 ---------- */
+.toastui-editor-defaultUI {
+  border: 2px inset #fff; border-radius: 0; background: #c0c0c0;
+  font-family: "Times New Roman", Times, serif;
+}
+.toastui-editor-defaultUI-toolbar {
+  background: #dcdcdc; border: none; border-bottom: 2px groove #fff; border-radius: 0; padding: 3px;
+}
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-icons {
+  /* background-color, not background: the icon itself is a background-image */
+  border: 2px outset #fff; border-radius: 0; background-color: #c0c0c0; margin: 1px; height: 28px; width: 30px;
+}
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-icons:hover { background-color: #d4d4d4; border: 2px outset #fff; }
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-icons:active,
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-icons.active { border-style: inset; background-color: #b4b4b4; }
+.toastui-editor-toolbar-divider { background: #808080; }
+.toastui-editor-toolbar-group { border: none; }
+
+.toastui-editor-md-container, .toastui-editor-ww-container { background: #fff; }
+.toastui-editor-md-splitter { background: #808080; }
+.toastui-editor-md-preview { background: #fff; }
+
+/* markdown is typed in a fixed-width face; formatted text reads as the body face */
+.toastui-editor-md-container .ProseMirror { font-family: "Courier New", monospace; font-size: 15px; }
+.toastui-editor-contents { font-family: "Times New Roman", Times, serif; font-size: 17px; }
+.toastui-editor-contents p, .toastui-editor-contents li { color: #000; }
+
+/* Write / Preview, and the Markdown / WYSIWYG switch */
+.toastui-editor-tabs {
+  margin-right: 15px !important;
+}
+
+.toastui-editor-tabs .tab-item,
+.toastui-editor-mode-switch .tab-item {
+  background: #c0c0c0; border: 2px outset #fff; border-radius: 0; color: #000;
+  font-family: "Times New Roman", Times, serif; font-size: 14px; height: 26px; line-height: 22px;
+}
+.toastui-editor-tabs .tab-item.active,
+.toastui-editor-mode-switch .tab-item.active {
+  background: #fff; border-style: inset; font-weight: bold;
+}
+.toastui-editor-mode-switch { background: #dcdcdc; border: none; border-top: 2px groove #fff; }
+.toastui-editor-defaultUI .placeholder, .toastui-editor-defaultUI .ProseMirror-placeholder { color: #808080; }
+
+/* error banner: the classic alert box */
+.error-banner { background: #ffffcc; color: #800000; border-bottom: 3px solid #800000; font-weight: bold; }

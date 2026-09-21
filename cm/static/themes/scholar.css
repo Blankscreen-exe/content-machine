@@ -1,0 +1,104 @@
+/* Theme: Scholar — Palatino on cream paper, small caps, hairline rules.
+   Second theme, kept mainly to prove that swapping one file changes everything. */
+
+body {
+  background: #faf6ec;
+  color: #2e2a24;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 17px;
+}
+
+.masthead { text-align: center; border-bottom: 3px double #8a7c63; padding-bottom: 12px; }
+.masthead h1 {
+  font-size: 30px; font-weight: normal;
+  letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px;
+}
+.brands { justify-content: center; font-variant: small-caps; letter-spacing: 1px; font-size: 15px; }
+.brands a { color: #6b5f4b; text-decoration: none; }
+.brands a.on { color: #2e2a24; border-bottom: 1px solid #8a7c63; }
+
+.count { font-variant: small-caps; color: #7a6e58; font-size: 15px; }
+
+input, textarea, select {
+  background: #fffdf7; border: 1px solid #c9bda2; padding: 6px 8px;
+  color: inherit; font-variant: normal;
+}
+.btn { background: none; border: none; color: #2e2a24; }
+.btn::before { content: "[ "; }
+.btn::after { content: " ]"; }
+.btn-primary { font-weight: bold; }
+.btn-danger { color: #8c2f2a; }
+.saved { font-variant: small-caps; color: #4a6b4f; }
+
+.list th {
+  font-variant: small-caps; letter-spacing: 1px; font-weight: normal;
+  color: #6b5f4b; border-bottom: 1px solid #c9bda2; padding: 6px 8px;
+}
+.list td { padding: 9px 8px; border-bottom: 1px solid #e4dbc6; }
+.list tr.sel td { background: #f2ead6; }
+.list tr:hover td { background: #f6efdf; }
+
+.editor { border-top: 3px double #8a7c63; padding-top: 16px; }
+.editor h2 { font-weight: normal; font-variant: small-caps; letter-spacing: 2px; font-size: 21px; }
+.editor label, .footer { font-variant: small-caps; letter-spacing: .6px; color: #6b5f4b; }
+.footer { border-top: 1px solid #c9bda2; padding-top: 12px; }
+
+@media (max-width: 760px) {
+  .list tr { border: 1px solid #c9bda2; background: #fffdf7; }
+}
+
+.tabs { justify-content: center; font-variant: small-caps; letter-spacing: 1px; margin-bottom: 6px; }
+.tabs a { color: #6b5f4b; text-decoration: none; }
+.tabs a.on { color: #2e2a24; border-bottom: 2px solid #8a7c63; }
+.subsection { border-top: 1px solid #c9bda2; }
+.list tr.overdue td.num { color: #8c2f2a; }
+.empty-inline { color: #7a6e58; margin: 0 0 12px; }
+
+/* panels and settings */
+.panel { border: 1px solid #c9bda2; background: #fffdf7; }
+.panel h2 { font-variant: small-caps; letter-spacing: 1.5px; font-weight: normal; font-size: 20px; border-bottom: 1px solid #e4dbc6; padding-bottom: 4px; }
+.hint { font-size: 14px; color: #7a6e58; }
+.hint code, .plain code { font-family: Consolas, monospace; font-size: 13px; }
+.list tr.inactive td { color: #9a8f7a; font-style: italic; }
+.message { border-left: 3px solid #8a7c63; padding: 6px 12px; margin-top: 10px; color: #6b5f4b; }
+
+/* piece page and editor */
+.piece-meta { font-size: 15px; color: #7a6e58; font-variant: small-caps; letter-spacing: .5px; }
+.editor-pane { border: 1px solid #c9bda2; background: #fffdf7; padding: 12px 14px; }
+.file-tabs a { color: #6b5f4b; text-decoration: none; font-variant: small-caps; letter-spacing: 1px; }
+.file-tabs a.on { color: #2e2a24; border-bottom: 2px solid #8a7c63; }
+.draft { border: 1px solid #c9bda2; background: #fffdf7; font-size: 15px; padding: 8px; }
+.saved { font-variant: small-caps; color: #4a6b4f; }
+
+/* ---------- Toast UI editor, wearing Scholar ---------- */
+.toastui-editor-defaultUI {
+  border: 1px solid #c9bda2; border-radius: 0; background: #faf6ec;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+.toastui-editor-defaultUI-toolbar {
+  background: #f2ead6; border: none; border-bottom: 1px solid #c9bda2; border-radius: 0;
+}
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-icons { border: none; border-radius: 0; background-color: transparent; }
+.toastui-editor-defaultUI-toolbar .toastui-editor-toolbar-icons:hover { background-color: #e8ddc4; border: none; }
+.toastui-editor-toolbar-divider { background: #c9bda2; }
+
+.toastui-editor-md-container, .toastui-editor-ww-container, .toastui-editor-md-preview { background: #fffdf7; }
+.toastui-editor-md-splitter { background: #c9bda2; }
+.toastui-editor-md-container .ProseMirror { font-family: Consolas, monospace; font-size: 15px; color: #2e2a24; }
+.toastui-editor-contents { font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif; font-size: 17px; color: #2e2a24; }
+
+.toastui-editor-tabs {
+  margin-right: 15px !important;
+}
+
+.toastui-editor-tabs .tab-item,
+.toastui-editor-mode-switch .tab-item {
+  background: transparent; border: none; border-radius: 0; color: #6b5f4b;
+  font-variant: small-caps; letter-spacing: 1px; font-size: 14px;
+}
+.toastui-editor-tabs .tab-item.active,
+.toastui-editor-mode-switch .tab-item.active { color: #2e2a24; border-bottom: 2px solid #8a7c63; }
+.toastui-editor-mode-switch { background: #f2ead6; border: none; border-top: 1px solid #c9bda2; }
+
+/* error banner */
+.error-banner { background: #f7ece9; color: #8c2f2a; border-bottom: 2px solid #8c2f2a; }

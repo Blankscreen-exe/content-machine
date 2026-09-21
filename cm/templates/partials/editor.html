@@ -1,0 +1,75 @@
+<section class="editor">
+  <h2>{{ "Edit idea" if idea else "New idea" }}</h2>
+
+  <form hx-post="{{ '/ideas/' ~ idea.id if idea else '/ideas' }}"
+        hx-target="#list" hx-swap="outerHTML">
+    {% if not idea %}<input type="hidden" name="brand_id" value="{{ brand_id }}">{% endif %}
+
+    <label>Title <input name="title" value="{{ idea.title if idea else '' }}" required autofocus></label>
+    <label>Angle <input name="angle" value="{{ idea.angle if idea else '' }}"></label>
+    <label>Talking points <textarea name="talking_points" rows="4">{{ idea.talking_points if idea else '' }}</textarea></label>
+    <label>Notes <textarea name="notes" rows="2">{{ idea.notes if idea else '' }}</textarea></label>
+
+    <div class="row">
+      <label>Mode
+        <select name="mode">
+          {% for value in ["", "consultant", "commentator"] %}
+            <option value="{{ value }}" {{ 'selected' if idea and idea.mode == value }}>{{ value or "—" }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Status
+        <select name="status">
+          {% for value in statuses %}
+            <option value="{{ value }}" {{ 'selected' if idea and idea.status.value == value }}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Priority
+        <select name="priority">
+          {% for value in [1, 2, 3] %}
+            <option value="{{ value }}" {{ 'selected' if (idea.priority if idea else 2) == value }}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Source <input name="source" value="{{ idea.source if idea else '' }}" placeholder="where it came from"></label>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <button class="btn" type="button"
+              hx-on:click="document.getElementById('editor').innerHTML = ''">Cancel</button>
+      {% if idea %}
+        <button class="btn btn-danger" type="button"
+                hx-post="/ideas/{{ idea.id }}/delete" hx-target="#list" hx-swap="outerHTML"
+                hx-confirm="Delete &quot;{{ idea.title }}&quot;?">Delete</button>
+      {% endif %}
+    </div>
+  </form>
+
+  {% if idea %}
+    <div class="subsection">
+      <h3>Pieces from this idea</h3>
+      {% if pieces %}
+        <ul class="pieces-of-idea">
+          {% for piece in pieces %}
+            <li>{{ piece.type.value }} &middot; {{ piece.stage.value }}{% if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-inline">None yet.</p>
+      {% endif %}
+
+      <form class="inline-form" hx-post="/ideas/{{ idea.id }}/pieces"
+            hx-target="#editor" hx-swap="innerHTML">
+        <label class="inline">Type
+          <select name="type">
+            {% for value in types %}<option value="{{ value }}">{{ value }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="inline">Due <input type="date" name="due_on"></label>
+        <button class="btn" type="submit">Make a piece</button>
+      </form>
+    </div>
+  {% endif %}
+</section>

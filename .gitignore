@@ -1,0 +1,30 @@
+# Your content, brands, database and access token live here. Never committed.
+workspace/
+
+# Personal material kept next to the code but not part of it
+demo/
+docs/
+
+# A safety net, in case a workspace is ever pointed inside the repo
+*.db
+*.db-wal
+*.db-shm
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Local configuration
+.env
+CLAUDE.local.md
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

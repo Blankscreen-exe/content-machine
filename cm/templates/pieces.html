@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<div class="bar">
+  <input type="hidden" name="brand_id" value="{{ brand_id or '' }}">
+  <select name="stage"
+          hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
+          hx-include="[name='type'],[name='brand_id']">
+    <option value="">all stages</option>
+    {% for value in stages %}
+      <option value="{{ value }}" {{ 'selected' if stage == value }}>{{ value }}</option>
+    {% endfor %}
+  </select>
+  <select name="type"
+          hx-get="/pieces/list" hx-trigger="change" hx-target="#pieces" hx-swap="outerHTML"
+          hx-include="[name='stage'],[name='brand_id']">
+    <option value="">all types</option>
+    {% for value in types %}
+      <option value="{{ value }}" {{ 'selected' if type == value }}>{{ value }}</option>
+    {% endfor %}
+  </select>
+  <span class="count" id="piece-count">{{ counts.get('total', 0) }} pieces &middot; {{ counts.get('published', 0) }} published</span>
+  <button class="btn btn-primary" hx-get="/pieces/new?brand_id={{ brand_id or '' }}"
+          hx-target="#piece-editor" hx-swap="innerHTML">New piece</button>
+</div>
+
+{% include "partials/pieces.html" %}
+
+<div id="piece-editor"></div>
+
+{% endblock %}

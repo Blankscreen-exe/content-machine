@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Content Machine</title>
+  <link rel="stylesheet" href="/static/base.css">
+  {# vendor stylesheets load before the theme, so a theme can restyle them #}
+  {% block vendor_css %}{% endblock %}
+  <link rel="stylesheet" href="/static/themes/{{ settings.theme }}.css">
+  <script src="/static/vendor/htmx.min.js"></script>
+  <script src="/static/errors.js" defer></script>
+  <script src="/static/copy.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="error-banner" id="error-banner" role="alert" hidden>
+    <span class="error-text"></span>
+    <button class="btn error-close" type="button">Dismiss</button>
+  </div>
+  <div class="app">{% block body %}{% endblock %}</div>
+</body>
+</html>

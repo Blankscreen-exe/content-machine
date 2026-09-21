@@ -1,0 +1,39 @@
+<div id="list">
+  {% if ideas %}
+    <table class="list">
+      <thead>
+        <tr>
+          <th>Title</th><th>Mode</th><th>Status</th><th class="num">Pri</th>
+          <th class="num">Updated</th><th class="actions-head">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for idea in ideas %}
+          <tr>
+            <td class="title" data-label="Title">{{ idea.title }}</td>
+            <td data-label="Mode">{{ idea.mode or "—" }}</td>
+            <td data-label="Status">{{ idea.status.value }}</td>
+            <td class="num" data-label="Priority">{{ idea.priority }}</td>
+            <td class="num" data-label="Updated">{{ idea.updated_at.strftime("%Y-%m-%d") }}</td>
+            <td class="actions-cell" data-label="Actions">
+              <button class="btn" hx-get="/ideas/{{ idea.id }}"
+                      hx-target="#editor" hx-swap="innerHTML">Edit</button>
+              <button class="btn btn-danger" hx-post="/ideas/{{ idea.id }}/delete"
+                      hx-target="#list" hx-swap="outerHTML"
+                      hx-confirm="Delete &quot;{{ idea.title }}&quot;?">Delete</button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nothing here. Hit <b>New idea</b>.</p>
+  {% endif %}
+</div>
+
+{# Out-of-band updates only make sense in an htmx response; the first page render
+   already has these elements and would otherwise duplicate their ids. #}
+{% if oob %}
+  <span id="count" hx-swap-oob="true">{{ counts.get('total', 0) }} ideas &middot; {{ counts.get('pool', 0) }} in pool</span>
+  {% if close_editor %}<div id="editor" hx-swap-oob="true"></div>{% endif %}
+{% endif %}

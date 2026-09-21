@@ -1,0 +1,50 @@
+<section class="editor">
+  <h2>{{ "Edit piece" if piece else "New piece" }}</h2>
+
+  <form hx-post="{{ '/pieces/' ~ piece.id if piece else '/pieces' }}"
+        hx-target="#pieces" hx-swap="outerHTML" hx-include="[name='brand_id']">
+    {% if not piece %}
+      <input type="hidden" name="brand_id" value="{{ brand_id }}">
+      {% if idea_id %}<input type="hidden" name="idea_id" value="{{ idea_id }}">{% endif %}
+    {% endif %}
+
+    <label>Title <input name="title" value="{{ piece.title if piece else (idea_title or '') }}" required autofocus></label>
+
+    <div class="row">
+      <label>Type
+        <select name="type">
+          {% for value in types %}
+            <option value="{{ value }}" {{ 'selected' if piece and piece.type.value == value }}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Stage
+        <select name="stage">
+          {% for value in stages %}
+            <option value="{{ value }}" {{ 'selected' if piece and piece.stage.value == value }}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Due <input type="date" name="due_on" value="{{ piece.due_on.isoformat() if piece and piece.due_on else '' }}"></label>
+    </div>
+
+    <label>Notes <textarea name="notes" rows="2">{{ piece.notes if piece else '' }}</textarea></label>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <button class="btn" type="button"
+              hx-on:click="document.getElementById('piece-editor').innerHTML = ''">Cancel</button>
+      {% if piece %}
+        <button class="btn" type="button"
+                hx-post="/pieces/{{ piece.id }}/session"
+                hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
+        <button class="btn btn-danger" type="button"
+                hx-post="/pieces/{{ piece.id }}/delete" hx-target="#pieces" hx-swap="outerHTML"
+                hx-include="[name='brand_id']"
+                hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
+      {% endif %}
+    </div>
+  </form>
+
+  <div id="session-message"></div>
+</section>

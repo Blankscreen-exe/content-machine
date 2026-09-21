@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<div class="bar">
+  <input type="hidden" name="brand_id" value="{{ brand_id or '' }}">
+  <input class="search" type="search" name="q" value="{{ q }}" placeholder="search ideas..."
+         autocomplete="off"
+         hx-get="/ideas" hx-trigger="input changed delay:250ms, search"
+         hx-target="#list" hx-swap="outerHTML"
+         hx-include="[name='status'],[name='brand_id']">
+  <select name="status"
+          hx-get="/ideas" hx-trigger="change" hx-target="#list" hx-swap="outerHTML"
+          hx-include="[name='q'],[name='brand_id']">
+    <option value="">all statuses</option>
+    {% for value in statuses %}
+      <option value="{{ value }}" {{ 'selected' if status == value }}>{{ value }}</option>
+    {% endfor %}
+  </select>
+  <span class="count" id="count">{{ counts.get('total', 0) }} ideas &middot; {{ counts.get('pool', 0) }} in pool</span>
+  <button class="btn btn-primary" hx-get="/ideas/new?brand_id={{ brand_id or '' }}"
+          hx-target="#editor" hx-swap="innerHTML">New idea</button>
+</div>
+
+{% include "partials/list.html" %}
+
+<div id="editor"></div>
+
+{% endblock %}

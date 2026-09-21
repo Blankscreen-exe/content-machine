@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{# only the piece page needs the editor, so it is not loaded anywhere else #}
+{% block vendor_css %}
+  <link rel="stylesheet" href="/static/vendor/toastui-editor.min.css">
+{% endblock %}
+
+{% block head %}
+  {# the "-all" build is the self-contained one; the plain build expects ProseMirror
+     to be supplied separately #}
+  <script src="/static/vendor/toastui-editor-all.min.js"></script>
+  <script src="/static/editor.js" defer></script>
+{% endblock %}
+
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<section class="piece-head">
+  <div>
+    <h2>{{ piece.title }}</h2>
+    <p class="piece-meta">
+      {{ piece.type.value }} &middot; {{ piece.stage.value }}
+      &middot; due {{ piece.due_on.isoformat() if piece.due_on else "not scheduled" }}
+      {% if idea %}&middot; from <a href="/?brand_id={{ piece.brand_id }}">{{ idea.title }}</a>{% endif %}
+    </p>
+  </div>
+  <div class="piece-actions">
+    <button class="btn" hx-get="/pieces/{{ piece.id }}/form"
+            hx-target="#piece-editor" hx-swap="innerHTML">Edit details</button>
+    <button class="btn btn-primary" hx-post="/pieces/{{ piece.id }}/session"
+            hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
+    <a class="btn" href="/pieces?brand_id={{ piece.brand_id }}">Back to pieces</a>
+  </div>
+</section>
+
+<div id="session-message"></div>
+<div id="piece-editor"></div>
+
+{% include "partials/editor_pane.html" %}
+
+<section class="panel">
+  <h2>Images</h2>
+  {% if images %}
+    <ul class="image-list">
+      {% for name in images %}
+        <li>
+          <a href="/pieces/{{ piece.id }}/assets/{{ name }}">
+            <img src="/pieces/{{ piece.id }}/assets/{{ name }}" alt="{{ name }}">
+          </a>
+          <code>assets/{{ name }}</code>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="hint">No images yet. Paste or drop one into the editor and it is saved here.</p>
+  {% endif %}
+  <p class="hint">
+    Images do not travel through copy and paste — upload them again on the platform.
+    Folder: <code>{{ folder }}</code>
+  </p>
+</section>
+
+{% if publications %}
+  <section class="panel">
+    <h2>Published</h2>
+    <table class="plain">
+      {% for publication in publications %}
+        <tr>
+          <th>{{ publication.posted_at.strftime("%Y-%m-%d") }}</th>
+          <td>{{ publication.platform }}
+            {% if publication.url %}— <a href="{{ publication.url }}">{{ publication.url }}</a>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  </section>
+{% endif %}
+
+{% endblock %}

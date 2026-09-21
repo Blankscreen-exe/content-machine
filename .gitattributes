@@ -1,0 +1,10 @@
+# Store text with LF line endings so the repo is the same on Windows and Linux.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+
+# Third-party files copied in so the app works offline. Not ours to review line by line,
+# and not what the repository's language statistics should be about.
+cm/static/vendor/** linguist-vendored -diff
