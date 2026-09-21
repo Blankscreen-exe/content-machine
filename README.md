@@ -12,11 +12,25 @@ raise its own reminders, and sit next to the files and generation steps that pro
 ```sh
 uv sync --extra dev   # exact versions from uv.lock, into .venv
 
-cm init           # create the workspace: rules, skills and a starter brand
+cm init           # create the workspace: session rules and skills
 cm serve          # this machine only
 cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
 ```
+
+To have `cm` in every terminal, not only with the `.venv` active, register it:
+
+```sh
+./install.sh                  # Linux, macOS, Git Bash
+.\install.ps1                 # Windows PowerShell
+```
+
+Both wrap `uv tool install --editable` and `uv tool update-shell`: `cm` gets its own
+environment in uv's tool folder, and that folder goes on PATH. The install is editable, so it
+runs the code in this repo (a `git pull` needs no reinstall) and the default workspace stays
+`<repo>/workspace`. Options: `--uninstall` / `-Uninstall` removes it, `--no-path` / `-NoPath`
+leaves PATH alone, `--native-tls` / `-NativeTls` uses the system's certificates on networks
+that inspect HTTPS. If PowerShell blocks scripts: `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
 
 `cm init` copies the session rules and skills from `cm/starter/` into the workspace. Brands
 are added under Manage in the app; a new brand's voice and profile start from the
