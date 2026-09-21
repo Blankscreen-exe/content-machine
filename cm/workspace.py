@@ -31,6 +31,41 @@ def ensure_folder(session: Session, piece: Piece) -> Path:
     return folder
 
 
+def delete_piece(session: Session, piece: Piece) -> Path | None:
+    """Delete a piece: its folder goes to the trash first, then its entry goes.
+
+    Returns where the folder went, or None if it never had one. If the folder cannot be
+    moved, this raises OSError and nothing is deleted — on Windows that happens while a
+    terminal session is still open in it.
+    """
+    folder = piece_folder(session, piece)
+    trashed = None
+    if folder.exists():
+        trashed = _move_to_trash(folder, crud.brand_slug(session, piece.brand_id))
+    try:
+        crud.delete_piece(session, piece)
+    except Exception:
+        if trashed:
+            trashed.rename(folder)          # put the work back where the entry expects it
+        raise
+    return trashed
+
+
+def _move_to_trash(folder: Path, brand: str) -> Path:
+    """`trash/<brand>/<folder name>`, numbered if a folder of that name is already there.
+
+    A rename rather than shutil.move: the trash is in the same workspace, so a rename either
+    happens completely or not at all, where a copy could stop halfway.
+    """
+    target_dir = get_settings().trash_dir / brand
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target, number = target_dir / folder.name, 2
+    while target.exists():
+        target, number = target_dir / f"{folder.name}-{number}", number + 1
+    folder.rename(target)
+    return target
+
+
 def brand_voice_file(session: Session, piece: Piece) -> Path | None:
     path = get_settings().brands_dir / crud.brand_slug(session, piece.brand_id) / "voice.md"
     return path if path.exists() else None

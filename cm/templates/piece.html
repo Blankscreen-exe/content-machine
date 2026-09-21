@@ -45,20 +45,6 @@
   </p>
 </section>
 
-{% if publications %}
-  <section class="panel">
-    <h2>Published</h2>
-    <table class="plain">
-      {% for publication in publications %}
-        <tr>
-          <th>{{ publication.posted_at | local_date }}</th>
-          <td>{{ publication.platform }}
-            {% if publication.url %}— <a href="{{ publication.url }}">{{ publication.url }}</a>{% endif %}
-          </td>
-        </tr>
-      {% endfor %}
-    </table>
-  </section>
-{% endif %}
+{% include "partials/publications.html" %}
 
 {% endblock %}

@@ -19,7 +19,7 @@ def test_every_page_offers_the_same_three_tabs(client: TestClient, brand):
     for path in ("/", "/pieces", "/settings"):
         page = client.get(path).text
         assert page.count('class="tabs"') == 1
-        for label in (">Ideas<", ">Pieces<", ">Settings<"):
+        for label in (">Ideas", ">Pieces", ">Settings"):     # Pieces may carry a due count
             assert label in page, f"{label} missing from {path}"
 
 

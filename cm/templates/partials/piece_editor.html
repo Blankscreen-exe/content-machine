@@ -51,7 +51,7 @@
         <button class="btn btn-danger" type="button"
                 hx-post="/pieces/{{ piece.id }}/delete" hx-target="#pieces" hx-swap="outerHTML"
                 hx-include="#brand-scope"
-                hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
+                hx-confirm="Delete &quot;{{ piece.title }}&quot;? Its folder moves to the workspace trash.">Delete</button>
       {% endif %}
     </div>
   </form>

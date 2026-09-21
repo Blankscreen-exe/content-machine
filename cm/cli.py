@@ -139,6 +139,7 @@ def where() -> None:
     typer.echo(f"database:  {settings.db_path}")
     typer.echo(f"brands:    {settings.brands_dir}")
     typer.echo(f"content:   {settings.content_dir}")
+    typer.echo(f"trash:     {settings.trash_dir}")
 
 
 def _port_is_free(host: str, port: int) -> bool:

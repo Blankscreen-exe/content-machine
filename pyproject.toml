@@ -2,6 +2,8 @@
 name = "content-machine"
 version = "0.1.0"
 description = "Local content pipeline: idea pool, pieces, schedules and generation, all offline."
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.115",        # HTTP API and validation
@@ -17,7 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
-    "httpx>=0.27",           # FastAPI TestClient
+    "httpx2>=2.13",          # FastAPI TestClient; Starlette has moved to it from httpx
 ]
 
 [project.scripts]
@@ -32,3 +34,8 @@ packages = ["cm"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+filterwarnings = [
+    # Raised inside Starlette's own test client, not by our code, and still there in the
+    # latest release. Remove this once a Starlette upgrade makes the warning go away.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning:starlette.testclient",
+]

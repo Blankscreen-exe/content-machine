@@ -25,7 +25,7 @@
                       hx-target="#piece-editor" hx-swap="innerHTML">Edit</button>
               <button class="btn btn-danger" hx-post="/pieces/{{ piece.id }}/delete"
                       hx-target="#pieces" hx-swap="outerHTML" hx-include="#brand-scope"
-                      hx-confirm="Delete &quot;{{ piece.title }}&quot;?">Delete</button>
+                      hx-confirm="Delete &quot;{{ piece.title }}&quot;? Its folder moves to the workspace trash.">Delete</button>
             </td>
           </tr>
         {% endfor %}
@@ -39,4 +39,7 @@
 {% if oob %}
   <span id="piece-count" hx-swap-oob="true">{{ counts.get('total', 0) }} pieces &middot; {{ counts.get('published', 0) }} published</span>
   {% if close_editor %}<div id="piece-editor" hx-swap-oob="true"></div>{% endif %}
+  {# a stage or date change can move a piece in or out of what is due #}
+  {% include "partials/due.html" %}
+  {% include "partials/due_badge.html" %}
 {% endif %}

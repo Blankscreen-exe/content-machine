@@ -4,7 +4,7 @@ Both the web app and the CLI call these, so the rules live in one place.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from sqlmodel import Session, func, or_, select
 
@@ -12,7 +12,7 @@ from .models import (Brand, Event, Idea, IdeaStatus, Piece, PieceType, Publicati
                      Setting, Stage, now)
 from .text import slugify
 
-DEFAULT_SETTINGS = {"theme": "1996"}
+DEFAULT_SETTINGS = {"theme": "1996", "due_soon_days": "7"}
 
 
 # ---------- events ----------
@@ -204,7 +204,8 @@ def update_piece(session: Session, piece: Piece, **fields) -> Piece:
 def delete_piece(session: Session, piece: Piece) -> None:
     """Delete a piece and the record of where it was published, which only describes it.
 
-    Its folder of drafts is left on disk: deleting the entry is not deleting the work.
+    Files are not touched here; `workspace.delete_piece` moves the folder to the trash
+    and then calls this.
     """
     for publication in session.exec(select(Publication).where(Publication.piece_id == piece.id)).all():
         session.delete(publication)
@@ -216,9 +217,13 @@ def delete_piece(session: Session, piece: Piece) -> None:
 
 
 def record_publication(session: Session, piece: Piece, platform: str, url: str = "",
-                       notes: str = "") -> Publication:
-    """Record where a piece went out, and move it to published."""
-    publication = Publication(piece_id=piece.id, platform=platform, url=url, notes=notes)
+                       notes: str = "", posted_at: datetime | None = None) -> Publication:
+    """Record where a piece went out, and move it to published.
+
+    `posted_at` is for recording a post after the fact; left out, it is now.
+    """
+    publication = Publication(piece_id=piece.id, platform=platform.strip(), url=url.strip(),
+                              notes=notes, posted_at=posted_at or now())
     session.add(publication)
     session.commit()
     session.refresh(publication)
@@ -226,10 +231,25 @@ def record_publication(session: Session, piece: Piece, platform: str, url: str =
     return publication
 
 
+def get_publication(session: Session, publication_id: int) -> Publication | None:
+    return session.get(Publication, publication_id)
+
+
+def delete_publication(session: Session, publication: Publication) -> None:
+    """Remove a record made by mistake. The piece keeps its stage; change that yourself."""
+    session.delete(publication)
+    session.commit()
+
+
 def list_publications(session: Session, piece_id: int) -> list[Publication]:
     return list(session.exec(
         select(Publication).where(Publication.piece_id == piece_id).order_by(Publication.posted_at)
     ).all())
+
+
+def known_platforms(session: Session) -> list[str]:
+    """Platforms used before, offered as suggestions so the same one is spelled the same way."""
+    return sorted(session.exec(select(Publication.platform).distinct()).all())
 
 
 def piece_counts(session: Session, brand_id: int | None = None) -> dict[str, int]:

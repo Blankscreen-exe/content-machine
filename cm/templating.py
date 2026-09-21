@@ -1,11 +1,13 @@
 """Template setup and the context every page needs."""
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
 
-from . import crud
+from . import crud, schedule
 from .dates import local_date
 from .models import PRIORITIES, IdeaStatus, PieceType, Stage
 from .paths import TEMPLATES_DIR, THEMES_DIR
@@ -49,4 +51,5 @@ def page_context(request: Request, session: Session, view: str, brand_id: int | 
         "statuses": STATUSES,
         "stages": STAGES,
         "types": TYPES,
+        "due": schedule.due(session, date.today(), brand_id),
     }

@@ -56,6 +56,8 @@ input, textarea, select {
 .tabs a.on { color: #2e2a24; border-bottom: 2px solid #8a7c63; }
 .subsection { border-top: 1px solid #c9bda2; }
 .list tr.overdue td.num { color: #8c2f2a; }
+.due-badge { color: #8c2f2a; border: 1px solid #8c2f2a; border-radius: 8px; font-variant: normal; letter-spacing: 0; }
+.due-list li.overdue { color: #8c2f2a; }
 .empty-inline { color: #7a6e58; margin: 0 0 12px; }
 
 /* panels and settings */

@@ -1,6 +1,6 @@
 {# The top of a piece's page. Saving its details redraws only this, so an open draft
    below it is never reloaded or lost. #}
-<section class="piece-head" id="piece-head">
+<section class="piece-head" id="piece-head"{% if head_oob %} hx-swap-oob="true"{% endif %}>
   <div>
     <h2>{{ piece.title }}</h2>
     <p class="piece-meta">
@@ -17,4 +17,7 @@
     <a class="btn" href="/pieces?brand_id={{ piece.brand_id }}">Back to pieces</a>
   </div>
 </section>
-{% if oob %}<div id="piece-editor" hx-swap-oob="true"></div>{% endif %}
+{% if oob %}
+  <div id="piece-editor" hx-swap-oob="true"></div>
+  {% include "partials/due_badge.html" %}
+{% endif %}

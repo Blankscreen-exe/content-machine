@@ -7,7 +7,6 @@
   const REASONS = {
     403: "The app no longer recognises this tab. Reopen it with the link that `cm serve` prints.",
     404: "That item no longer exists. It may have been deleted in another tab.",
-    409: "Someone else changed this in the meantime.",
     413: "That was too large to send.",
   };
 
@@ -23,10 +22,21 @@
     banner?.querySelector(".error-close")?.addEventListener("click", () => { banner.hidden = true; });
   });
 
+  // For anything not covered above, the server's own explanation, which FastAPI sends as
+  // {"detail": "..."}, says more than a generic line could.
+  function detail(xhr) {
+    try {
+      const body = JSON.parse(xhr.responseText);
+      return typeof body.detail === "string" ? body.detail : null;
+    } catch {
+      return null;
+    }
+  }
+
   document.body.addEventListener("htmx:responseError", (event) => {
-    const status = event.detail.xhr.status;
-    const reason = REASONS[status] || "The server could not complete that.";
-    show(`Nothing was saved (${status}). ${reason} Your text is still on this page.`);
+    const xhr = event.detail.xhr;
+    const reason = REASONS[xhr.status] || detail(xhr) || "The server could not complete that.";
+    show(`Nothing was saved (${xhr.status}). ${reason} Your text is still on this page.`);
   });
 
   document.body.addEventListener("htmx:sendError", () => {

@@ -10,8 +10,7 @@ raise its own reminders, and sit next to the files and generation steps that pro
 ## Running it
 
 ```sh
-uv venv
-uv pip install -e ".[dev]"
+uv sync --extra dev   # exact versions from uv.lock, into .venv
 
 cm init           # create the workspace: rules, skills and a starter brand
 cm serve          # this machine only
@@ -59,12 +58,19 @@ terminal session read and write the same files, so there is no import or export.
 ```
 cm/
   app.py          application factory
-  routes.py       page routes; htmx swaps the fragments
+  cli.py          the `cm` command
+  routes/         page routes, one module per screen; htmx swaps the fragments
   crud.py         database operations, shared by the web app and the CLI
   models.py       tables: brands, ideas, pieces, publications, events, settings
-  database.py     engine, sessions, migrate-on-start
+  database.py     engine, sessions, foreign keys, migrate-on-start
+  schedule.py     what is overdue or due soon
+  workspace.py    a piece's folder: where it is, its brief, moving it to the trash
+  files.py        reading and saving drafts inside a piece folder
+  terminals.py    opening a terminal session in a piece folder
+  dates.py        stored UTC times to local calendar dates
   security.py     access token
   settings.py     configuration and workspace location
+  templating.py   template setup and the context every page shares
   templates/      base page and htmx partials
   static/         base.css (layout), themes/ (appearance), vendor/
 alembic/          migrations
@@ -92,3 +98,25 @@ out. Making a piece from an idea promotes that idea out of the pool, because it 
 
 The pieces list sorts by due date with undated work last, and marks anything overdue that has not
 been published.
+
+## Reminders
+
+Unpublished pieces that are overdue, or due within a window set in Settings (a week by default),
+are listed above the pieces and counted on the Pieces tab. There is no background process: the
+reminder is wherever you already look.
+
+## Publishing
+
+Recording a publish on a piece's page (platform, link, date) moves the piece to published.
+Platforms used before are suggested, so the same one is always spelled the same way. `cm published`
+does the same from a terminal session.
+
+## Deleting
+
+Deleting a piece moves its folder to `trash/<brand>/` in the workspace, so deleting the entry never
+deletes the work. If the folder cannot be moved — on Windows, while a terminal is open in it —
+nothing is deleted and the page says why.
+
+## Licence
+
+MIT. See `LICENSE`.

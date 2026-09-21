@@ -1,0 +1,15 @@
+{# Above the pieces list: what is overdue and what is coming up. Hidden when nothing is. #}
+<section id="due" class="panel due"{% if oob %} hx-swap-oob="true"{% endif %}{% if not due.count %} hidden{% endif %}>
+  <h2>Due</h2>
+  <ul class="due-list">
+    {% for piece in due.overdue %}
+      <li class="overdue"><a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+        &middot; {{ piece.type.value }} &middot; was due {{ piece.due_on.isoformat() }}</li>
+    {% endfor %}
+    {% for piece in due.soon %}
+      <li><a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+        &middot; {{ piece.type.value }} &middot; due {{ "today" if piece.due_on == today else piece.due_on.isoformat() }}</li>
+    {% endfor %}
+  </ul>
+  <p class="hint">Unpublished pieces that are overdue or due in the next {{ due.window_days }} days. Change the window in <a href="/settings">Settings</a>.</p>
+</section>

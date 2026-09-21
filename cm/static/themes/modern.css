@@ -101,6 +101,8 @@ input:focus, textarea:focus, select:focus {
 .list tr:hover td { background: #fafbff; }
 .list tr.sel td { background: var(--accent-soft); }
 .list tr.overdue td.num { color: var(--danger); font-weight: 600; }
+.due-badge { background: var(--danger-soft); color: var(--danger); border-radius: 999px; font-weight: 600; }
+.due-list li.overdue { color: var(--danger); font-weight: 600; }
 .list tr.inactive td { color: var(--text-muted); font-style: italic; }
 .empty {
   background: var(--surface); border: 1px dashed var(--line-strong);

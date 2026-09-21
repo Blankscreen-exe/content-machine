@@ -6,7 +6,7 @@ date could be a day off either way.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 
 
 def local_date(moment: datetime) -> date:
@@ -14,3 +14,12 @@ def local_date(moment: datetime) -> date:
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
     return moment.astimezone().date()
+
+
+def moment_on(day: date) -> datetime:
+    """A stored moment that falls on `day` on this machine's calendar.
+
+    Used when only a date is known, such as a post recorded after the fact. Noon leaves
+    twelve hours either side, so a clock change never pushes it onto a neighbouring day.
+    """
+    return datetime.combine(day, time(12)).astimezone().astimezone(timezone.utc)

@@ -14,8 +14,22 @@ from ..templating import page_context, templates
 
 router = APIRouter()
 
+
+def _whole_days(value: str) -> str:
+    days = int(value)          # a ValueError here becomes the message below
+    if not 0 <= days <= 365:
+        raise ValueError
+    return str(days)
+
+
 # Only these can be written from the browser, so a stray form cannot invent a setting.
-ALLOWED_SETTINGS = {"theme", "terminal"}
+# Each one maps to the check its value must pass, which returns the value to store.
+ALLOWED_SETTINGS = {
+    "theme": str.strip,
+    "terminal": str.strip,
+    "due_soon_days": _whole_days,
+}
+SETTING_RULES = {"due_soon_days": "a whole number of days from 0 to 365"}
 
 
 @router.get("/settings", response_class=HTMLResponse)
@@ -34,6 +48,10 @@ def setting_set(key: str = Form(...), value: str = Form(...),
     """Store a preference. A theme change needs the page reloaded; others do not."""
     if key not in ALLOWED_SETTINGS:
         raise HTTPException(400, f"unknown setting {key!r}")
+    try:
+        value = ALLOWED_SETTINGS[key](value)
+    except ValueError:
+        raise HTTPException(400, f"{key} must be {SETTING_RULES[key]}") from None
     crud.set_setting(session, key, value)
     return Response(status_code=204, headers={"HX-Refresh": "true"} if key == "theme" else {})
 

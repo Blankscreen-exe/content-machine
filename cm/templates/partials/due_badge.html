@@ -1,0 +1,4 @@
+{# How many unpublished pieces are overdue or due soon, on the Pieces tab. Always rendered,
+   hidden at zero, so a change elsewhere can update it in place. #}
+<span id="due-badge" class="due-badge"{% if oob %} hx-swap-oob="true"{% endif %}{% if not due.count %} hidden{% endif %}
+      title="{{ due.overdue | length }} overdue, {{ due.soon | length }} due in the next {{ due.window_days }} days">{{ due.count }}</span>

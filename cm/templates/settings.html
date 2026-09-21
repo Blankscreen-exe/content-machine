@@ -39,6 +39,19 @@
 </section>
 
 <section class="panel">
+  <h2>Reminders</h2>
+  <form class="inline-form" hx-post="/settings">
+    <input type="hidden" name="key" value="due_soon_days">
+    <label class="inline">Show pieces due within
+      <input type="number" name="value" min="0" max="365" size="4" required
+             value="{{ settings.due_soon_days }}"
+             hx-post="/settings" hx-trigger="change" hx-include="closest form"> days
+    </label>
+  </form>
+  <p class="hint">They are listed above the pieces and counted on the Pieces tab, along with anything overdue.</p>
+</section>
+
+<section class="panel">
   <h2>Brands</h2>
   {% include "partials/brand_list.html" %}
 
@@ -56,6 +69,7 @@
     <tr><th>Database</th><td><code>{{ paths.db_path }}</code></td></tr>
     <tr><th>Brands</th><td><code>{{ paths.brands_dir }}</code></td></tr>
     <tr><th>Content</th><td><code>{{ paths.content_dir }}</code></td></tr>
+    <tr><th>Trash</th><td><code>{{ paths.trash_dir }}</code></td></tr>
   </table>
   <p class="hint">Set a different one with the <code>CM_WORKSPACE</code> environment variable, then restart.</p>
 </section>

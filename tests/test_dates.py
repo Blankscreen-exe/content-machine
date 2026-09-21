@@ -27,3 +27,13 @@ def test_the_ideas_list_shows_the_local_date(client: TestClient, session: Sessio
     session.refresh(idea)                                      # read back the way the page does
 
     assert f">{local_date(idea.updated_at).isoformat()}<" in client.get("/").text
+
+
+def test_a_recorded_date_reads_back_as_that_date():
+    """A post recorded "on 20 September" must show 20 September, whatever the timezone."""
+    from datetime import date
+
+    from cm.dates import moment_on
+
+    day = date(2026, 3, 29)                                    # a clock-change weekend in Europe
+    assert local_date(moment_on(day).replace(tzinfo=None)) == day   # stored naive, as SQLite does

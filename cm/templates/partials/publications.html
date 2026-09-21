@@ -1,0 +1,38 @@
+{# Where a piece went out. Recording one moves the piece to published; removing one made by
+   mistake leaves the stage alone. #}
+<section class="panel" id="publications">
+  <h2>Published</h2>
+  {% if publications %}
+    <table class="plain">
+      {% for publication in publications %}
+        <tr>
+          <th>{{ publication.posted_at | local_date }}</th>
+          <td>{{ publication.platform }}
+            {% if publication.url %}— <a href="{{ publication.url }}">{{ publication.url }}</a>{% endif %}
+          </td>
+          <td class="row-action">
+            <button class="btn" type="button"
+                    hx-post="/pieces/{{ piece.id }}/publications/{{ publication.id }}/delete"
+                    hx-target="#publications" hx-swap="outerHTML"
+                    hx-confirm="Remove this record? The piece stays {{ piece.stage.value }}.">Remove</button>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="hint">Not published anywhere yet.</p>
+  {% endif %}
+
+  <form class="inline-form" hx-post="/pieces/{{ piece.id }}/publications"
+        hx-target="#publications" hx-swap="outerHTML">
+    <label class="inline">Platform
+      <input name="platform" list="known-platforms" size="14" required>
+    </label>
+    <datalist id="known-platforms">
+      {% for platform in platforms %}<option value="{{ platform }}">{% endfor %}
+    </datalist>
+    <label class="inline">Link <input type="url" name="url" size="30" placeholder="link to the post"></label>
+    <label class="inline">On <input type="date" name="posted_on" value="{{ today.isoformat() }}" required></label>
+    <button class="btn btn-primary" type="submit">Record publish</button>
+  </form>
+</section>

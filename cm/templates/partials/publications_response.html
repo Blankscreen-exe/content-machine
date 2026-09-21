@@ -1,0 +1,7 @@
+{# The reply to recording or removing a publication: the panel itself, plus the heading
+   when the stage it shows has changed, and the due count. #}
+{% include "partials/publications.html" %}
+{% if redraw_head %}
+  {% with head_oob = true, oob = false %}{% include "partials/piece_head.html" %}{% endwith %}
+{% endif %}
+{% with oob = true %}{% include "partials/due_badge.html" %}{% endwith %}

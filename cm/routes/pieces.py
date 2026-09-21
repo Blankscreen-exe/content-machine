@@ -8,11 +8,12 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlmodel import Session
 
-from .. import crud, files, terminals, workspace
+from .. import crud, files, schedule, terminals, workspace
 from ..database import get_session
 from ..models import PieceType, Stage
 from ..templating import STAGES, TYPES, page_context, templates
 from .editor import pane_context
+from .publications import publications_context
 from .params import OptionalId
 
 router = APIRouter(prefix="/pieces")
@@ -37,6 +38,7 @@ def _list_context(request: Request, session: Session, brand_id: int | None,
         "stages": STAGES,
         "types": TYPES,
         "today": date.today(),
+        "due": schedule.due(session, date.today(), brand_id),
     }
 
 
@@ -85,10 +87,10 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
         "idea": crud.get_idea(session, piece.idea_id) if piece.idea_id else None,
         "folder": folder,
         "images": files.images(folder),
-        "publications": crud.list_publications(session, piece.id),
         "stages": STAGES,
         "types": TYPES,
     }
+    context |= publications_context(session, piece)
     context |= pane_context(piece, folder, main, text, fingerprint)
     return templates.TemplateResponse(request, "piece.html", context)
 
@@ -136,7 +138,8 @@ def piece_update(piece_id: int, request: Request, session: Session = Depends(get
         return templates.TemplateResponse(
             request, "partials/piece_head.html",
             {"request": request, "piece": piece, "oob": True,
-             "idea": crud.get_idea(session, piece.idea_id) if piece.idea_id else None},
+             "idea": crud.get_idea(session, piece.idea_id) if piece.idea_id else None,
+             "due": schedule.due(session, date.today(), piece.brand_id)},
         )
     return _refresh(request, session, view_brand_id)
 
@@ -197,7 +200,12 @@ def piece_delete(piece_id: int, request: Request, session: Session = Depends(get
     if not piece:
         raise HTTPException(404, "piece not found")
     own_brand_id = piece.brand_id
-    crud.delete_piece(session, piece)
+    try:
+        workspace.delete_piece(session, piece)
+    except OSError as exc:
+        raise HTTPException(409, f"Its folder could not be moved to the trash ({exc.strerror}). "
+                                 "Close anything using it, such as a terminal session, "
+                                 "and try again.") from exc
     if origin == "page":
         # the page being looked at no longer exists, so go back to its brand's list
         return Response(status_code=204,

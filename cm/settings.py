@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     def content_dir(self) -> Path:
         return self.workspace / "content"
 
+    @property
+    def trash_dir(self) -> Path:
+        """Where a deleted piece's folder goes, so deleting the entry never deletes the work."""
+        return self.workspace / "trash"
+
 
 @lru_cache
 def get_settings() -> Settings:
