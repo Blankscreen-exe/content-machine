@@ -4,13 +4,21 @@ The app can be served on the local network (`cm serve --lan`) so a phone or anot
 computer can use it. Starting programs or opening windows is only allowed for requests
 from this machine itself: nothing on the network should be able to do that here, and a
 window opened here would not be seen by someone on another device anyway.
+
+Opening the --lan link on this same machine still counts as local: the OS then routes
+the connection through the LAN interface, so it arrives as this machine's own LAN
+address rather than as loopback.
 """
 from __future__ import annotations
 
 from fastapi import Request
 
+from ..net import lan_ip
+
 LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
 
 
 def from_this_machine(request: Request) -> bool:
-    return request.client is not None and request.client.host in LOCAL_HOSTS
+    if request.client is None:
+        return False
+    return request.client.host in LOCAL_HOSTS or request.client.host == lan_ip()

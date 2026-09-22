@@ -15,6 +15,7 @@ from sqlmodel import Session
 from . import choices, crud, scaffold, workspace
 from .database import engine, migrate
 from .models import Platform, Stage
+from .net import lan_ip
 from .security import rotate_token, token
 from .settings import get_settings
 
@@ -37,7 +38,7 @@ def serve(
         typer.echo(f"Close it, or start this one elsewhere: cm serve --port {port + 1}")
         raise typer.Exit(1)
 
-    shown = _lan_ip() if lan else settings.host
+    shown = lan_ip() if lan else settings.host
     typer.echo(f"content machine: http://{shown}:{port}/?t={token()}")
     if lan:
         typer.echo("reachable on this network - open that address on your phone")
@@ -158,20 +159,6 @@ def _port_is_free(host: str, port: int) -> bool:
             return True
         except OSError:
             return False
-
-
-def _lan_ip() -> str:
-    """This machine's address on the local network."""
-    import socket
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        sock.connect(("8.8.8.8", 80))  # no packets are sent; this just picks the interface
-        return sock.getsockname()[0]
-    except OSError:
-        return "127.0.0.1"
-    finally:
-        sock.close()
 
 
 if __name__ == "__main__":
