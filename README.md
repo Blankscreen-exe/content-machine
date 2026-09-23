@@ -7,6 +7,32 @@ nothing is sent anywhere.
 It replaces a Notion database, so it has to do three things Notion could not: work offline,
 raise its own reminders, and sit next to the files and generation steps that produce the work.
 
+## What it looks like
+
+The screenshots show made-up brands and content; real work never leaves the workspace.
+
+**Dashboard** — what is due now, what is in progress, what to start next, what went out last.
+
+![The dashboard](screenshots/dashboard.png)
+
+**Pieces** — every piece with its stage, paged and sortable, with a search that looks inside
+the drafts themselves.
+
+![The pieces list](screenshots/pieces.png)
+
+**A piece** — its drafts in a markdown editor, the files that go with it in a sidebar, and
+where it was published underneath.
+
+![One piece, with its drafts and assets](screenshots/piece.png)
+
+**Calendar** — what is due, then the month laid out by due date, coloured by stage.
+
+![The calendar](screenshots/calendar.png)
+
+**Manage** — brands with their voice and profile, each brand's modes, piece types, platforms.
+
+![Managing a brand's modes](screenshots/manage-modes.png)
+
 ## Running it
 
 ```sh
@@ -137,6 +163,12 @@ workspace/        your content and the database (not in git)
 `static/base.css` holds structure and the responsive rules; a theme file holds only colours,
 fonts and borders. Drop a stylesheet into `static/themes/` and it appears in the theme picker;
 the choice is stored in the database, so it follows you to whatever device you open it on.
+
+The same page in the three themes that ship with it — modern, 1996 and scholar:
+
+| Modern | 1996 | Scholar |
+|---|---|---|
+| ![Modern](screenshots/theme-modern.png) | ![1996](screenshots/theme-1996.png) | ![Scholar](screenshots/theme-scholar.png) |
 
 ## Data model
 

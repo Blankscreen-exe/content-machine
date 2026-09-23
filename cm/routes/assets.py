@@ -7,6 +7,8 @@ assets.py accepts, and answers by redrawing itself.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from sqlmodel import Session
@@ -14,6 +16,7 @@ from sqlmodel import Session
 from .. import assets, crud, desktop, files, workspace
 from ..database import get_session
 from ..models import Piece
+from ..settings import get_settings
 from ..templating import templates
 from .local import from_this_machine
 
@@ -77,7 +80,7 @@ def trash(piece_id: int, name: str, request: Request, session: Session = Depends
         moved = workspace.trash_asset(session, piece, name)
     except (files.UnsafePath, FileNotFoundError) as exc:
         raise HTTPException(404, str(exc)) from exc
-    return _panel(request, session, piece, message=f"Moved {name} to {moved.parent}.")
+    return _panel(request, session, piece, message=f"Moved {name} to {_in_workspace(moved.parent)}.")
 
 
 @router.post("/open", response_class=HTMLResponse)
@@ -92,6 +95,13 @@ def open_folder(piece_id: int, request: Request, session: Session = Depends(get_
     except desktop.DesktopError as exc:
         return _panel(request, session, piece, problems=[str(exc)])
     return _panel(request, session, piece, message="Opened the folder.")
+
+
+def _in_workspace(path: Path) -> str:
+    """A path as it reads inside the workspace: the panel already shows the full folder,
+    and an absolute path does not fit the sidebar."""
+    workspace_dir = get_settings().workspace
+    return str(path.relative_to(workspace_dir)) if path.is_relative_to(workspace_dir) else str(path)
 
 
 def _piece(session: Session, piece_id: int) -> Piece:

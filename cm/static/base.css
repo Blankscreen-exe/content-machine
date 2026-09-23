@@ -82,6 +82,8 @@ body { margin: 0; }
 .panel h2 { margin: 0 0 12px; }
 .panel .hint { margin: 10px 0 0; }
 .hint code { overflow-wrap: anywhere; }   /* a workspace path must not widen the page */
+/* messages carry file names and paths, which have nothing a browser would break on */
+.saved, .message { overflow-wrap: anywhere; }
 .panel .inline-form { margin-bottom: 4px; }
 
 /* a borderless table for showing paths and other read-only facts */

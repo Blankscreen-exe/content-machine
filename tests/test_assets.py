@@ -141,7 +141,12 @@ def test_deleting_an_asset_moves_it_to_the_trash(client: TestClient, session: Se
 
     response = client.post(f"/pieces/{piece.id}/assets/cover.png/delete")
 
-    assert response.status_code == 200 and "Moved cover.png" in response.text
+    assert response.status_code == 200
+    # relative to the workspace: the panel already shows the full folder, and the sidebar is narrow
+    page = response.text
+    start = page.index('<p class="saved">')
+    said = page[start:page.index("</p>", start)]
+    assert "Moved cover.png to trash" in said and str(workspace_dir) not in said
     assert not (_assets_folder(session, piece) / "cover.png").exists()
     trashed = list((workspace_dir / "trash").rglob("cover.png"))
     assert len(trashed) == 1 and trashed[0].read_bytes() == PNG
