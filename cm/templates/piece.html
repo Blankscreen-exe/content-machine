@@ -23,10 +23,16 @@
 <div id="session-message"></div>
 <div id="piece-editor"></div>
 
-{% include "partials/editor_pane.html" %}
-
-{% include "partials/assets_panel.html" %}
-
-{% include "partials/publications.html" %}
+{# the drafts, with the piece's files beside them: the images and PDFs belong to what is
+   being written, and stay in view while writing #}
+<div class="workbench">
+  <div class="workbench-main">
+    {% include "partials/editor_pane.html" %}
+    {% include "partials/publications.html" %}
+  </div>
+  <aside class="workbench-side">
+    {% include "partials/assets_panel.html" %}
+  </aside>
+</div>
 
 {% endblock %}

@@ -44,9 +44,27 @@ body { margin: 0; }
 .file-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
 .file-tabs a { cursor: pointer; padding: 6px 12px; }
 .draft { width: 100%; min-height: 460px; font-family: Consolas, monospace; line-height: 1.5; }
-/* assets: a grid of cards, then the drop zone */
+/* the writing area, with the piece's assets in a sidebar beside it */
+.workbench { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 18px;
+             align-items: start; }
+.workbench-main, .workbench-side { min-width: 0; }
+.workbench .editor-pane { margin-top: 0; }
+/* only while it really is a sidebar: one file per row, each image as wide as the column
+   and as tall as it needs to be, with the list scrolling under the controls above it */
+@media (min-width: 901px) {
+  .workbench-side .asset-list { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .workbench-side .asset-preview { height: auto; }
+  /* as wide as the column, as tall as it needs, but never taking over the sidebar */
+  .workbench-side .asset-preview img { width: 100%; height: auto; max-height: 320px;
+                                       object-fit: contain; }
+  .workbench-side .asset-file { min-height: 64px; }
+  .workbench-side .asset-scroll { max-height: 460px; overflow-y: auto; }
+  .workbench-side .drop-zone { padding: 10px; }
+}
+
+/* assets: the drop zone and the folder, then the files below them */
 .asset-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
-              list-style: none; margin: 0 0 14px; padding: 0; }
+              list-style: none; margin: 14px 0 0; padding: 0; }
 .asset { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .asset-preview { display: flex; align-items: center; justify-content: center; height: 120px;
                  text-decoration: none; }
@@ -63,6 +81,7 @@ body { margin: 0; }
 .panel { margin: 0 0 18px; padding: 14px 16px; }
 .panel h2 { margin: 0 0 12px; }
 .panel .hint { margin: 10px 0 0; }
+.hint code { overflow-wrap: anywhere; }   /* a workspace path must not widen the page */
 .panel .inline-form { margin-bottom: 4px; }
 
 /* a borderless table for showing paths and other read-only facts */
@@ -162,6 +181,11 @@ input, textarea, select { width: 100%; }
 .bar select { width: auto; }
 textarea { resize: vertical; }
 .btn { cursor: pointer; min-height: 38px; padding: 6px 14px; }
+
+/* ---------- narrow window: the assets sidebar moves below the drafts ---------- */
+@media (max-width: 900px) {
+  .workbench { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* ---------- phone: the table becomes stacked cards ---------- */
 @media (max-width: 760px) {

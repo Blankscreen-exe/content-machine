@@ -6,7 +6,8 @@
      save_url      where Save posts;    open_url  where Reload fetches the saved version
      text, fingerprint, editable, readonly_reason, message, conflict
      upload_url, assets_url             only where pasted images have somewhere to go
-     char_limit                         the most characters the text should run to, if any #}
+     char_limit                         the most characters the text should run to, if any
+     open_folder_url, can_open_folder   only for a piece's drafts, on this machine #}
 <section class="editor-pane" id="editor-pane">
   <nav class="file-tabs">
     {% for tab in pane.tabs %}
@@ -39,6 +40,12 @@
         <span class="hint">{{ pane.readonly_reason }}</span>
       {% endif %}
 
+      {% if pane.can_open_folder and pane.open_folder_url %}
+        {# reports into the message area, so the pane and anything unsaved in it stay put #}
+        <button class="btn" type="button" title="The folder these drafts are in"
+                hx-post="{{ pane.open_folder_url }}"
+                hx-target="#session-message" hx-swap="innerHTML">Open folder</button>
+      {% endif %}
       <button class="btn" type="button" data-copy="markdown">Copy as markdown</button>
       <button class="btn" type="button" data-copy="plain">Copy as plain text</button>
 

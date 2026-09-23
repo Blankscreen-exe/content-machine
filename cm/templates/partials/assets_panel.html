@@ -1,32 +1,10 @@
 {# The files that go with a piece. Uploads come through the browser, so they work from any
-   device; "Open folder" only shows on the machine running the app, where it can be seen. #}
+   device; "Open folder" only shows on the machine running the app, where it can be seen.
+
+   The things there is only one of — the drop zone, the folder, the message — sit at the
+   top, so they stay put as the list of files below them grows. #}
 <section class="panel" id="assets">
   <h2>Assets</h2>
-
-  {% if assets %}
-    <ul class="asset-list">
-      {% for asset in assets %}
-        {% set url = "/pieces/" ~ piece.id ~ "/assets/" ~ (asset.name | urlencode) %}
-        <li class="asset">
-          {% if asset.is_image %}
-            <a class="asset-preview" href="{{ url }}" target="_blank" rel="noopener"><img src="{{ url }}" alt="{{ asset.name }}"></a>
-          {% else %}
-            <a class="asset-preview asset-file" href="{{ url }}" download>{{ asset.kind }}</a>
-          {% endif %}
-          <code class="asset-name">assets/{{ asset.name }}</code>
-          <span class="hint">{{ asset.size | filesize }}</span>
-          <span class="asset-actions">
-            <a class="btn" href="{{ url }}" download>Download</a>
-            <button class="btn btn-danger" type="button"
-                    hx-post="{{ url }}/delete" hx-target="#assets" hx-swap="outerHTML"
-                    hx-confirm="Move {{ asset.name }} to the workspace trash?">Delete</button>
-          </span>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p class="hint">No assets yet.</p>
-  {% endif %}
 
   <form class="drop-zone" hx-post="/pieces/{{ piece.id }}/assets/files" hx-encoding="multipart/form-data"
         hx-target="#assets" hx-swap="outerHTML" data-drop-zone>
@@ -42,12 +20,40 @@
   {% if message %}<p class="saved">{{ message }}</p>{% endif %}
   {% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
 
+  {% if can_open_folder %}
+    <p><button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/assets/open"
+               hx-target="#assets" hx-swap="outerHTML">Open folder</button></p>
+  {% endif %}
+
   <p class="hint">
     Images do not travel through copy and paste — upload them again on the platform.
     Folder: <code>{{ assets_folder }}</code>
-    {% if can_open_folder %}
-      <button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/assets/open"
-              hx-target="#assets" hx-swap="outerHTML">Open folder</button>
-    {% endif %}
   </p>
+
+  {% if assets %}
+    <div class="asset-scroll">
+      <ul class="asset-list">
+        {% for asset in assets %}
+          {% set url = "/pieces/" ~ piece.id ~ "/assets/" ~ (asset.name | urlencode) %}
+          <li class="asset">
+            {% if asset.is_image %}
+              <a class="asset-preview" href="{{ url }}" target="_blank" rel="noopener"><img src="{{ url }}" alt="{{ asset.name }}"></a>
+            {% else %}
+              <a class="asset-preview asset-file" href="{{ url }}" download>{{ asset.kind }}</a>
+            {% endif %}
+            <code class="asset-name">assets/{{ asset.name }}</code>
+            <span class="hint">{{ asset.size | filesize }}</span>
+            <span class="asset-actions">
+              <a class="btn" href="{{ url }}" download>Download</a>
+              <button class="btn btn-danger" type="button"
+                      hx-post="{{ url }}/delete" hx-target="#assets" hx-swap="outerHTML"
+                      hx-confirm="Move {{ asset.name }} to the workspace trash?">Delete</button>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <p class="hint">No assets yet.</p>
+  {% endif %}
 </section>

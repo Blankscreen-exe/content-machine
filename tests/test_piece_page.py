@@ -1,11 +1,15 @@
 """The piece page and its editor, over HTTP."""
 from __future__ import annotations
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from cm import crud, workspace
+from cm import crud, desktop, workspace
+from cm.app import create_app
+from cm.database import get_session
 from cm.settings import get_settings
 from helpers import type_id
 
@@ -120,3 +124,54 @@ def test_the_count_carries_the_types_limit(client: TestClient, session: Session,
     post = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "linkedin post"),
                              title="A post")
     assert 'data-limit="3000"' in client.get(f"/pieces/{post.id}").text
+
+
+def test_open_folder_opens_the_piece_folder_from_this_machine(session: Session, piece, monkeypatch):
+    """The drafts are in the piece folder; the Assets panel's button opens assets/ inside it."""
+    opened = []
+    monkeypatch.setattr(desktop, "open_folder", lambda path: opened.append(path))
+    app = create_app(run_migrations=False)
+    app.dependency_overrides[get_session] = lambda: session
+    cookies = {"cm_token": os.environ["CM_TOKEN"]}
+
+    with TestClient(app, cookies=cookies, client=("192.168.1.20", 50000)) as remote:
+        assert "Open folder" not in remote.get(f"/pieces/{piece.id}").text
+        refused = remote.post(f"/pieces/{piece.id}/files/open")
+        assert "only be opened on the machine running the app" in refused.text
+
+    with TestClient(app, cookies=cookies, client=("127.0.0.1", 50000)) as local:
+        page = local.get(f"/pieces/{piece.id}").text
+        assert page.count("Open folder") == 2            # the drafts folder, and assets/
+        assert f'hx-post="/pieces/{piece.id}/files/open"' in page
+        assert "Opened" in local.post(f"/pieces/{piece.id}/files/open").text
+
+    assert opened == [workspace.piece_folder(session, piece)]
+
+
+def test_opening_the_folder_leaves_the_writing_pane_alone(client: TestClient, piece):
+    """It answers with a message, not a new pane: a redrawn pane would lose unsaved typing."""
+    response = client.post(f"/pieces/{piece.id}/files/open")
+    assert 'id="editor-pane"' not in response.text
+
+
+def test_the_assets_panel_sits_beside_the_drafts(client: TestClient, piece):
+    """Side by side while there is room; the stylesheet stacks them on a narrow window."""
+    page = client.get(f"/pieces/{piece.id}").text
+    workbench = page[page.index('<div class="workbench">'):page.index("</aside>")]
+
+    assert 'id="editor-pane"' in workbench and 'id="assets"' in workbench
+    assert workbench.index('id="editor-pane"') < workbench.index('<aside class="workbench-side">')
+    # the publish records follow the drafts, in the same column
+    assert 'id="publications"' in workbench
+    assert workbench.index('id="publications"') < workbench.index('<aside class="workbench-side">')
+
+
+def test_the_assets_sidebar_keeps_its_controls_above_the_files(client: TestClient, session: Session,
+                                                               piece):
+    """There is one drop zone and one folder button, however many files there are."""
+    client.post(f"/pieces/{piece.id}/assets/files",
+                files=[("uploads", ("cover.png", b"not really a png", "image/png"))])
+    page = client.get(f"/pieces/{piece.id}").text
+    panel = page[page.index('id="assets"'):page.index("</aside>")]
+
+    assert panel.index("drop-zone") < panel.index("asset-scroll")

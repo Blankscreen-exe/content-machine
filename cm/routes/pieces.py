@@ -108,7 +108,7 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
     }
     context |= panel_context(request, session, piece)
     context |= publications_context(session, piece)
-    context |= pane_context(piece, folder, opened, text, fingerprint)
+    context |= pane_context(request, piece, folder, opened, text, fingerprint)
     return templates.TemplateResponse(request, "piece.html", context)
 
 
