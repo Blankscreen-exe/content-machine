@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sqlmodel import Session
 
-from . import assets, crud
+from . import assets, crud, video_brief
 from .dates import local_date
 from .models import Idea, Piece
 from .settings import get_settings
@@ -133,6 +133,9 @@ def write_brief(session: Session, piece: Piece) -> Path:
     if others:
         lines += ["", "## Other pieces from this idea"]
         lines += [f"- {p.type.name} — {p.stage.value}" for p in others]
+
+    if piece.type.video:
+        lines += video_brief.section(piece, folder, brand.slug)
 
     # The brand's own documents go last, as they have headings of their own.
     if brand.voice.strip():

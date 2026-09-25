@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlmodel import Session, SQLModel, create_engine  # noqa: E402
 from sqlmodel.pool import StaticPool  # noqa: E402
 
-from cm import choices, crud  # noqa: E402
+from cm import choices, crud, terminals  # noqa: E402
 from cm.app import create_app  # noqa: E402
 from cm.database import enforce_foreign_keys, get_session  # noqa: E402
 from cm.models import PieceType  # noqa: E402
@@ -46,3 +46,27 @@ def client_fixture(session: Session):
 @pytest.fixture(name="brand")
 def brand_fixture(session: Session):
     return crud.create_brand(session, "personal", "Example Person")
+
+
+@pytest.fixture(name="local_client")
+def local_client_fixture(session: Session):
+    """A client that looks like it came from this machine."""
+    app = create_app(run_migrations=False)
+    app.dependency_overrides[get_session] = lambda: session
+    with TestClient(app, cookies={"cm_token": TEST_TOKEN}, client=("127.0.0.1", 45678)) as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(name="launches")
+def launches_fixture(monkeypatch):
+    """Capture what would have been launched instead of opening a real terminal."""
+    calls = []
+
+    def fake_open(cwd, title, command, key=None):
+        calls.append({"cwd": cwd, "title": title, "command": command, "key": key})
+        return ["fake"]
+
+    monkeypatch.setattr(terminals, "open_terminal", fake_open)
+    monkeypatch.setattr(terminals, "claude_command", lambda prompt: ["claude", prompt])
+    return calls

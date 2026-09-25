@@ -153,6 +153,21 @@ takes to say. The file is read strictly: under the editor it shows what it will 
 frames · vertical 1080×1920 · captions on") or lists every problem with its frame and line.
 It is always saved as written, so nothing typed is lost to a mistake.
 
+### Building
+
+**Build video**, in a video piece's Video panel, opens a session on this machine with the
+`video` skill. It reads `brief.md`, whose Video section gives the frames as the render will
+read them (or what must be fixed first), where each sits on the timeline, and the imports
+for the brand's kit and images, ready to paste. The skill writes `video/Video.tsx` with the
+kit only: what the kit lacks is added to the kit, so every video keeps the brand's look.
+It renders a draft, looks at stills from it, and leaves the final render until the voice
+is on. A brand without a kit is asked about first; its kit starts from the example.
+
+Who does what changes with it: in the workspace's `CLAUDE.md`, videos and the brand's kit
+are the session's work, while images, diagrams and the voice stay yours. An existing
+workspace keeps its own `CLAUDE.md` (`cm init` never overwrites it), so copy that change
+across by hand, or run `cm init --force` if you have not edited the starter files.
+
 ### Rendering
 
 A piece's video is drawn by `video/Video.tsx` in its folder, which exports a component
@@ -244,6 +259,7 @@ cm/
   video.py        running Remotion: the only module that knows how a video is rendered
   renders.py      a video piece rendered into its assets: drafts replaced, finals kept
   render_jobs.py  renders started from the page, run in the background and followed
+  video_brief.py  the Video section of a video piece's brief
   remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder

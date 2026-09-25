@@ -181,6 +181,7 @@ def piece_stage(piece_id: int, request: Request, session: Session = Depends(get_
 SESSION_PROMPT = "Read brief.md first, then help me with this piece."
 DERIVE_PROMPT = ("Read brief.md first, then use the derive skill to make this piece "
                  "from the one it was made from.")
+VIDEO_PROMPT = "Read brief.md first, then use the video skill to build this piece's video from frames.md."
 REMOTE_SESSION = "Terminal sessions can only be started on the machine running the app."
 
 
@@ -196,6 +197,19 @@ def piece_session(piece_id: int, request: Request, session: Session = Depends(ge
     if not piece:
         raise HTTPException(404, "piece not found")
     return _session_message(request, _open_session(session, piece, SESSION_PROMPT))
+
+
+@router.post("/{piece_id}/build-video", response_class=HTMLResponse)
+def piece_build_video(piece_id: int, request: Request, session: Session = Depends(get_session)):
+    """Open a session that builds a video piece's video from its frames, on this machine only."""
+    if not from_this_machine(request):
+        return _session_message(request, REMOTE_SESSION)
+    piece = crud.get_piece(session, piece_id)
+    if not piece:
+        raise HTTPException(404, "piece not found")
+    if not piece.type.video:
+        raise HTTPException(400, f"{piece.title} is not a video piece")
+    return _session_message(request, _open_session(session, piece, VIDEO_PROMPT))
 
 
 @router.post("/{piece_id}/derive", response_class=HTMLResponse)

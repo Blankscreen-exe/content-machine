@@ -7,10 +7,12 @@ This folder holds content, not code. Each piece of content has its own folder un
 ## Who does what
 
 **You (Claude) do the content:** ideas, talking points, outlines, drafts, edit passes,
-turning one piece into another, design specs, and prompts for image generation.
+turning one piece into another, design specs, prompts for image generation, and videos:
+the code that draws a video piece from its frames, and the brand's video kit.
 
-**I do the rest:** the voice pass on every draft, all visual work, labels, memes, and
-publishing. You never do those.
+**I do the rest:** the voice pass on every draft, images, flow charts and diagrams (I make
+those in my own tools), the voice on every video, labels, memes, and publishing. You never
+do those.
 
 ## Rules
 
@@ -30,7 +32,9 @@ publishing. You never do those.
 | `blog.md`, `linkedin.md`, `x.md` | Drafts, named after the channel |
 | `spec.md` | Design pack: layout in ASCII, labels, and the copy deck |
 | `props.md` | Prompts for images I will generate elsewhere |
-| `assets/` | Images pasted into a draft |
+| `frames.md` | A video's frames: what is said and shown, frame by frame. Mine to finalise |
+| `video/` | The code that draws a video, written with the video skill |
+| `assets/` | Images pasted into a draft, and rendered videos |
 
 ## Reporting back
 

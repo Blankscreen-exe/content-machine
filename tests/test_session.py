@@ -1,49 +1,19 @@
 """Opening a terminal session for a piece."""
 from __future__ import annotations
 
-import os
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from cm import crud, terminals
-from cm.app import create_app
-from cm.database import get_session
 from cm.settings import get_settings
 from helpers import type_id
-
-TEST_TOKEN = os.environ["CM_TOKEN"]      # set by conftest before anything is imported
 
 
 @pytest.fixture(autouse=True)
 def workspace_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(get_settings(), "workspace", tmp_path)
     return tmp_path
-
-
-@pytest.fixture(name="local_client")
-def local_client_fixture(session: Session):
-    """A client that looks like it came from this machine."""
-    app = create_app(run_migrations=False)
-    app.dependency_overrides[get_session] = lambda: session
-    with TestClient(app, cookies={"cm_token": TEST_TOKEN}, client=("127.0.0.1", 45678)) as client:
-        yield client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(name="launches")
-def launches_fixture(monkeypatch):
-    """Capture what would have been launched instead of opening a real terminal."""
-    calls = []
-
-    def fake_open(cwd, title, command, key=None):
-        calls.append({"cwd": cwd, "title": title, "command": command, "key": key})
-        return ["fake"]
-
-    monkeypatch.setattr(terminals, "open_terminal", fake_open)
-    monkeypatch.setattr(terminals, "claude_command", lambda prompt: ["claude", prompt])
-    return calls
 
 
 def test_remote_callers_are_refused(client: TestClient, session: Session, brand, launches):

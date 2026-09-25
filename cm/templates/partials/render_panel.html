@@ -5,7 +5,11 @@
 <section class="panel" id="render"
          {% if job and job.running %}hx-get="/pieces/{{ piece.id }}/render?following=true"
          hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
-  <h2>Render</h2>
+  <h2>Video</h2>
+
+  {# a session on this machine writes video/Video.tsx from the frames; results go to the message area #}
+  <p><button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/build-video"
+             hx-target="#session-message" hx-swap="innerHTML">Build video</button></p>
 
   {% if job and job.running %}
     <p class="render-progress">{{ 'Draft' if job.draft else 'Final' }}: {{ job.progress }} &middot; {{ job.elapsed }}</p>
@@ -23,6 +27,7 @@
   {% endif %}
   {% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
 
-  <p class="hint">Renders the saved {{ piece.type.main_file }}. A draft is half size and quick,
+  <p class="hint">Build video opens a session that writes the video from the frames, with
+    the brand's kit. Render uses the saved {{ piece.type.main_file }}. A draft is half size and quick,
     and replaces <code>draft.mp4</code>; a final is full size and kept alongside earlier ones.</p>
 </section>
