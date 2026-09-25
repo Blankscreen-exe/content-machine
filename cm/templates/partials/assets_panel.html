@@ -3,7 +3,8 @@
 
    The things there is only one of — the drop zone, the folder, the message — sit at the
    top, so they stay put as the list of files below them grows. #}
-<section class="panel" id="assets">
+<section class="panel" id="assets"
+         hx-get="/pieces/{{ piece.id }}/assets" hx-trigger="assets-changed from:body" hx-swap="outerHTML">
   <h2>Assets</h2>
 
   <form class="drop-zone" hx-post="/pieces/{{ piece.id }}/assets/files" hx-encoding="multipart/form-data"

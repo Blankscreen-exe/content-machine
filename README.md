@@ -166,11 +166,18 @@ Timing comes from `frames.md`: a frame with a length runs exactly that long; oth
 runs as long as its script takes to say at about 150 words a minute, plus a breath. The
 voice is recorded to this pace afterwards.
 
-`cm render <id>` renders at full size into the piece's assets as `video.mp4`, keeping
-earlier ones as `video-2.mp4` and on. `--draft` renders at half size, quickly, replacing
-`draft.mp4`. Rendering never changes the piece's stage. A render works in its own folder
-under `.cm/renders/`, which is removed once the video is in place; if the render fails,
-the folder is kept and the error says what Remotion said, without its stack trace.
+The Render panel on a video piece's page, or `cm render <id>`, renders the saved frames at
+full size into the piece's assets as `video.mp4`, keeping earlier ones as `video-2.mp4` and
+on. A draft (`--draft`) renders at half size, quickly, replacing `draft.mp4`. Rendering
+never changes the piece's stage.
+
+From the page, the render runs in the background and the panel shows how far it has got;
+when it is done the video appears in the Assets panel. Any device can start one, since it
+renders on the machine running the app, and a piece renders once at a time from the page.
+Each render works in a folder of its own under `.cm/renders/`, so a render from the page and
+one from the terminal never collide. The folder is removed once the video is in place; if
+the render fails, it is kept and the error says what Remotion said, without its stack
+trace, and names the cause where Remotion does not.
 
 ### The video toolchain
 
@@ -236,6 +243,7 @@ cm/
   timing.py       how long each frame runs, and the props a video is handed
   video.py        running Remotion: the only module that knows how a video is rendered
   renders.py      a video piece rendered into its assets: drafts replaced, finals kept
+  render_jobs.py  renders started from the page, run in the background and followed
   remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder

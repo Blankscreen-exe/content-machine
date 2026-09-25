@@ -35,6 +35,12 @@ def panel_context(request: Request, session: Session, piece: Piece) -> dict:
     }
 
 
+@router.get("", response_class=HTMLResponse)
+def panel(piece_id: int, request: Request, session: Session = Depends(get_session)):
+    """The panel on its own, for redrawing it when something else has added a file."""
+    return _panel(request, session, _piece(session, piece_id))
+
+
 @router.post("")
 def paste(piece_id: int, file: UploadFile, session: Session = Depends(get_session)):
     """An image pasted or dropped into the editor: store it, return the path for the markdown."""

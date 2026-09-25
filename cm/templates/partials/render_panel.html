@@ -1,0 +1,28 @@
+{# Rendering a video piece: start a render, and follow it while it runs. While one is
+   running the panel fetches itself every second; `following` tells the server this panel
+   saw it running, so the Assets panel can be told to redraw once it is done. #}
+{% set job = render_job %}
+<section class="panel" id="render"
+         {% if job and job.running %}hx-get="/pieces/{{ piece.id }}/render?following=true"
+         hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
+  <h2>Render</h2>
+
+  {% if job and job.running %}
+    <p class="render-progress">{{ 'Draft' if job.draft else 'Final' }}: {{ job.progress }} &middot; {{ job.elapsed }}</p>
+  {% else %}
+    <form class="inline-form" hx-post="/pieces/{{ piece.id }}/render" hx-target="#render" hx-swap="outerHTML">
+      <button class="btn" type="submit" name="draft" value="true">Render draft</button>
+      <button class="btn btn-primary" type="submit">Render final</button>
+    </form>
+  {% endif %}
+
+  {% if job and job.state == "done" %}
+    <p class="saved">Rendered <code>assets/{{ job.result.name }}</code> in {{ job.elapsed }}.</p>
+  {% elif job and job.state == "failed" %}
+    <pre class="message render-error">{{ job.error }}</pre>
+  {% endif %}
+  {% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
+
+  <p class="hint">Renders the saved {{ piece.type.main_file }}. A draft is half size and quick,
+    and replaces <code>draft.mp4</code>; a final is full size and kept alongside earlier ones.</p>
+</section>

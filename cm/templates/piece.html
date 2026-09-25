@@ -31,6 +31,7 @@
     {% include "partials/publications.html" %}
   </div>
   <aside class="workbench-side">
+    {% if piece.type.video %}{% include "partials/render_panel.html" %}{% endif %}
     {% include "partials/assets_panel.html" %}
   </aside>
 </div>

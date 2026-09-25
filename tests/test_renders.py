@@ -57,6 +57,13 @@ def test_finals_are_all_kept_and_the_job_is_cleared(session: Session, short, ren
     assert not rendered[0]["job"].exists()
 
 
+def test_each_render_has_a_job_folder_of_its_own(session: Session, short, rendered):
+    renders.render_piece(session, short)
+    renders.render_piece(session, short)
+    first, second = rendered[0]["job"], rendered[1]["job"]
+    assert first != second and first.name.startswith(f"{short.id}-") and second.name.startswith(f"{short.id}-")
+
+
 def test_a_draft_is_half_size_and_replaces_the_last_draft(session: Session, short, rendered):
     renders.render_piece(session, short, draft=True)
     draft = renders.render_piece(session, short, draft=True)

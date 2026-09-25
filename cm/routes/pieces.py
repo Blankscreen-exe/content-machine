@@ -17,6 +17,7 @@ from .editor import opening_text, pane_context
 from .local import from_this_machine
 from .params import OptionalId
 from .publications import publications_context
+from .render import panel_context as render_context
 
 router = APIRouter(prefix="/pieces")
 
@@ -107,6 +108,8 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
         "derive_types": [t for t in choices.options(session, PieceType) if t.id != piece.type_id],
     }
     context |= panel_context(request, session, piece)
+    if piece.type.video:
+        context |= render_context(piece)
     context |= publications_context(session, piece)
     context |= pane_context(request, piece, folder, opened, text, fingerprint)
     return templates.TemplateResponse(request, "piece.html", context)
