@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlmodel import Session
 
 from .. import assets, crud, files, frames, renders, resources, timing, voice, workspace
@@ -21,6 +21,7 @@ from ..models import Piece
 from ..settings import get_settings
 from ..templating import page_context, templates
 from .local import opened_at_loopback
+from .serving import stored_file
 
 router = APIRouter(prefix="/pieces/{piece_id}/voice")
 
@@ -49,7 +50,7 @@ def serve_take(piece_id: int, name: str, session: Session = Depends(get_session)
         path = voice.take_path(workspace.piece_folder(session, piece), name)
     except (files.UnsafePath, FileNotFoundError) as exc:
         raise HTTPException(404, str(exc)) from exc
-    return FileResponse(path, media_type=assets.media_type(path))
+    return stored_file(path)
 
 
 @router.post("/takes/{name}/delete")
@@ -130,13 +131,19 @@ def _page(request: Request, session: Session, piece: Piece, message: str = "",
     frames_file = folder / piece.type.main_file
     scenes, frames_problems = _teleprompter(piece, folder)
     music = resources.listing(crud.brand_slug(session, piece.brand_id))["music"]
+    takes = voice.takes(folder)
+    # a file removed since it was chosen would otherwise just look unchosen, until a render fails
+    if mix.take and mix.take not in {t.name for t in takes}:
+        problems.append(f"The saved take, {mix.take}, is no longer in voice/. Choose another, or no voice, and save.")
+    if mix.music and mix.music not in {m.name for m in music}:
+        problems.append(f"The saved music, {mix.music}, is no longer in the brand's library. Choose again and save.")
     context = page_context(request, session, "pieces", piece.brand_id) | {
         "piece": piece,
         "message": message,
         "problems": problems,
         "frames_problems": frames_problems,
         "mix": mix,
-        "takes": voice.takes(folder),
+        "takes": takes,
         "music": music,
         "has_draft": draft.is_file(),
         # the draft's timings are the frames' as they were when it was rendered
@@ -144,12 +151,13 @@ def _page(request: Request, session: Session, piece: Piece, message: str = "",
                        and frames_file.stat().st_mtime > draft.stat().st_mtime,
         # a browser records only on a secure address, which over http means loopback
         "can_record": opened_at_loopback(request),
+        "record_url": str(request.url.replace(hostname="localhost", query="")),
         # what voice.js needs, handed over as JSON
         "studio": {
             "fps": FPS,
             "scenes": scenes,
             "draftUrl": f"/pieces/{piece.id}/assets/{renders.DRAFT_NAME}",
-            "takeUrls": {t.name: f"/pieces/{piece.id}/voice/takes/{t.name}" for t in voice.takes(folder)},
+            "takeUrls": {t.name: f"/pieces/{piece.id}/voice/takes/{t.name}" for t in takes},
             "musicUrls": {m.name: f"/manage/brands/{piece.brand_id}/resources/music/{m.name}" for m in music},
             "uploadUrl": f"/pieces/{piece.id}/voice/takes",
         },

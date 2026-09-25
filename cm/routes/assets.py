@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlmodel import Session
 
 from .. import assets, crud, desktop, files, workspace
@@ -19,6 +19,7 @@ from ..models import Piece
 from ..settings import get_settings
 from ..templating import templates
 from .local import from_this_machine
+from .serving import stored_file
 
 router = APIRouter(prefix="/pieces/{piece_id}/assets")
 
@@ -77,8 +78,7 @@ def serve(piece_id: int, name: str, session: Session = Depends(get_session)):
         path = assets.path_of(folder, name)
     except (files.UnsafePath, FileNotFoundError) as exc:
         raise HTTPException(404, str(exc)) from exc
-    # Answers range requests, so a video can be scrubbed without downloading all of it.
-    return FileResponse(path, media_type=assets.media_type(path))
+    return stored_file(path)
 
 
 @router.post("/{name}/delete", response_class=HTMLResponse)

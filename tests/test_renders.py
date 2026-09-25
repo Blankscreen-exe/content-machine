@@ -73,6 +73,17 @@ def test_a_draft_is_half_size_and_replaces_the_last_draft(session: Session, shor
     assert [p.name for p in draft.parent.iterdir()] == ["draft.mp4"]
 
 
+def test_a_video_that_cannot_be_put_in_place_is_kept_and_said_where(session: Session, short, rendered, monkeypatch):
+    def locked(source, target):
+        raise PermissionError("the file is in use")
+    monkeypatch.setattr(renders.os, "replace", locked)
+
+    with pytest.raises(video.RenderError, match="could not be put in") as caught:
+        renders.render_piece(session, short, draft=True)
+    kept = rendered[0]["job"] / "out.mp4"
+    assert str(kept) in str(caught.value) and kept.read_bytes() == b"render 1"
+
+
 def test_frames_that_cannot_be_read_stop_the_render(session: Session, short, rendered):
     (workspace.piece_folder(session, short) / "frames.md").write_text("Format: tall\n## Hook\nScript: Hi.", encoding="utf-8")
     with pytest.raises(frames.FramesError):

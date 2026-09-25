@@ -209,6 +209,18 @@ def test_media_is_served_with_its_own_type_whatever_the_system_says(client: Test
                       "voice.wav": "audio/wav", "voice.m4a": "audio/mp4"}
 
 
+def test_the_browser_checks_back_so_a_rerendered_draft_is_never_shown_stale(client: TestClient, session: Session, piece):
+    folder = _assets_folder(session, piece)
+    folder.mkdir(parents=True)
+    (folder / "draft.mp4").write_bytes(b"first render")
+    assert client.get(f"/pieces/{piece.id}/assets/draft.mp4").headers["cache-control"] == "no-cache"
+
+
+def test_the_apps_own_scripts_are_checked_back_on_so_an_update_reaches_the_browser(client: TestClient):
+    response = client.get("/static/voice.js")
+    assert response.status_code == 200 and response.headers["cache-control"] == "no-cache"
+
+
 def test_every_stored_type_has_a_type_to_be_served_as():
     assert set(assets.MEDIA_TYPES) == set(assets.LIMITS)
 

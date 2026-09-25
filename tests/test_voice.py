@@ -167,6 +167,44 @@ def test_recording_is_offered_only_at_a_loopback_address(local_client: TestClien
     assert f"http://localhost:8777/pieces/{short.id}/voice" in lan      # says where to go instead
 
 
+def test_the_way_to_record_is_a_working_localhost_link(local_client: TestClient, short, folder):
+    (folder / "assets" / "draft.mp4").write_bytes(b"mp4")
+    page = local_client.get(f"http://192.168.1.20/pieces/{short.id}/voice?saved=true").text
+    assert f'<a href="http://localhost/pieces/{short.id}/voice">' in page      # no port, no "None"
+
+
+def test_pressing_enter_in_a_setting_cannot_delete_a_take(client: TestClient, short, folder):
+    """A form's first submit button is what Enter presses, so no Delete may belong to it."""
+    voice.save_take(folder, "take.webm", io.BytesIO(WEBM))
+    page = client.get(f"/pieces/{short.id}/voice").text
+    start = page.index('id="mix"')
+    settings_form = page[start:page.index("</form>", start)]
+    # the only submit button of the settings form is Save; Delete belongs to its own form
+    assert settings_form.count('type="submit"') == 2 and 'form="delete-take-1"' in settings_form
+    delete_form = page[page.index('<form id="delete-take-1"'):]
+    assert f'action="/pieces/{short.id}/voice/takes/take-1.webm/delete"' in delete_form.split(">", 1)[0]
+
+
+def test_a_saved_choice_whose_file_is_gone_is_pointed_out(client: TestClient, short, folder):
+    voice.write_mix(folder, voice.Mix(take="take-4.webm", music="removed.mp3"))
+    page = client.get(f"/pieces/{short.id}/voice").text
+    assert "The saved take, take-4.webm, is no longer in voice/." in page
+    assert "The saved music, removed.mp3, is no longer in the brand&#39;s library." in page
+
+
+def test_the_draft_has_a_transport_and_a_timeline_under_it(client: TestClient, short, folder):
+    (folder / "assets" / "draft.mp4").write_bytes(b"mp4")
+    page = client.get(f"/pieces/{short.id}/voice").text
+    for part in ('id="play"', 'id="to-start"', 'id="clock"', '<canvas class="timeline" id="timeline"'):
+        assert part in page, part
+    # the teleprompter sits right under the picture, before the controls
+    assert page.index('id="teleprompter"') < page.index('id="play"') < page.index('id="timeline"')
+    scripts = [line.strip() for line in page.splitlines() if "<script src=\"/static/studio_" in line or "voice.js" in line]
+    assert scripts == ['<script src="/static/studio_sound.js" defer></script>',
+                       '<script src="/static/studio_timeline.js" defer></script>',
+                       '<script src="/static/voice.js" defer></script>']      # in the order they rely on
+
+
 def test_the_teleprompter_is_handed_the_frames_as_saved(client: TestClient, short):
     page = client.get(f"/pieces/{short.id}/voice").text
     data = json.loads(page.split('id="studio-data">', 1)[1].split("</script>", 1)[0])

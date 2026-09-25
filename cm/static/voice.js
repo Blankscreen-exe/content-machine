@@ -1,13 +1,14 @@
-// The Voice page: recording a take over the draft, the teleprompter that says what to read
-// and when, playing the take lined up with the draft as a render would, and the waveform
-// of the chosen take with its trimmed parts shaded.
+// The Voice page: the draft with a transport and a timeline under it, the teleprompter that
+// says what to read and when, and recording a take over the draft.
 //
-// The server keeps what is saved; this only plays and records. Play with voice reads the
-// form as it stands, so a change can be heard before it is saved.
+// The server keeps what is saved; this only plays and records. Playback reads the form as
+// it stands, so a change can be heard before it is saved. The sound itself is
+// studio_sound.js; the strip under the video is studio_timeline.js.
 (function () {
   const dataElement = document.getElementById("studio-data");
   if (!dataElement) return;
   const studio = JSON.parse(dataElement.textContent);
+  const { sound, timeline: timelines } = window.contentMachine;
   const form = document.getElementById("mix");
   const video = document.getElementById("studio-video");
   const status = document.getElementById("studio-status");
@@ -46,66 +47,58 @@
     offset.dispatchEvent(new Event("input", { bubbles: true }));
   });
 
-  // ---- waveform of the chosen take -------------------------------------------------------
+  if (!video) return;                  // no draft: nothing to play, read along to, or record over
 
-  const canvas = document.getElementById("waveform");
-  let waveform = { take: null, peaks: null, seconds: 0 };
+  // ---- the sound for the settings as they stand -------------------------------------------
 
-  async function loadWaveform() {
-    const take = settings().take;
-    if (!canvas || take === waveform.take) return drawWaveform();
-    waveform = { take, peaks: null, seconds: 0 };
-    if (take) {
-      try {
-        const bytes = await (await fetch(studio.takeUrls[take])).arrayBuffer();
-        const audio = await new AudioContext().decodeAudioData(bytes);
-        const samples = audio.getChannelData(0);
-        const step = Math.max(1, Math.floor(samples.length / canvas.width));
-        const peaks = [];
-        for (let x = 0; x < canvas.width; x++) {
-          let peak = 0;
-          for (let i = x * step; i < (x + 1) * step && i < samples.length; i++) peak = Math.max(peak, Math.abs(samples[i]));
-          peaks.push(peak);
-        }
-        if (waveform.take === take) waveform = { take, peaks, seconds: audio.duration };
-      } catch (error) {
-        status.textContent = `The waveform of ${take} could not be drawn: ${error.message}`;
-      }
-    }
-    drawWaveform();
+  function loadSound(s) {
+    return Promise.all([
+      s.take ? sound.decode(studio.takeUrls[s.take]) : null,
+      s.music ? sound.decode(studio.musicUrls[s.music]) : null,
+    ]).then(([voice, music]) => ({ voice, music }));
   }
 
-  function drawWaveform() {
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-    const { width, height } = canvas;
-    const ink = getComputedStyle(canvas).color;
-    context.clearRect(0, 0, width, height);
-    if (!waveform.peaks) return;
-    context.fillStyle = ink;
-    waveform.peaks.forEach((peak, x) => {
-      const bar = Math.max(1, peak * height);
-      context.fillRect(x, (height - bar) / 2, 1, bar);
-    });
-    // what the trims leave out is shaded
-    const { trimStart, trimEnd } = settings();
-    const toX = (seconds) => (seconds / waveform.seconds) * width;
-    context.fillStyle = "rgba(128, 128, 128, 0.55)";
-    context.fillRect(0, 0, toX(trimStart), height);
-    if (trimEnd !== null) context.fillRect(toX(trimEnd), 0, width - toX(trimEnd), height);
+  // Start the sound again from where the video is, if it is playing: after a seek, or a
+  // change of offset, trim or volume, so lining up can be done by ear.
+  function restartSound() {
+    if (video.paused) return;
+    const s = settings();
+    loadSound(s).then((buffers) => { if (!video.paused) sound.start(buffers, s, video.currentTime); });
   }
 
-  form.addEventListener("input", loadWaveform);
-  form.addEventListener("change", loadWaveform);
-  loadWaveform();
+  // ---- timeline -------------------------------------------------------------------------
 
-  if (!video) return;                  // no draft: nothing to read along to or record over
+  let recording = false;
+  const strip = timelines.create(document.getElementById("timeline"), {
+    scenes: studio.scenes,
+    fps: studio.fps,
+    onSeek: (seconds) => { if (!recording) video.currentTime = seconds; },
+  });
+  let shownTake = null;
 
-  // ---- teleprompter -------------------------------------------------------------------------
+  function showSettings() {
+    const s = settings();
+    strip.update({ settings: s });
+    if (s.take === shownTake) return;
+    shownTake = s.take;
+    strip.update({ take: null });
+    if (!s.take) return;
+    sound.decode(studio.takeUrls[s.take])
+      .then((buffer) => { if (shownTake === s.take) strip.update({ take: timelines.peaks(buffer) }); })
+      .catch((error) => { status.textContent = `${s.take} could not be read: ${error.message}`; });
+  }
+
+  form.addEventListener("input", () => { showSettings(); restartSound(); });
+  form.addEventListener("change", () => { showSettings(); restartSound(); });
+  video.addEventListener("loadedmetadata", () => strip.update({ duration: video.duration }));
+  if (video.readyState >= 1) strip.update({ duration: video.duration });
+  showSettings();
+
+  // ---- teleprompter -----------------------------------------------------------------------
 
   const nowLine = document.getElementById("teleprompter-now");
   const nextLine = document.getElementById("teleprompter-next");
-  let shown = null;                    // the scene whose words are on screen
+  let shownScene = null;
 
   function sceneAt(frame) {
     const index = studio.scenes.findIndex((s) => frame >= s.from && frame < s.from + s.duration);
@@ -118,8 +111,8 @@
     const frame = Math.floor(video.currentTime * studio.fps);
     const index = sceneAt(frame);
     const scene = studio.scenes[index];
-    if (shown !== index) {
-      shown = index;
+    if (shownScene !== index) {
+      shownScene = index;
       nowLine.replaceChildren(...scene.script.split(" ").filter(Boolean).map((word) => {
         const span = document.createElement("span");
         span.textContent = word + " ";
@@ -135,68 +128,59 @@
     });
   }
 
-  function tick() {
-    drawTeleprompter();
-    if (!video.paused) requestAnimationFrame(tick);
-  }
-  video.addEventListener("play", () => requestAnimationFrame(tick));
-  video.addEventListener("seeked", drawTeleprompter);
-  video.addEventListener("loadedmetadata", drawTeleprompter);
-
-  // ---- playing the take and music lined up with the draft ---------------------------------
-
-  const voiceAudio = new Audio();
-  const musicAudio = new Audio();
-  musicAudio.loop = true;
-  const playing = { voice: null, music: null };   // which file each is set to
-  const DRIFT = 0.15;                  // seconds out of step before the take is put back in place
-
-  function load(audio, role, url) {
-    if (playing[role] !== url) {
-      audio.src = url;
-      playing[role] = url;
-    }
-  }
-
-  function follow() {
-    if (video.paused) return;
-    const s = settings();
-    const t = video.currentTime;
-    const at = t - s.offset + s.trimStart;               // where in the take the render would be
-    const heard = s.take && t >= s.offset && at >= s.trimStart && (s.trimEnd === null || at < s.trimEnd);
-    if (heard) {
-      load(voiceAudio, "voice", studio.takeUrls[s.take]);
-      voiceAudio.volume = Math.min(1, s.volume);          // a browser cannot play louder than 1
-      if (voiceAudio.paused || Math.abs(voiceAudio.currentTime - at) > DRIFT) voiceAudio.currentTime = at;
-      if (voiceAudio.paused) voiceAudio.play();
-    } else if (!voiceAudio.paused) {
-      voiceAudio.pause();
-    }
-    if (s.music) {
-      load(musicAudio, "music", studio.musicUrls[s.music]);
-      musicAudio.volume = Math.min(1, s.musicVolume);
-      if (musicAudio.paused) musicAudio.play();
-    } else if (!musicAudio.paused) {
-      musicAudio.pause();
-    }
-    requestAnimationFrame(follow);
-  }
-
-  function stopFollowing() {
-    voiceAudio.pause();
-    musicAudio.pause();
-  }
+  // ---- transport ----------------------------------------------------------------------------
 
   const playButton = document.getElementById("play");
-  playButton.addEventListener("click", () => {
-    if (!video.paused) return video.pause();
+  const startButton = document.getElementById("to-start");
+  const clock = document.getElementById("clock");
+
+  function time(seconds) {
+    const whole = Math.max(0, seconds || 0);
+    return `${Math.floor(whole / 60)}:${(whole % 60).toFixed(1).padStart(4, "0")}`;
+  }
+
+  function showTime() {
+    clock.textContent = `${time(video.currentTime)} / ${time(video.duration)}`;
+    strip.update({ time: video.currentTime });
+    drawTeleprompter();
+  }
+
+  function tick() {
+    showTime();
+    if (!video.paused) requestAnimationFrame(tick);
+  }
+
+  async function play() {
+    sound.wake();                      // audio may only start from a click, so ask now
+    const s = settings();
+    status.textContent = "Loading the sound...";
+    let buffers;
+    try {
+      buffers = await loadSound(s);
+    } catch (error) {
+      status.textContent = `The sound could not be loaded: ${error.message}`;
+      return;
+    }
+    status.textContent = "";
     video.muted = true;                // an older render's sound would get in the way
-    video.currentTime = 0;
-    musicAudio.currentTime = 0;
-    video.play().then(() => requestAnimationFrame(follow));
+    if (video.ended) video.currentTime = 0;
+    await video.play();
+    sound.start(buffers, s, video.currentTime);
+  }
+
+  playButton.addEventListener("click", () => (video.paused ? play() : video.pause()));
+  startButton.addEventListener("click", () => { video.currentTime = 0; });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== " " || recording || event.target.closest("input, select, textarea, button")) return;
+    event.preventDefault();            // the space bar plays and pauses, rather than scrolling
+    playButton.click();
   });
-  video.addEventListener("pause", stopFollowing);
-  video.addEventListener("ended", stopFollowing);
+
+  video.addEventListener("play", () => { playButton.textContent = "Pause"; requestAnimationFrame(tick); });
+  video.addEventListener("pause", () => { playButton.textContent = "Play"; sound.stop(); showTime(); });
+  video.addEventListener("seeking", sound.stop);
+  video.addEventListener("seeked", () => { showTime(); if (!recording) restartSound(); });
+  video.addEventListener("loadedmetadata", showTime);
 
   // ---- recording a take -----------------------------------------------------------------
 
@@ -218,6 +202,11 @@
     countdown.hidden = true;
   }
 
+  function lockTransport(locked) {
+    recording = locked;
+    [playButton, startButton].forEach((button) => { button.disabled = locked; });
+  }
+
   async function upload(blob) {
     const name = blob.type.includes("mp4") ? "take.m4a" : "take.webm";
     const body = new FormData();
@@ -228,6 +217,7 @@
     const answer = await response.json().catch(() => ({}));
     status.textContent = answer.error || `The take could not be saved (${response.status}).`;
     recordButton.disabled = false;
+    lockTransport(false);
   }
 
   recordButton.addEventListener("click", async () => {
@@ -254,6 +244,7 @@
 
     recordButton.disabled = true;
     video.pause();
+    lockTransport(true);
     video.currentTime = 0;
     video.muted = true;
     await countDown(3);

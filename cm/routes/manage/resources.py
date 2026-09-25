@@ -3,13 +3,14 @@ moving them to the trash. The panel answers every change by redrawing itself."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import HTMLResponse
 from sqlmodel import Session
 
 from ... import assets, crud, desktop, files, resources
 from ...database import get_session
 from ...models import Brand
 from ..local import from_this_machine
+from ..serving import stored_file
 from . import page
 
 router = APIRouter(prefix="/brands/{brand_id}/resources")
@@ -50,7 +51,7 @@ def serve(brand_id: int, kind: str, name: str, session: Session = Depends(get_se
         path = resources.path_of(brand.slug, kind, name)
     except (resources.UnknownKind, files.UnsafePath, FileNotFoundError) as exc:
         raise HTTPException(404, str(exc)) from exc
-    return FileResponse(path, media_type=assets.media_type(path))
+    return stored_file(path)
 
 
 @router.post("/{kind}/{name}/delete", response_class=HTMLResponse)

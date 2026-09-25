@@ -79,12 +79,18 @@ def run(plan: Plan, draft: bool = False,
     job = settings.state_dir / "renders" / f"{plan.piece_id}-{uuid.uuid4().hex[:8]}"
     out = video.render(settings.workspace, plan.video_dir, job, plan.props,
                        scale=DRAFT_SCALE if draft else 1.0, public=plan.public, on_progress=on_progress)
-    if draft:
-        plan.assets_dir.mkdir(parents=True, exist_ok=True)
-        target = plan.assets_dir / DRAFT_NAME
-        os.replace(out, target)                 # the old draft has no value once replaced
-    else:
-        target = assets.move(out, plan.assets_dir, stem=FINAL_STEM)
+    try:
+        if draft:
+            plan.assets_dir.mkdir(parents=True, exist_ok=True)
+            target = plan.assets_dir / DRAFT_NAME
+            os.replace(out, target)             # the old draft has no value once replaced
+        else:
+            target = assets.move(out, plan.assets_dir, stem=FINAL_STEM)
+    except OSError as exc:
+        # On Windows a file being read, such as a draft the browser is playing, cannot be replaced.
+        raise video.RenderError(f"The video rendered, but could not be put in {plan.assets_dir} ({exc}). "
+                                f"If something has the old one open, close it and render again. "
+                                f"The new one is kept at {out}.") from exc
     video.clear(job)
     return target
 

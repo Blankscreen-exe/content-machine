@@ -82,7 +82,8 @@ The address printed on start carries a one-time token; the app refuses requests 
 | Tests | pytest + FastAPI TestClient | Covers the routes, the audit trail, file safety and the migrations |
 
 htmx, the editor and DataTables are vendored in `cm/static/vendor/` so the app loads nothing from the
-internet. Use the editor's `-all` build: the plain one expects ProseMirror to be supplied
+internet. Every file the app serves, its own scripts included, tells the browser to check
+back each time, so an update is never hidden behind a cached copy. Use the editor's `-all` build: the plain one expects ProseMirror to be supplied
 separately.
 
 ## Writing
@@ -181,9 +182,20 @@ including the `--lan` address on the same machine, the page still plays but cann
 Takes are kept in the piece's `voice/` folder as `take-1.webm`, `take-2.webm` and on. A take
 is never cut: which one is used, its offset against the video, where it is trimmed, its
 volume, and the music from the brand's library with its volume are numbers in
-`voice/mix.json`, so any choice can be undone. "Play with voice" plays the draft with the
-take and music lined up as a render will mix them, from the settings as they stand, saved
-or not. A `mix.json` that cannot be read is reported, never replaced.
+`voice/mix.json`, so any choice can be undone. A `mix.json` that cannot be read is
+reported, never replaced.
+
+Under the draft are a transport (play and pause, back to the start, the time) and a
+timeline as long as the video: the frames along the top, and the chosen take's waveform
+below, placed where the render will place it, its trimmed parts faded. Pressing or dragging
+on the timeline moves through the video, and the space bar plays and pauses. Playback lines
+the take and music up with the draft as a render will mix them, from the settings as they
+stand, saved or not; a change of offset, trim or volume is heard at once, so a take can be
+lined up by ear. The sound is decoded whole and played through Web Audio at a set moment
+against the video: a take recorded in a browser has no index to seek by, so an audio
+element nudged into step while playing stalls. The sound output is opened afresh at each
+Play, on whatever device is current, since a Bluetooth headset is a different device while
+its microphone is in use. Each take also has the browser's own player, to hear it as recorded.
 
 A render plays the voice and music itself, under the piece's video, so no video or kit has
 to handle sound. The music loops if it is short and fades out over the last second. The
@@ -288,6 +300,7 @@ cm/
   desktop.py      opening a folder in the system's file manager
   dates.py        stored UTC times to local calendar dates
   security.py     access token
+  hangups.py      a browser hanging up, which Windows' event loop reports as an error: not logged
   settings.py     configuration and workspace location
   templating.py   template setup and the context every page shares
   starter/        what `cm init` copies into a workspace, and what new brands and pieces start from

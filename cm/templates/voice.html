@@ -4,6 +4,8 @@
    plays, and the choices that line the take up and bring in music. Everything that plays
    or records is voice.js; the forms post and come back here, so the page shows what is saved. #}
 {% block head %}
+  <script src="/static/studio_sound.js" defer></script>
+  <script src="/static/studio_timeline.js" defer></script>
   <script src="/static/voice.js" defer></script>
 {% endblock %}
 
@@ -36,19 +38,28 @@
         <video id="studio-video" src="{{ studio.draftUrl }}" preload="auto" playsinline muted></video>
         <div class="studio-countdown" id="studio-countdown" hidden></div>
       </div>
+      {# right under the picture, where the eye already is while recording #}
       <div class="teleprompter" id="teleprompter" aria-live="off">
         <p class="teleprompter-now" id="teleprompter-now"></p>
         <p class="teleprompter-next" id="teleprompter-next"></p>
       </div>
       {% for problem in frames_problems %}<p class="message">{{ problem }}</p>{% endfor %}
+      <div class="transport">
+        <button class="btn btn-primary" type="button" id="play">Play</button>
+        <button class="btn" type="button" id="to-start" title="Back to the start">&#9198; Start</button>
+        <span class="clock" id="clock">0:00.0 / 0:00.0</span>
+      </div>
+      <canvas class="timeline" id="timeline"
+              aria-label="The video's timeline: its frames along the top, and the chosen take below where it will be heard"></canvas>
+      <p class="hint">Press or drag on the timeline to move through the video; the space bar plays and
+        pauses. The take is drawn where the render will place it, the parts trimmed away faded.</p>
 
       <div class="actions">
         <button class="btn btn-primary" type="button" id="record" {% if not can_record %}disabled{% endif %}>Record a take</button>
         <button class="btn" type="button" id="stop" hidden>Stop</button>
-        <button class="btn" type="button" id="play" {% if not mix.take %}disabled{% endif %}>Play with voice</button>
         <span class="hint" id="studio-status">
           {% if not can_record %}To record, open this page at localhost on the machine running the app
-            (http://localhost:{{ request.url.port }}{{ request.url.path }}): browsers only allow the
+            (<a href="{{ record_url }}">{{ record_url }}</a>): browsers only allow the
             microphone there.{% endif %}
         </span>
       </div>
@@ -68,12 +79,15 @@
               <label><input type="radio" name="take" value="{{ take.name }}" {% if take.name == mix.take %}checked{% endif %}>
                 {{ take.name }}</label>
               <span class="hint">{{ take.size | filesize }}</span>
-              <button class="btn btn-danger" type="submit" formaction="/pieces/{{ piece.id }}/voice/takes/{{ take.name | urlencode }}/delete"
-                      formnovalidate data-confirm="Move {{ take.name }} to the workspace trash?">Delete</button>
+              {# in a form of its own (below), so Enter in a setting can never press it #}
+              <button class="btn btn-danger" type="submit" form="delete-take-{{ loop.index }}"
+                      data-confirm="Move {{ take.name }} to the workspace trash?">Delete</button>
+              {# the take alone, in the browser's own player: to hear it as recorded #}
+              <audio class="take-player" controls preload="none"
+                     src="/pieces/{{ piece.id }}/voice/takes/{{ take.name | urlencode }}"></audio>
             </li>
           {% endfor %}
         </ul>
-        <canvas class="waveform" id="waveform" width="560" height="90" aria-label="The chosen take, with its trimmed parts shaded"></canvas>
       {% else %}
         <p class="hint">No takes yet.</p>
       {% endif %}
@@ -106,8 +120,13 @@
       {% endif %}
 
       <p class="actions"><button class="btn btn-primary" type="submit">Save</button></p>
-      <p class="hint">Play with voice uses what is set here, saved or not. A render uses what is saved.</p>
+      <p class="hint">Playing uses what is set here, saved or not, and changes can be heard as it plays.
+        A render uses what is saved.</p>
     </form>
+    {% for take in takes %}
+      <form id="delete-take-{{ loop.index }}" method="post" hidden
+            action="/pieces/{{ piece.id }}/voice/takes/{{ take.name | urlencode }}/delete"></form>
+    {% endfor %}
   </aside>
 </div>
 

@@ -28,6 +28,8 @@ const Soundtrack: React.FC<VideoProps> = ({ voice, music, total, fps }) => (
       <Html5Audio
         src={staticFile(music.src)}
         loop
+        // count frames across the whole video, not from each repeat, or the fade never comes
+        loopVolumeCurveBehavior="extend"
         volume={(frame) => interpolate(frame, [total - FADE_SECONDS * fps, total], [music.volume, 0],
                                        { extrapolateLeft: "clamp", extrapolateRight: "clamp" })}
       />
