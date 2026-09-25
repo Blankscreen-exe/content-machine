@@ -7,7 +7,8 @@
      text, fingerprint, editable, readonly_reason, message, conflict
      upload_url, assets_url             only where pasted images have somewhere to go
      count_characters, char_limit       whether to count the text, and the most it should run to
-     open_folder_url, can_open_folder   only for a piece's drafts, on this machine #}
+     open_folder_url, can_open_folder   only for a piece's drafts, on this machine
+     frames_summary, frames_problems    only for a video's frames file: what it reads as #}
 <section class="editor-pane" id="editor-pane">
   <nav class="file-tabs">
     {% for tab in pane.tabs %}
@@ -53,6 +54,13 @@
       {% if pane.count_characters %}
         <span class="char-count" {% if pane.char_limit %}data-limit="{{ pane.char_limit }}"{% endif %}></span>
       {% endif %}
+      {% if pane.frames_summary %}<span class="hint frames-summary">{{ pane.frames_summary }}</span>{% endif %}
     </div>
+    {% if pane.frames_problems %}
+      <div class="message frames-problems">
+        <p>The video cannot be made from this until these are fixed. Saving still keeps what you wrote.</p>
+        <ul>{% for problem in pane.frames_problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+      </div>
+    {% endif %}
   </form>
 </section>

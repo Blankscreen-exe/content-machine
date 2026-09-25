@@ -182,3 +182,54 @@ def test_the_assets_sidebar_keeps_its_controls_above_the_files(client: TestClien
     panel = page[page.index('id="assets"'):page.index("</aside>")]
 
     assert panel.index("drop-zone") < panel.index("asset-scroll")
+
+
+@pytest.fixture(name="short")
+def short_fixture(session: Session, brand):
+    return crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "youtube short"),
+                             title="A short")
+
+
+def test_a_new_video_opens_on_the_frames_template(client: TestClient, session: Session, short):
+    page = client.get(f"/pieces/{short.id}").text
+    assert "## Hook (4s)" in page and "3 frames · vertical 1080×1920 · captions on" in page
+    # only shown, not written: the file appears on the first save
+    assert not (workspace.piece_folder(session, short) / "frames.md").exists()
+
+
+def test_the_template_is_saved_like_any_first_draft(client: TestClient, session: Session, short):
+    fingerprint = _fingerprint(client.get(f"/pieces/{short.id}/files/frames.md").text)
+    response = client.post(f"/pieces/{short.id}/files/frames.md",
+                           data={"text": "## Hook\nScript: Hello.", "fingerprint": fingerprint})
+    assert "Saved" in response.text and "1 frame · vertical" in response.text
+
+
+def test_frames_that_cannot_be_read_are_still_saved_and_the_problems_listed(client: TestClient,
+                                                                             session: Session, short):
+    fingerprint = _fingerprint(client.get(f"/pieces/{short.id}/files/frames.md").text)
+    response = client.post(f"/pieces/{short.id}/files/frames.md",
+                           data={"text": "Format: tall\n## Hook\nScript: Hi.", "fingerprint": fingerprint})
+
+    assert "Saved" in response.text
+    assert "<li>Format: “tall” is not one of vertical, square, portrait, landscape.</li>" in response.text
+    assert (workspace.piece_folder(session, short) / "frames.md").read_text(encoding="utf-8").startswith("Format: tall")
+
+
+def test_an_emptied_frames_file_stays_empty(client: TestClient, session: Session, short):
+    """The template is only for a file that does not exist; one you emptied is yours."""
+    folder = workspace.ensure_folder(session, short)
+    (folder / "frames.md").write_text("", encoding="utf-8")
+    pane = client.get(f"/pieces/{short.id}/files/frames.md").text
+    assert "## Hook (4s)" not in pane and "No frames yet" in pane
+
+
+def test_other_drafts_of_a_video_are_not_checked_as_frames(client: TestClient, session: Session, short):
+    folder = workspace.ensure_folder(session, short)
+    (folder / "notes.md").write_text("anything at all", encoding="utf-8")
+    pane = client.get(f"/pieces/{short.id}/files/notes.md").text
+    assert "frames-problems" not in pane and "frames-summary" not in pane
+
+
+def test_a_text_piece_opens_empty_as_before(client: TestClient, piece):
+    pane = client.get(f"/pieces/{piece.id}/files/blog.md").text
+    assert "## Hook" not in pane and "frames-summary" not in pane

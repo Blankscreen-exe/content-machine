@@ -88,6 +88,10 @@ body { margin: 0; }
 .hint code { overflow-wrap: anywhere; }   /* a workspace path must not widen the page */
 /* messages carry file names and paths, which have nothing a browser would break on */
 .saved, .message { overflow-wrap: anywhere; }
+/* what stops a video's frames file being read, listed under the editor */
+.frames-problems { margin-top: 10px; }
+.frames-problems p { margin: 0; }
+.frames-problems ul { margin: 4px 0 0; padding-left: 20px; }
 .panel .inline-form { margin-bottom: 4px; }
 
 /* a borderless table for showing paths and other read-only facts */

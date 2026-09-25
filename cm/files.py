@@ -71,6 +71,10 @@ def read(folder: Path, name: str) -> tuple[str, str]:
     return text, digest(text)
 
 
+def exists(folder: Path, name: str) -> bool:
+    return resolve(folder, name).is_file()
+
+
 def write(folder: Path, name: str, text: str, expected: str, force: bool = False) -> str:
     """Save `text`, unless the file changed since `expected` was taken.
 

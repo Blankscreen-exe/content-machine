@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from sqlmodel import Session
 
-from .. import crud, desktop, files, workspace
+from .. import crud, desktop, files, frames, workspace
 from ..database import get_session
 from ..models import Piece
 from ..templating import templates
@@ -25,6 +25,33 @@ def _piece_and_folder(session: Session, piece_id: int) -> tuple[Piece, Path]:
     if not piece:
         raise HTTPException(404, "piece not found")
     return piece, workspace.piece_folder(session, piece)
+
+
+def opening_text(piece: Piece, folder: Path, name: str) -> tuple[str, str]:
+    """A draft as the editor opens it, with its fingerprint.
+
+    A video piece's frames file that does not exist yet opens on the template. The
+    fingerprint stays that of the missing file, so the first save writes it as usual.
+    """
+    text, fingerprint = files.read(folder, name)
+    if _is_frames_file(piece, name) and not files.exists(folder, name):
+        text = frames.template()
+    return text, fingerprint
+
+
+def _is_frames_file(piece: Piece, name: str) -> bool:
+    return piece.type.video and name == piece.type.main_file
+
+
+def _frames_check(piece: Piece, name: str, text: str) -> dict:
+    """For a frames file: a one-line summary, or what stops it being read as frames.
+    Either way the text is saved; nothing typed is refused."""
+    if not _is_frames_file(piece, name):
+        return {}
+    try:
+        return {"frames_summary": frames.parse(text).summary()}
+    except frames.FramesError as exc:
+        return {"frames_problems": exc.problems}
 
 
 def pane_context(request: Request, piece: Piece, folder: Path, name: str, text: str,
@@ -52,6 +79,7 @@ def pane_context(request: Request, piece: Piece, folder: Path, name: str, text: 
         # the folder these drafts are in, opened on the machine running the app
         "open_folder_url": f"{base}/files/open",
         "can_open_folder": from_this_machine(request),
+        **_frames_check(piece, name, text),
     }}
 
 
@@ -87,7 +115,7 @@ def open_file(piece_id: int, name: str, request: Request,
               session: Session = Depends(get_session)):
     piece, folder = _piece_and_folder(session, piece_id)
     try:
-        text, fingerprint = files.read(folder, name)
+        text, fingerprint = opening_text(piece, folder, name)
     except files.UnsafePath as exc:
         raise HTTPException(400, str(exc)) from exc
     return editor_pane(request, piece, folder, name, text, fingerprint)

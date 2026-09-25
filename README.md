@@ -130,6 +130,26 @@ title, and remembers which piece it came from. Its brief names the source draft 
 session to use the `derive` skill; on the machine running the app a session opens straight
 away.
 
+## Videos
+
+A video piece is written as `frames.md`: what is said and shown, frame by frame. A new one
+opens on a template.
+
+```md
+Format: vertical          # or square, portrait, landscape
+Captions: on
+
+## Hook (4s)
+Script: What is said while this frame is on screen.
+On screen: The words and pictures shown.
+Animation: How they move.
+```
+
+A length like `(4s)` fixes how long a frame runs; without one it runs as long as its script
+takes to say. The file is read strictly: under the editor it shows what it will make ("5
+frames · vertical 1080×1920 · captions on") or lists every problem with its frame and line.
+It is always saved as written, so nothing typed is lost to a mistake.
+
 ## Layout
 
 ```
@@ -148,13 +168,16 @@ cm/
   search.py       full-text search over the drafts (SQLite FTS5), kept in step with the files
   workspace.py    a piece's folder: where it is, its brief, moving it to the trash
   files.py        reading and saving drafts inside a piece folder
-  assets.py       a piece's images, PDFs and Photoshop files: what is stored, and how
+  assets.py       a piece's images, PDFs, Photoshop files, video and audio: what is stored, and how
+  frames.py       reading a video's frames file, and every problem in it
+  formats.py      the shapes a video renders in: vertical, square, portrait, landscape
   terminals.py    opening a terminal session in a piece folder
   desktop.py      opening a folder in the system's file manager
   dates.py        stored UTC times to local calendar dates
   security.py     access token
   settings.py     configuration and workspace location
   templating.py   template setup and the context every page shares
+  starter/        what `cm init` copies into a workspace, and what new brands and pieces start from
   templates/      base page and htmx partials
   static/         base.css (layout), themes/ (appearance), vendor/
 alembic/          migrations

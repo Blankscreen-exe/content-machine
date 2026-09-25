@@ -13,7 +13,7 @@ from ..database import get_session
 from ..models import Piece, PieceType, Stage
 from ..templating import STAGES, page_context, templates
 from .assets import panel_context
-from .editor import pane_context
+from .editor import opening_text, pane_context
 from .local import from_this_machine
 from .params import OptionalId
 from .publications import publications_context
@@ -96,7 +96,7 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
     folder = workspace.piece_folder(session, piece)
     drafts = files.list_drafts(folder, piece.type.main_file)
     opened = file if file in drafts else piece.type.main_file
-    text, fingerprint = files.read(folder, opened)
+    text, fingerprint = opening_text(piece, folder, opened)
 
     context = page_context(request, session, "pieces", piece.brand_id)
     context |= {
