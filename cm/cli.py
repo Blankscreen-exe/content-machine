@@ -12,7 +12,7 @@ import typer
 import uvicorn
 from sqlmodel import Session
 
-from . import choices, crud, scaffold, toolchain, workspace
+from . import choices, crud, frames, renders, scaffold, toolchain, video, workspace
 from .database import engine, migrate
 from .models import Platform, Stage
 from .net import lan_ip
@@ -20,8 +20,8 @@ from .security import rotate_token, token
 from .settings import get_settings
 
 app = typer.Typer(help="content machine: local idea pool and content pipeline", no_args_is_help=True)
-video = typer.Typer(help="the toolchain that renders video pieces", no_args_is_help=True)
-app.add_typer(video, name="video")
+video_app = typer.Typer(help="the toolchain that renders video pieces", no_args_is_help=True)
+app.add_typer(video_app, name="video")
 
 
 @app.command()
@@ -151,7 +151,33 @@ def where() -> None:
     typer.echo(f"trash:     {settings.trash_dir}")
 
 
-@video.command()
+@app.command()
+def render(piece_id: int, draft: bool = typer.Option(False, "--draft", help="half size and quick, replacing the last draft")) -> None:
+    """Render a video piece into its assets folder."""
+    migrate()
+    with Session(engine) as session:
+        piece = crud.get_piece(session, piece_id)
+        if not piece:
+            raise typer.BadParameter(f"no piece with id {piece_id}")
+        try:
+            path = renders.render_piece(session, piece, draft=draft, on_progress=_show_progress)
+        except frames.FramesError as exc:
+            typer.echo(f"error: {piece.type.main_file} needs fixing first:", err=True)
+            for problem in exc.problems:
+                typer.echo(f"  - {problem}", err=True)
+            raise typer.Exit(1) from exc
+        except video.RenderError as exc:
+            typer.echo(f"\nerror: {exc}", err=True)
+            raise typer.Exit(1) from exc
+    typer.echo(f"\nrendered {path}")
+
+
+def _show_progress(progress: video.Progress) -> None:
+    """One line, rewritten in place as the render goes."""
+    typer.echo(f"\r{str(progress):<40}", nl=False)
+
+
+@video_app.command()
 def setup() -> None:
     """Install the video toolchain into the workspace, checking every package. Downloads."""
     try:

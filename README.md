@@ -40,6 +40,7 @@ uv sync --extra dev   # exact versions from uv.lock, into .venv
 
 cm init           # create the workspace: session rules, skills, video starter files
 cm video setup    # only for video: install the toolchain (downloads, once)
+cm render 12      # render video piece 12 into its assets; --draft for a quick half-size one
 cm serve          # this machine only
 cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
@@ -152,6 +153,25 @@ takes to say. The file is read strictly: under the editor it shows what it will 
 frames · vertical 1080×1920 · captions on") or lists every problem with its frame and line.
 It is always saved as written, so nothing typed is lost to a mistake.
 
+### Rendering
+
+A piece's video is drawn by `video/Video.tsx` in its folder, which exports a component
+named `Video`. It draws every frame with the brand's kit, from props the app hands it:
+each frame's script, what is on screen, how it moves, and where it sits on the timeline.
+Their shape is `VideoProps`, which the app writes to `video/props.ts` in the workspace.
+The app registers the component itself, with the size, frame rate and length it worked
+out, so a video only has to draw.
+
+Timing comes from `frames.md`: a frame with a length runs exactly that long; otherwise it
+runs as long as its script takes to say at about 150 words a minute, plus a breath. The
+voice is recorded to this pace afterwards.
+
+`cm render <id>` renders at full size into the piece's assets as `video.mp4`, keeping
+earlier ones as `video-2.mp4` and on. `--draft` renders at half size, quickly, replacing
+`draft.mp4`. Rendering never changes the piece's stage. A render works in its own folder
+under `.cm/renders/`, which is removed once the video is in place; if the render fails,
+the folder is kept and the error says what Remotion said, without its stack trace.
+
 ### The video toolchain
 
 Videos are drawn with [Remotion](https://www.remotion.dev): each frame is a React component
@@ -213,6 +233,10 @@ cm/
   frames.py       reading a video's frames file, and every problem in it
   formats.py      the shapes a video renders in: vertical, square, portrait, landscape
   toolchain.py    installing and checking the video toolchain: Node, npm packages, the browser
+  timing.py       how long each frame runs, and the props a video is handed
+  video.py        running Remotion: the only module that knows how a video is rendered
+  renders.py      a video piece rendered into its assets: drafts replaced, finals kept
+  remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder
   desktop.py      opening a folder in the system's file manager

@@ -136,10 +136,10 @@ def media_type(path: Path) -> str:
     return MEDIA_TYPES[path.suffix.lower()]
 
 
-def move(path: Path, target_dir: Path) -> Path:
-    """Move a stored file into `target_dir`, numbered if the name is taken there."""
+def move(path: Path, target_dir: Path, stem: str | None = None) -> Path:
+    """Move a file into `target_dir`, as `stem` if given, numbered if the name is taken there."""
     target_dir.mkdir(parents=True, exist_ok=True)
-    target = target_dir / _free_name(target_dir, path.stem, path.suffix)
+    target = target_dir / _free_name(target_dir, stem or path.stem, path.suffix)
     path.rename(target)             # same workspace, so it moves whole or not at all
     return target
 

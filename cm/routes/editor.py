@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from sqlmodel import Session
 
-from .. import crud, desktop, files, frames, workspace
+from .. import crud, desktop, files, frames, timing, workspace
 from ..database import get_session
 from ..models import Piece
 from ..templating import templates
@@ -49,9 +49,10 @@ def _frames_check(piece: Piece, name: str, text: str) -> dict:
     if not _is_frames_file(piece, name):
         return {}
     try:
-        return {"frames_summary": frames.parse(text).summary()}
+        read = frames.parse(text)
     except frames.FramesError as exc:
         return {"frames_problems": exc.problems}
+    return {"frames_summary": f"{read.summary()} · about {round(timing.timeline(read).seconds)}s"}
 
 
 def pane_context(request: Request, piece: Piece, folder: Path, name: str, text: str,
