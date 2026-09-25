@@ -168,6 +168,26 @@ are the session's work, while images, diagrams and the voice stay yours. An exis
 workspace keeps its own `CLAUDE.md` (`cm init` never overwrites it), so copy that change
 across by hand, or run `cm init --force` if you have not edited the starter files.
 
+### Voice
+
+**Record voice**, in the Video panel, opens the piece's Voice page: the draft, with a
+teleprompter under it that shows the line to read and lights each word as it is due, and
+the next line after it. Recording counts down, then plays the draft with its sound off
+while you read; the whole video is one take, so a sentence can carry across a frame change.
+A browser only records on a secure address, which for this app means the machine running
+it; from another device the page still plays, but cannot record.
+
+Takes are kept in the piece's `voice/` folder as `take-1.webm`, `take-2.webm` and on. A take
+is never cut: which one is used, its offset against the video, where it is trimmed, its
+volume, and the music from the brand's library with its volume are numbers in
+`voice/mix.json`, so any choice can be undone. "Play with voice" plays the draft with the
+take and music lined up as a render will mix them, from the settings as they stand, saved
+or not. A `mix.json` that cannot be read is reported, never replaced.
+
+A render plays the voice and music itself, under the piece's video, so no video or kit has
+to handle sound. The music loops if it is short and fades out over the last second. The
+files are copied beside the render, so it sees them and nothing else of the workspace.
+
 ### Rendering
 
 A piece's video is drawn by `video/Video.tsx` in its folder, which exports a component
@@ -260,6 +280,7 @@ cm/
   renders.py      a video piece rendered into its assets: drafts replaced, finals kept
   render_jobs.py  renders started from the page, run in the background and followed
   video_brief.py  the Video section of a video piece's brief
+  voice.py        a video's takes, and the mix: which take, lined up and trimmed, and the music
   remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder

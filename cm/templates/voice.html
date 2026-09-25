@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{# The Voice page: the draft with a teleprompter under it, recording one take while it
+   plays, and the choices that line the take up and bring in music. Everything that plays
+   or records is voice.js; the forms post and come back here, so the page shows what is saved. #}
+{% block head %}
+  <script src="/static/voice.js" defer></script>
+{% endblock %}
+
+{% block body %}
+{% include "partials/masthead.html" %}
+
+<section class="piece-head">
+  <div>
+    <h2>Voice: {{ piece.title }}</h2>
+    <p class="piece-meta">Record over the draft, reading along; then line the take up and choose the music.</p>
+  </div>
+  <div class="piece-actions">
+    <a class="btn" href="/pieces/{{ piece.id }}">Back to the piece</a>
+  </div>
+</section>
+
+{% if message %}<p class="saved">{{ message }}</p>{% endif %}
+{% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
+
+<div class="studio">
+  <div class="studio-main">
+    {% if not has_draft %}
+      <p class="message">There is no draft to record over yet. Render one from the Video panel on the piece's page.</p>
+    {% else %}
+      {% if draft_stale %}
+        <p class="message">{{ piece.type.main_file }} has changed since the draft was rendered, so the
+          teleprompter and the draft may not match. Render a new draft first.</p>
+      {% endif %}
+      <div class="studio-screen">
+        <video id="studio-video" src="{{ studio.draftUrl }}" preload="auto" playsinline muted></video>
+        <div class="studio-countdown" id="studio-countdown" hidden></div>
+      </div>
+      <div class="teleprompter" id="teleprompter" aria-live="off">
+        <p class="teleprompter-now" id="teleprompter-now"></p>
+        <p class="teleprompter-next" id="teleprompter-next"></p>
+      </div>
+      {% for problem in frames_problems %}<p class="message">{{ problem }}</p>{% endfor %}
+
+      <div class="actions">
+        <button class="btn btn-primary" type="button" id="record" {% if not can_record %}disabled{% endif %}>Record a take</button>
+        <button class="btn" type="button" id="stop" hidden>Stop</button>
+        <button class="btn" type="button" id="play" {% if not mix.take %}disabled{% endif %}>Play with voice</button>
+        <span class="hint" id="studio-status">
+          {% if not can_record %}Recording only works in a browser on the machine running the app.{% endif %}
+        </span>
+      </div>
+      <p class="hint">Recording counts down, then plays the draft with its sound off while you read.
+        It stops when the draft ends, or at Stop. The new take is used, lined up at the start.</p>
+    {% endif %}
+  </div>
+
+  <aside class="studio-side">
+    <form class="panel" method="post" action="/pieces/{{ piece.id }}/voice/mix" id="mix">
+      <h2>Takes</h2>
+      {% if takes %}
+        <ul class="takes">
+          <li><label><input type="radio" name="take" value="" {% if not mix.take %}checked{% endif %}> No voice</label></li>
+          {% for take in takes %}
+            <li>
+              <label><input type="radio" name="take" value="{{ take.name }}" {% if take.name == mix.take %}checked{% endif %}>
+                {{ take.name }}</label>
+              <span class="hint">{{ take.size | filesize }}</span>
+              <button class="btn btn-danger" type="submit" formaction="/pieces/{{ piece.id }}/voice/takes/{{ take.name | urlencode }}/delete"
+                      formnovalidate data-confirm="Move {{ take.name }} to the workspace trash?">Delete</button>
+            </li>
+          {% endfor %}
+        </ul>
+        <canvas class="waveform" id="waveform" width="560" height="90" aria-label="The chosen take, with its trimmed parts shaded"></canvas>
+      {% else %}
+        <p class="hint">No takes yet.</p>
+      {% endif %}
+
+      <h2>Line up</h2>
+      <label>Offset, seconds (later if above 0)
+        <span class="nudge">
+          <button class="btn" type="button" data-nudge="-0.05">&minus;</button>
+          <input type="number" name="offset" step="0.01" value="{{ mix.offset }}" class="short-number">
+          <button class="btn" type="button" data-nudge="0.05">+</button>
+        </span>
+      </label>
+      <label>Trim the take's start, seconds <input type="number" name="trim_start" min="0" step="0.01" value="{{ mix.trim_start }}" class="short-number"></label>
+      <label>Stop the take at, seconds <input type="number" name="trim_end" min="0" step="0.01" value="{{ mix.trim_end if mix.trim_end is not none else '' }}" placeholder="its end" class="short-number"></label>
+      <label>Voice volume <input type="range" name="volume" min="0" max="2" step="0.05" value="{{ mix.volume }}"></label>
+
+      <h2>Music</h2>
+      {% if music %}
+        <label>Track
+          <select name="music">
+            <option value="">None</option>
+            {% for track in music %}<option value="{{ track.name }}" {% if track.name == mix.music %}selected{% endif %}>{{ track.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Music volume <input type="range" name="music_volume" min="0" max="1" step="0.01" value="{{ mix.music_volume }}"></label>
+      {% else %}
+        <p class="hint">The brand has no music yet. Add some under Manage, on the brand's page.</p>
+        <input type="hidden" name="music" value="">
+        <input type="hidden" name="music_volume" value="{{ mix.music_volume }}">
+      {% endif %}
+
+      <p class="actions"><button class="btn btn-primary" type="submit">Save</button></p>
+      <p class="hint">Play with voice uses what is set here, saved or not. A render uses what is saved.</p>
+    </form>
+  </aside>
+</div>
+
+<script type="application/json" id="studio-data">{{ studio | tojson }}</script>
+{% endblock %}

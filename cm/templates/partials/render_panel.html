@@ -9,7 +9,8 @@
 
   {# a session on this machine writes video/Video.tsx from the frames; results go to the message area #}
   <p><button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/build-video"
-             hx-target="#session-message" hx-swap="innerHTML">Build video</button></p>
+             hx-target="#session-message" hx-swap="innerHTML">Build video</button>
+     <a class="btn" href="/pieces/{{ piece.id }}/voice">Record voice</a></p>
 
   {% if job and job.running %}
     <p class="render-progress">{{ 'Draft' if job.draft else 'Final' }}: {{ job.progress }} &middot; {{ job.elapsed }}</p>
@@ -28,6 +29,7 @@
   {% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
 
   <p class="hint">Build video opens a session that writes the video from the frames, with
-    the brand's kit. Render uses the saved {{ piece.type.main_file }}. A draft is half size and quick,
+    the brand's kit. Record voice reads along to the draft; a render mixes in the chosen take
+    and music. Render uses the saved {{ piece.type.main_file }}. A draft is half size and quick,
     and replaces <code>draft.mp4</code>; a final is full size and kept alongside earlier ones.</p>
 </section>

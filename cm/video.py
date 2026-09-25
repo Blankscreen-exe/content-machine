@@ -5,7 +5,7 @@ needs and nothing else:
 
     entry.tsx     registers the piece's video with the size, frame rate and length given
     props.json    what the video is handed: its scenes and settings (timing.py)
-    public/       files the video may load while it renders
+    public/       copies of the files the render plays: the chosen voice take and music
     out.mp4       the result, until the caller moves it to where it belongs
 
 It sits inside the workspace so the entry finds the npm packages at the workspace root.
@@ -68,9 +68,11 @@ def write_contract(workspace: Path) -> Path:
 
 
 def render(workspace: Path, video_dir: Path, job: Path, props: dict, scale: float = 1.0,
+           public: dict[str, Path] | None = None,
            on_progress: Callable[[Progress], None] = lambda progress: None) -> Path:
-    """Render the video in `video_dir` with `props`, in the job folder `job`. Returns the
-    rendered file, still in the job folder."""
+    """Render the video in `video_dir` with `props`, in the job folder `job`. `public` names
+    the files it may load, by the name it loads them as. Returns the rendered file, still
+    in the job folder."""
     if not (workspace / "node_modules" / "remotion").is_dir():
         raise RenderError("The video toolchain is not installed. Run `cm video setup` first.")
     video = video_dir / VIDEO_FILE
@@ -89,6 +91,9 @@ def render(workspace: Path, video_dir: Path, job: Path, props: dict, scale: floa
     (job / "entry.tsx").write_text(entry, encoding="utf-8")
     (job / "props.json").write_text(json.dumps(props, indent=1), encoding="utf-8")
     (job / "public").mkdir()
+    # copies, so the render sees these files and nothing else of the workspace
+    for name, source in (public or {}).items():
+        shutil.copyfile(source, job / "public" / name)
     out = job / "out.mp4"
 
     argv = [npm, "exec", "--no", "--", "remotion", "render", str(job / "entry.tsx"), COMPOSITION, str(out),

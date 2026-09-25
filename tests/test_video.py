@@ -59,11 +59,21 @@ def test_a_render_is_given_an_entry_its_props_and_nothing_else(monkeypatch, work
     entry = (job / "entry.tsx").read_text(encoding="utf-8")
     assert 'from "../../../content/acme-co/2026-09-25-tidy-desk/video/Video"' in entry
     assert 'from "../../../video/props"' in entry and "__VIDEO__" not in entry
-    assert (workspace / "video" / "props.ts").read_text(encoding="utf-8").count("export type") == 2
+    assert (workspace / "video" / "props.ts").read_text(encoding="utf-8").count("export type") == 4
     assert fake.cwd == workspace          # where the packages are
     assert fake.argv[1:9] == ["exec", "--no", "--", "remotion", "render", str(job / "entry.tsx"), "Video", str(out)]
     assert "--scale=0.5" in fake.argv and "--codec=h264" in fake.argv
     assert not any("license" in part for part in fake.argv)      # nothing that reports usage
+
+
+def test_the_render_gets_copies_of_the_files_it_plays_and_nothing_else(monkeypatch, workspace, video_dir, tmp_path):
+    take = tmp_path / "take-3.webm"
+    take.write_bytes(b"voice")
+    _render(monkeypatch, workspace, video_dir, FakeRemotion([]), public={"voice.webm": take})
+
+    public = workspace / ".cm" / "renders" / "7" / "public"
+    assert [p.name for p in public.iterdir()] == ["voice.webm"]
+    assert (public / "voice.webm").read_bytes() == b"voice" and take.exists()       # a copy: the take stays
 
 
 def test_progress_is_passed_on_as_it_comes(monkeypatch, workspace, video_dir):

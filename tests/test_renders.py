@@ -29,8 +29,8 @@ def rendered(monkeypatch):
     """Stands in for Remotion: writes a video named after the call, and records what it was given."""
     calls = []
 
-    def fake_render(workspace_dir, video_dir, job, props, scale=1.0, on_progress=None):
-        calls.append({"video_dir": video_dir, "job": job, "props": props, "scale": scale})
+    def fake_render(workspace_dir, video_dir, job, props, scale=1.0, public=None, on_progress=None):
+        calls.append({"video_dir": video_dir, "job": job, "props": props, "scale": scale, "public": public})
         job.mkdir(parents=True, exist_ok=True)
         out = job / "out.mp4"
         out.write_bytes(f"render {len(calls)}".encode())

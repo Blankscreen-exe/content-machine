@@ -13,6 +13,20 @@ export type Scene = {
   animation: string;
 };
 
+// The voice and music are played by the app, under the video; a video never plays them.
+export type Voice = {
+  src: string;               // a file beside the render, for staticFile()
+  from: number;              // the frame it starts at
+  trimBefore: number;        // frames skipped at the take's start
+  trimAfter: number | null;  // the frame of the take it stops at, or its end
+  volume: number;
+};
+
+export type Music = {
+  src: string;
+  volume: number;
+};
+
 export type VideoProps = {
   fps: number;
   width: number;
@@ -20,4 +34,6 @@ export type VideoProps = {
   total: number;      // frames in the whole video
   captions: boolean;
   scenes: Scene[];
+  voice: Voice | null;
+  music: Music | null;
 };
