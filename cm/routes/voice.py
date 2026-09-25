@@ -20,7 +20,7 @@ from ..formats import FPS
 from ..models import Piece
 from ..settings import get_settings
 from ..templating import page_context, templates
-from .local import from_this_machine
+from .local import opened_at_loopback
 
 router = APIRouter(prefix="/pieces/{piece_id}/voice")
 
@@ -142,8 +142,8 @@ def _page(request: Request, session: Session, piece: Piece, message: str = "",
         # the draft's timings are the frames' as they were when it was rendered
         "draft_stale": draft.is_file() and frames_file.is_file()
                        and frames_file.stat().st_mtime > draft.stat().st_mtime,
-        # a browser records only on a secure address; for this app, that is this machine
-        "can_record": from_this_machine(request),
+        # a browser records only on a secure address, which over http means loopback
+        "can_record": opened_at_loopback(request),
         # what voice.js needs, handed over as JSON
         "studio": {
             "fps": FPS,

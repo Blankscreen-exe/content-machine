@@ -232,7 +232,7 @@
 
   recordButton.addEventListener("click", async () => {
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-      status.textContent = "This browser only records on the machine running the app.";
+      status.textContent = "Browsers only allow the microphone at localhost: open this page at localhost on the machine running the app.";
       return;
     }
     let stream;

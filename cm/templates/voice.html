@@ -47,7 +47,9 @@
         <button class="btn" type="button" id="stop" hidden>Stop</button>
         <button class="btn" type="button" id="play" {% if not mix.take %}disabled{% endif %}>Play with voice</button>
         <span class="hint" id="studio-status">
-          {% if not can_record %}Recording only works in a browser on the machine running the app.{% endif %}
+          {% if not can_record %}To record, open this page at localhost on the machine running the app
+            (http://localhost:{{ request.url.port }}{{ request.url.path }}): browsers only allow the
+            microphone there.{% endif %}
         </span>
       </div>
       <p class="hint">Recording counts down, then plays the draft with its sound off while you read.

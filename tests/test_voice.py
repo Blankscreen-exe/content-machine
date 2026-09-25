@@ -156,10 +156,15 @@ def test_the_page_warns_when_the_frames_changed_after_the_draft(client: TestClie
     assert frames_file.stat().st_mtime > draft.stat().st_mtime
 
 
-def test_recording_is_only_offered_on_this_machine(client: TestClient, local_client: TestClient, short, folder):
+def test_recording_is_offered_only_at_a_loopback_address(local_client: TestClient, short, folder):
+    """Browsers allow the microphone only on a secure address, which over http means loopback.
+    The --lan link opened on this same machine comes from here, but still cannot record."""
     (folder / "assets" / "draft.mp4").write_bytes(b"mp4")
-    assert 'id="record" disabled' in client.get(f"/pieces/{short.id}/voice").text
-    assert 'id="record" >' in local_client.get(f"/pieces/{short.id}/voice").text
+    for address in ("localhost:8777", "127.0.0.1:8777"):
+        assert 'id="record" >' in local_client.get(f"http://{address}/pieces/{short.id}/voice").text
+    lan = local_client.get(f"http://192.168.1.20:8777/pieces/{short.id}/voice").text
+    assert 'id="record" disabled' in lan
+    assert f"http://localhost:8777/pieces/{short.id}/voice" in lan      # says where to go instead
 
 
 def test_the_teleprompter_is_handed_the_frames_as_saved(client: TestClient, short):

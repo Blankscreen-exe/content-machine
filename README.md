@@ -174,8 +174,9 @@ across by hand, or run `cm init --force` if you have not edited the starter file
 teleprompter under it that shows the line to read and lights each word as it is due, and
 the next line after it. Recording counts down, then plays the draft with its sound off
 while you read; the whole video is one take, so a sentence can carry across a frame change.
-A browser only records on a secure address, which for this app means the machine running
-it; from another device the page still plays, but cannot record.
+A browser only allows the microphone on a secure address, which over plain http means
+`localhost`: open the page there, on the machine running the app, to record. Anywhere else,
+including the `--lan` address on the same machine, the page still plays but cannot record.
 
 Takes are kept in the piece's `voice/` folder as `take-1.webm`, `take-2.webm` and on. A take
 is never cut: which one is used, its offset against the video, where it is trimmed, its
