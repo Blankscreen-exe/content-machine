@@ -8,6 +8,7 @@
 {% block head %}
   <script src="/static/vendor/toastui-editor-all.min.js"></script>
   <script src="/static/editor.js" defer></script>
+  <script src="/static/drop.js" defer></script>
 {% endblock %}
 
 {% block section %}
@@ -26,4 +27,6 @@
 
 <p class="hint">Both are handed to every session for this brand in <code>brief.md</code>.
   The voice is how the brand writes; the profile is its identity and visual constants.</p>
+
+{% include "manage/resources_panel.html" %}
 {% endblock %}

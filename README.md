@@ -38,7 +38,8 @@ where it was published underneath.
 ```sh
 uv sync --extra dev   # exact versions from uv.lock, into .venv
 
-cm init           # create the workspace: session rules and skills
+cm init           # create the workspace: session rules, skills, video starter files
+cm video setup    # only for video: install the toolchain (downloads, once)
 cm serve          # this machine only
 cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
@@ -76,6 +77,7 @@ The address printed on start carries a one-time token; the app refuses requests 
 | CLI | Typer | Same operations as the UI, without a browser |
 | Editor | Toast UI Editor | Markdown and WYSIWYG in one component, with a toggle, and no build step |
 | Paged lists | DataTables 3 | Paging, rows per page and column sorting on the lists, with no dependencies of its own; it keeps its place when htmx redraws a list |
+| Video | Remotion (Node) | Frames written as React components, rendered frame by frame; see [Videos](#videos) |
 | Tests | pytest + FastAPI TestClient | Covers the routes, the audit trail, file safety and the migrations |
 
 htmx, the editor and DataTables are vendored in `cm/static/vendor/` so the app loads nothing from the
@@ -150,6 +152,45 @@ takes to say. The file is read strictly: under the editor it shows what it will 
 frames · vertical 1080×1920 · captions on") or lists every problem with its frame and line.
 It is always saved as written, so nothing typed is lost to a mistake.
 
+### The video toolchain
+
+Videos are drawn with [Remotion](https://www.remotion.dev): each frame is a React component
+rendered in a headless Chrome. It needs Node 18 or later, and only video needs it; the rest
+of the app never touches Node. `cm video setup` installs it into the workspace, and is the
+only step that downloads anything for video:
+
+- `npm ci` installs exactly the packages in `package-lock.json` and refuses any whose contents
+  do not match the checksum recorded there. Every locked version was at least two weeks old
+  when the lockfile was made (`npm install --before=<date>`), so a release that is hijacked
+  and pulled within days never gets in.
+- No package runs code while it installs (`--ignore-scripts`, also set in the workspace's
+  `.npmrc`). Only esbuild has an install script, and it only double-checks a binary its
+  platform package already provides.
+- `npm audit signatures` checks every package was signed by the npm registry.
+- Remotion then fetches its headless Chrome, about 110 MB, from Google's Chrome for Testing
+  downloads. After that, rendering works offline.
+
+The packages: `remotion` and `@remotion/cli` render; `react` and `react-dom` are what the
+frames are written in; `roughjs` draws the hand-drawn boxes and arrows. They sit at the
+workspace root, so every piece folder beneath it finds them.
+
+Remotion is free for individuals and companies of up to three people; larger companies need
+a [company licence](https://www.remotion.dev/license). It reports usage to remotion.pro only
+when a licence key is set, and this app never sets one.
+
+### Brand resources
+
+What a brand reuses across its pieces lives in `resources/<brand>/` in the workspace:
+`images/` (a portrait, logos), `music/` (what a video can play under the voice) and `kit/`,
+the brand's video kit. A kit is the code that gives the brand's videos their look — colours,
+fonts, background, boxes, arrows, captions — and a video imports only from it, so the look
+stays the same from one video to the next. `cm init` puts an example kit for a made-up brand
+in `video/example-kit/` to start from. Kits load their fonts from files in their own folder,
+never from the internet, and size everything to the frame, so one kit serves every format.
+
+Images and music are uploaded on the brand's Manage page, where each file goes to the folder
+its type belongs to, by the same rules as a piece's assets.
+
 ## Layout
 
 ```
@@ -171,6 +212,8 @@ cm/
   assets.py       a piece's images, PDFs, Photoshop files, video and audio: what is stored, and how
   frames.py       reading a video's frames file, and every problem in it
   formats.py      the shapes a video renders in: vertical, square, portrait, landscape
+  toolchain.py    installing and checking the video toolchain: Node, npm packages, the browser
+  resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder
   desktop.py      opening a folder in the system's file manager
   dates.py        stored UTC times to local calendar dates
@@ -178,6 +221,7 @@ cm/
   settings.py     configuration and workspace location
   templating.py   template setup and the context every page shares
   starter/        what `cm init` copies into a workspace, and what new brands and pieces start from
+    video/        the pinned npm packages, and the example brand kit
   templates/      base page and htmx partials
   static/         base.css (layout), themes/ (appearance), vendor/
 alembic/          migrations
@@ -260,4 +304,5 @@ nothing is deleted and the page says why.
 
 ## Licence
 
-MIT. See `LICENSE`.
+MIT. See `LICENSE`. The example kit's font, Inter, is under the SIL Open Font License, in
+`cm/starter/video/kit/fonts/OFL.txt`.

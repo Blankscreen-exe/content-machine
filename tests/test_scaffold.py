@@ -25,6 +25,17 @@ def test_init_creates_rules_skills_and_the_content_folder(workspace_dir):
     assert not (workspace_dir / "brands").exists()      # brands live in the database now
 
 
+def test_init_sets_up_the_video_packages_and_the_example_kit(workspace_dir):
+    scaffold.init_workspace()
+
+    # at the root, so every piece folder beneath it finds the packages
+    for name in ("package.json", "package-lock.json", ".npmrc"):
+        assert (workspace_dir / name).is_file(), f"missing {name}"
+    kit = workspace_dir / "video" / "example-kit"
+    assert (kit / "index.ts").is_file()
+    assert (kit / "fonts" / "inter-latin-800-normal.woff2").read_bytes()[:4] == b"wOF2"
+
+
 def test_init_never_overwrites_your_edits(workspace_dir):
     scaffold.init_workspace()
     rules = workspace_dir / "CLAUDE.md"

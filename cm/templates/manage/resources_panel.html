@@ -1,0 +1,55 @@
+{# What the brand reuses across its pieces: images such as a portrait or logo, and music a
+   video can play under the voice. Uploads come through the browser, so they work from any
+   device; each file goes to the folder its type belongs to. #}
+<section class="panel" id="resources">
+  <h2>Resources</h2>
+
+  <form class="drop-zone" hx-post="/manage/brands/{{ brand.id }}/resources" hx-encoding="multipart/form-data"
+        hx-target="#resources" hx-swap="outerHTML" data-drop-zone>
+    <p>Drop images or music here, or
+      <label class="btn">choose files<input type="file" name="uploads" multiple accept="{{ resources_accepted }}" hidden
+             hx-on:change="this.form.requestSubmit()"></label>
+    </p>
+    <progress value="0" max="100" hidden></progress>
+    <p class="hint">Images up to 10 MB; music as MP3 or M4A up to 50 MB, WAV up to 200 MB.</p>
+  </form>
+
+  {% if message %}<p class="saved">{{ message }}</p>{% endif %}
+  {% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
+
+  {% if can_open_folder %}
+    <p><button class="btn" type="button" hx-post="/manage/brands/{{ brand.id }}/resources/open"
+               hx-target="#resources" hx-swap="outerHTML">Open folder</button></p>
+  {% endif %}
+
+  <p class="hint">Folder: <code>{{ resources_folder }}</code>. The video kit, the code that
+    gives this brand's videos their look, is in <code>{{ kit_folder }}</code>.</p>
+
+  {% for kind, items in resources.items() %}
+    <h3>{{ kind | capitalize }}</h3>
+    {% if items %}
+      <ul class="asset-list">
+        {% for item in items %}
+          {% set url = "/manage/brands/" ~ brand.id ~ "/resources/" ~ kind ~ "/" ~ (item.name | urlencode) %}
+          <li class="asset">
+            {% if item.is_image %}
+              <a class="asset-preview" href="{{ url }}" target="_blank" rel="noopener"><img src="{{ url }}" alt="{{ item.name }}"></a>
+            {% else %}
+              <div class="asset-preview asset-media"><audio src="{{ url }}" controls preload="metadata"></audio></div>
+            {% endif %}
+            <code class="asset-name">{{ kind }}/{{ item.name }}</code>
+            <span class="hint">{{ item.size | filesize }}</span>
+            <span class="asset-actions">
+              <a class="btn" href="{{ url }}" download>Download</a>
+              <button class="btn btn-danger" type="button"
+                      hx-post="{{ url }}/delete" hx-target="#resources" hx-swap="outerHTML"
+                      hx-confirm="Move {{ item.name }} to the workspace trash?">Delete</button>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="hint">No {{ kind }} yet.</p>
+    {% endif %}
+  {% endfor %}
+</section>

@@ -16,7 +16,7 @@ from ... import crud, scaffold
 from ...database import get_session
 from ...files import digest
 from ...models import Brand
-from . import page
+from . import page, resources
 
 router = APIRouter(prefix="/brands")
 
@@ -59,7 +59,7 @@ def brand_active(brand_id: int, request: Request, active: bool = Form(...),
 def brand_page(brand_id: int, request: Request, session: Session = Depends(get_session)):
     brand = _brand(session, brand_id)
     return page.render(request, session, "brands", "manage/brand.html", brand=brand,
-                       **_pane(brand, "voice", brand.voice))
+                       **_pane(brand, "voice", brand.voice), **resources.panel_context(request, brand))
 
 
 @router.get("/{brand_id}/text/{field}", response_class=HTMLResponse)

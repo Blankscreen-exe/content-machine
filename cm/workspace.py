@@ -71,7 +71,7 @@ def trash_asset(session: Session, piece: Piece, name: str) -> Path:
     folder = piece_folder(session, piece)
     target_dir = (get_settings().trash_dir / crud.brand_slug(session, piece.brand_id)
                   / folder.name / "assets")
-    return assets.move(assets.path_of(folder, name), target_dir)
+    return assets.move(assets.path_of(assets.folder_of(folder), name), target_dir)
 
 
 def write_brief(session: Session, piece: Piece) -> Path:

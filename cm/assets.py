@@ -38,6 +38,7 @@ IMAGE_LIMITS = {suffix: LIMITS[suffix] for suffix in IMAGE_SUFFIXES}
 # Played in the panel. A browser records voice as WebM, which a video player plays too.
 VIDEO_SUFFIXES = {".mp4", ".webm"}
 AUDIO_SUFFIXES = {".mp3", ".m4a", ".wav"}
+AUDIO_LIMITS = {suffix: LIMITS[suffix] for suffix in AUDIO_SUFFIXES}
 
 # What each stored type is served as. Stated here rather than looked up, because Python
 # reads these from the Windows registry, where another program can change them, and a
@@ -81,12 +82,13 @@ class Asset:
 
 
 def folder_of(piece_folder: Path) -> Path:
+    """Where a piece keeps its assets. The functions below take this folder, or any other
+    folder kept by the same rules, such as a brand's resources."""
     return piece_folder / "assets"
 
 
-def listing(piece_folder: Path) -> list[Asset]:
+def listing(folder: Path) -> list[Asset]:
     """The stored files, by name. Anything else in the folder is not shown or served."""
-    folder = folder_of(piece_folder)
     if not folder.is_dir():
         return []
     return sorted((Asset(p.name, p.stat().st_size) for p in folder.iterdir()
@@ -94,14 +96,13 @@ def listing(piece_folder: Path) -> list[Asset]:
                   key=lambda asset: asset.name.lower())
 
 
-def save(piece_folder: Path, filename: str, source: BinaryIO, limits: dict[str, int] = LIMITS) -> str:
-    """Store one upload and return its file name. `limits` narrows what is accepted."""
+def save(folder: Path, filename: str, source: BinaryIO, limits: dict[str, int] = LIMITS) -> str:
+    """Store one upload in `folder` and return its file name. `limits` narrows what is accepted."""
     suffix = Path(filename or "").suffix.lower()
     if suffix not in limits:
         raise BadAsset(f"{filename or 'That file'}: {suffix or 'files without an extension'} "
                        f"cannot be stored here ({', '.join(sorted(limits))})")
 
-    folder = folder_of(piece_folder)
     folder.mkdir(parents=True, exist_ok=True)
     name = _free_name(folder, slugify(Path(filename).stem) or "file", suffix)
     partial = folder / (name + PARTIAL)
@@ -123,9 +124,9 @@ def save(piece_folder: Path, filename: str, source: BinaryIO, limits: dict[str, 
     return name
 
 
-def path_of(piece_folder: Path, name: str) -> Path:
-    """The path of one stored file, or an error if the name points anywhere else."""
-    path = resolve(folder_of(piece_folder), name)
+def path_of(folder: Path, name: str) -> Path:
+    """The path of one file stored in `folder`, or an error if the name points anywhere else."""
+    path = resolve(folder, name)
     if path.suffix.lower() not in LIMITS or not path.is_file():
         raise FileNotFoundError(f"{name!r} is not a stored asset")
     return path

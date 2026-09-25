@@ -4,6 +4,7 @@
 *.png binary
 *.jpg binary
 *.gif binary
+*.woff2 binary
 
 # Third-party files copied in so the app works offline. Not ours to review line by line,
 # and not what the repository's language statistics should be about.

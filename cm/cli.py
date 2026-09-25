@@ -12,7 +12,7 @@ import typer
 import uvicorn
 from sqlmodel import Session
 
-from . import choices, crud, scaffold, workspace
+from . import choices, crud, scaffold, toolchain, workspace
 from .database import engine, migrate
 from .models import Platform, Stage
 from .net import lan_ip
@@ -20,6 +20,8 @@ from .security import rotate_token, token
 from .settings import get_settings
 
 app = typer.Typer(help="content machine: local idea pool and content pipeline", no_args_is_help=True)
+video = typer.Typer(help="the toolchain that renders video pieces", no_args_is_help=True)
+app.add_typer(video, name="video")
 
 
 @app.command()
@@ -123,7 +125,7 @@ def brief(piece_id: int) -> None:
 
 @app.command()
 def init(force: bool = typer.Option(False, "--force", help="overwrite the starter files")) -> None:
-    """Create the workspace folder, CLAUDE.md and the starter skills."""
+    """Create the workspace folder, CLAUDE.md, the starter skills and the video starter files."""
     written = scaffold.init_workspace(force=force)
     if not written:
         typer.echo("workspace already set up (use --force to rewrite the starter files)")
@@ -145,7 +147,18 @@ def where() -> None:
     typer.echo(f"workspace: {settings.workspace}")
     typer.echo(f"database:  {settings.db_path}")
     typer.echo(f"content:   {settings.content_dir}")
+    typer.echo(f"resources: {settings.resources_dir}")
     typer.echo(f"trash:     {settings.trash_dir}")
+
+
+@video.command()
+def setup() -> None:
+    """Install the video toolchain into the workspace, checking every package. Downloads."""
+    try:
+        toolchain.setup(get_settings().workspace, say=typer.echo)
+    except toolchain.ToolchainError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc
 
 
 def _port_is_free(host: str, port: int) -> bool:

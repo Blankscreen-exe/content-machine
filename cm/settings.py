@@ -38,6 +38,11 @@ class Settings(BaseSettings):
         return self.workspace / ".cm"
 
     @property
+    def resources_dir(self) -> Path:
+        """What a brand reuses across pieces: its video kit, music and images, a folder each."""
+        return self.workspace / "resources"
+
+    @property
     def trash_dir(self) -> Path:
         """Where a deleted piece's folder goes, so deleting the entry never deletes the work."""
         return self.workspace / "trash"

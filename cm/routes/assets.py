@@ -25,10 +25,10 @@ router = APIRouter(prefix="/pieces/{piece_id}/assets")
 
 def panel_context(request: Request, session: Session, piece: Piece) -> dict:
     """What the Assets panel needs; the piece page uses it for its first render too."""
-    folder = workspace.piece_folder(session, piece)
+    folder = assets.folder_of(workspace.piece_folder(session, piece))
     return {
         "assets": assets.listing(folder),
-        "assets_folder": assets.folder_of(folder),
+        "assets_folder": folder,
         "accepted": ",".join(sorted(assets.LIMITS)),
         # a folder opened on the server is only seen by someone sitting at it
         "can_open_folder": from_this_machine(request),
@@ -38,7 +38,7 @@ def panel_context(request: Request, session: Session, piece: Piece) -> dict:
 @router.post("")
 def paste(piece_id: int, file: UploadFile, session: Session = Depends(get_session)):
     """An image pasted or dropped into the editor: store it, return the path for the markdown."""
-    folder = workspace.piece_folder(session, _piece(session, piece_id))
+    folder = assets.folder_of(workspace.piece_folder(session, _piece(session, piece_id)))
     try:
         name = assets.save(folder, file.filename or "", file.file, limits=assets.IMAGE_LIMITS)
     except assets.BadAsset as exc:
@@ -53,7 +53,7 @@ def upload(piece_id: int, request: Request, uploads: list[UploadFile] = File(...
     """Files dropped on the Assets panel. Each is stored or refused on its own, so one
     wrong file does not stop the rest."""
     piece = _piece(session, piece_id)
-    folder = workspace.piece_folder(session, piece)
+    folder = assets.folder_of(workspace.piece_folder(session, piece))
     stored, refused = [], []
     for upload_file in uploads:
         try:
@@ -66,7 +66,7 @@ def upload(piece_id: int, request: Request, uploads: list[UploadFile] = File(...
 
 @router.get("/{name}")
 def serve(piece_id: int, name: str, session: Session = Depends(get_session)):
-    folder = workspace.piece_folder(session, _piece(session, piece_id))
+    folder = assets.folder_of(workspace.piece_folder(session, _piece(session, piece_id)))
     try:
         path = assets.path_of(folder, name)
     except (files.UnsafePath, FileNotFoundError) as exc:

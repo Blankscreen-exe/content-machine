@@ -84,7 +84,7 @@ def test_a_refused_upload_leaves_nothing_behind(tmp_path, monkeypatch):
     monkeypatch.setattr(assets, "CHUNK", 4)                   # so it fails part-way through
     with pytest.raises(assets.BadAsset):
         assets.save(tmp_path, "working.psd", io.BytesIO(b"x" * 40))
-    assert list(assets.folder_of(tmp_path).iterdir()) == []   # no half-written file
+    assert list(tmp_path.iterdir()) == []                     # no half-written file
 
 
 def test_an_empty_upload_is_refused(tmp_path):
@@ -98,7 +98,7 @@ def test_only_stored_types_are_listed_or_served(client: TestClient, session: Ses
     (folder / "cover.png").write_bytes(PNG)
     (folder / "page.html").write_text("<script>alert(1)</script>", encoding="utf-8")
 
-    assert [a.name for a in assets.listing(workspace.piece_folder(session, piece))] == ["cover.png"]
+    assert [a.name for a in assets.listing(folder)] == ["cover.png"]
     assert client.get(f"/pieces/{piece.id}/assets/page.html").status_code == 404
     assert client.get(f"/pieces/{piece.id}/assets/cover.png").content == PNG
 
