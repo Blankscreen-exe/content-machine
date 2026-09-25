@@ -157,7 +157,7 @@ def test_the_piece_page_shows_the_panel_and_loads_the_editor(client: TestClient,
     page = client.get(f"/pieces/{piece.id}").text
 
     assert 'id="assets"' in page and 'name="uploads" multiple' in page
-    assert 'accept=".gif,.jpeg,.jpg,.pdf,.png,.psd,.webp"' in page
+    assert 'accept=".gif,.jpeg,.jpg,.m4a,.mp3,.mp4,.pdf,.png,.psd,.wav,.webm,.webp"' in page
     assert "/static/vendor/toastui-editor-all.min.js" in page   # the self-contained build
     assert f'data-upload-url="/pieces/{piece.id}/assets"' in page
     assert "https://" not in page and "http://" not in page     # everything is local
@@ -177,3 +177,54 @@ def test_open_folder_is_offered_only_on_this_machine(session: Session, piece, mo
         assert "Open folder" in local.get(f"/pieces/{piece.id}").text
         assert "Opened the folder." in local.post(f"/pieces/{piece.id}/assets/open").text
     assert opened == [_assets_folder(session, piece)]
+
+
+# --- video and audio -----------------------------------------------------------------------
+
+def test_video_and_audio_are_stored_and_played_in_the_panel(client: TestClient, session: Session, piece):
+    response = client.post(f"/pieces/{piece.id}/assets/files", files=[
+        ("uploads", ("Short.mp4", b"\x00\x00\x00\x18ftypmp42 video", "video/mp4")),
+        ("uploads", ("take 1.webm", b"\x1aE\xdf\xa3 voice", "video/webm")),
+        ("uploads", ("Theme.mp3", b"ID3 music", "audio/mpeg")),
+    ])
+
+    assert "Added short.mp4, take-1.webm, theme.mp3." in response.text
+    assert f'<video src="/pieces/{piece.id}/assets/short.mp4" controls preload="metadata">' in response.text
+    assert f'<video src="/pieces/{piece.id}/assets/take-1.webm"' in response.text
+    assert f'<audio src="/pieces/{piece.id}/assets/theme.mp3" controls preload="metadata">' in response.text
+
+
+def test_media_is_served_with_its_own_type_whatever_the_system_says(client: TestClient, session: Session,
+                                                                     piece, monkeypatch):
+    monkeypatch.setattr("mimetypes.guess_type", lambda *args, **kwargs: ("text/plain", None))
+    folder = _assets_folder(session, piece)
+    folder.mkdir(parents=True)
+    for name in ("short.mp4", "take.webm", "theme.mp3", "voice.wav", "voice.m4a"):
+        (folder / name).write_bytes(b"media")
+
+    served = {name: client.get(f"/pieces/{piece.id}/assets/{name}").headers["content-type"]
+              for name in ("short.mp4", "take.webm", "theme.mp3", "voice.wav", "voice.m4a")}
+
+    assert served == {"short.mp4": "video/mp4", "take.webm": "video/webm", "theme.mp3": "audio/mpeg",
+                      "voice.wav": "audio/wav", "voice.m4a": "audio/mp4"}
+
+
+def test_every_stored_type_has_a_type_to_be_served_as():
+    assert set(assets.MEDIA_TYPES) == set(assets.LIMITS)
+
+
+def test_a_video_can_be_scrubbed_without_downloading_all_of_it(client: TestClient, session: Session, piece):
+    folder = _assets_folder(session, piece)
+    folder.mkdir(parents=True)
+    (folder / "short.mp4").write_bytes(bytes(range(100)))
+
+    response = client.get(f"/pieces/{piece.id}/assets/short.mp4", headers={"Range": "bytes=10-19"})
+
+    assert response.status_code == 206
+    assert response.content == bytes(range(10, 20))
+
+
+def test_only_images_can_be_pasted_even_now_video_is_stored(client: TestClient, piece):
+    response = client.post(f"/pieces/{piece.id}/assets",
+                           files={"file": ("short.mp4", b"video", "video/mp4")})
+    assert response.status_code == 400

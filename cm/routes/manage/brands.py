@@ -110,6 +110,7 @@ def _pane(brand: Brand, field: str, text: str, fingerprint: str | None = None,
         "text": text,
         "fingerprint": fingerprint or digest(text),
         "editable": True,
+        "count_characters": True,
         "message": message,
         "conflict": conflict,
     }}

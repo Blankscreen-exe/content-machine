@@ -69,6 +69,7 @@ def create(session: Session, kind: type[Choice], name: str, brand_id: int | None
     if kind is PieceType:
         fields["main_file"] = check_main_file(fields.get("main_file", "draft.md"))
         fields["char_limit"] = check_char_limit(fields.get("char_limit"))
+        check_video(fields.get("video", False), fields["char_limit"])
     if kind is Mode:
         fields["brand_id"] = brand_id
     item = kind(name=name, **fields)
@@ -86,6 +87,8 @@ def update(session: Session, item: Choice, **fields) -> Choice:
         fields["main_file"] = check_main_file(fields["main_file"])
     if "char_limit" in fields:
         fields["char_limit"] = check_char_limit(fields["char_limit"])
+    if isinstance(item, PieceType):
+        check_video(fields.get("video", item.video), fields.get("char_limit", item.char_limit))
     for key, value in fields.items():
         setattr(item, key, value)
     session.add(item)
@@ -125,6 +128,12 @@ def check_char_limit(limit: int | None) -> int | None:
     if limit is not None and limit < 1:
         raise ChoiceError("A character limit is a number above zero, or left empty for none.")
     return limit
+
+
+def check_video(video: bool, char_limit: int | None) -> None:
+    """A video is not pasted anywhere as text, so a character limit would mean nothing."""
+    if video and char_limit is not None:
+        raise ChoiceError("A video type has no character limit. Leave the limit empty.")
 
 
 def _clean_name(session: Session, kind: type[Choice], name: str, brand_id: int | None,

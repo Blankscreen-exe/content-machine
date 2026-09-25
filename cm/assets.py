@@ -1,4 +1,5 @@
-"""The files that go with a piece: images, PDFs and Photoshop files in its `assets/` folder.
+"""The files that go with a piece: images, PDFs, Photoshop files, video and audio in its
+`assets/` folder.
 
 Uploads come from the browser, which may be on another device than the one running the
 app, so this is how a finished image gets into the piece folder. Three rules:
@@ -26,10 +27,27 @@ LIMITS = {
     ".png": 10 * MB, ".jpg": 10 * MB, ".jpeg": 10 * MB, ".gif": 10 * MB, ".webp": 10 * MB,
     ".pdf": 50 * MB,           # a LinkedIn carousel is posted as a PDF
     ".psd": 200 * MB,          # the working file, kept with the piece
+    # A rendered short runs to tens of megabytes; the limit leaves room for longer videos.
+    ".mp4": 500 * MB, ".webm": 500 * MB,
+    # Music and voice. Uncompressed WAV is about 10 MB a minute.
+    ".mp3": 50 * MB, ".m4a": 50 * MB, ".wav": 200 * MB,
 }
 # Shown as thumbnails, and the only kind that can be pasted into a draft.
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 IMAGE_LIMITS = {suffix: LIMITS[suffix] for suffix in IMAGE_SUFFIXES}
+# Played in the panel. A browser records voice as WebM, which a video player plays too.
+VIDEO_SUFFIXES = {".mp4", ".webm"}
+AUDIO_SUFFIXES = {".mp3", ".m4a", ".wav"}
+
+# What each stored type is served as. Stated here rather than looked up, because Python
+# reads these from the Windows registry, where another program can change them, and a
+# video served with the wrong type does not play.
+MEDIA_TYPES = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
+    ".webp": "image/webp", ".pdf": "application/pdf", ".psd": "image/vnd.adobe.photoshop",
+    ".mp4": "video/mp4", ".webm": "video/webm",
+    ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".wav": "audio/wav",
+}
 
 PARTIAL = ".part"              # an upload still being written
 CHUNK = MB
@@ -47,6 +65,14 @@ class Asset:
     @property
     def is_image(self) -> bool:
         return Path(self.name).suffix.lower() in IMAGE_SUFFIXES
+
+    @property
+    def is_video(self) -> bool:
+        return Path(self.name).suffix.lower() in VIDEO_SUFFIXES
+
+    @property
+    def is_audio(self) -> bool:
+        return Path(self.name).suffix.lower() in AUDIO_SUFFIXES
 
     @property
     def kind(self) -> str:
@@ -103,6 +129,10 @@ def path_of(piece_folder: Path, name: str) -> Path:
     if path.suffix.lower() not in LIMITS or not path.is_file():
         raise FileNotFoundError(f"{name!r} is not a stored asset")
     return path
+
+
+def media_type(path: Path) -> str:
+    return MEDIA_TYPES[path.suffix.lower()]
 
 
 def move(path: Path, target_dir: Path) -> Path:

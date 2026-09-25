@@ -63,6 +63,8 @@ class PieceType(SQLModel, table=True):
     main_file: str = "draft.md"
     # The most characters it should run to once pasted (a platform's limit); None for no limit.
     char_limit: int | None = None
+    # Made of frames and rendered into a video, rather than text pasted onto a platform.
+    video: bool = False
     active: bool = True
 
 

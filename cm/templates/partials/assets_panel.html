@@ -13,7 +13,8 @@
              hx-on:change="this.form.requestSubmit()"></label>
     </p>
     <progress value="0" max="100" hidden></progress>
-    <p class="hint">Images up to 10 MB, PDF up to 50 MB, Photoshop files up to 200 MB.
+    <p class="hint">Images up to 10 MB, PDF up to 50 MB, Photoshop files up to 200 MB,
+      video up to 500 MB, audio up to 50 MB (WAV 200 MB).
       An image pasted into the editor is stored here too.</p>
   </form>
 
@@ -38,6 +39,11 @@
           <li class="asset">
             {% if asset.is_image %}
               <a class="asset-preview" href="{{ url }}" target="_blank" rel="noopener"><img src="{{ url }}" alt="{{ asset.name }}"></a>
+            {% elif asset.is_video %}
+              {# metadata only: a panel of videos should not download them all on opening #}
+              <div class="asset-preview asset-media"><video src="{{ url }}" controls preload="metadata"></video></div>
+            {% elif asset.is_audio %}
+              <div class="asset-preview asset-media"><audio src="{{ url }}" controls preload="metadata"></audio></div>
             {% else %}
               <a class="asset-preview asset-file" href="{{ url }}" download>{{ asset.kind }}</a>
             {% endif %}

@@ -46,6 +46,8 @@ def pane_context(request: Request, piece: Piece, folder: Path, name: str, text: 
         # pasted images are stored in the piece folder and served from there
         "upload_url": f"{base}/assets",
         "assets_url": f"{base}/assets/",
+        # a video's frames are not pasted anywhere, so their length in characters means nothing
+        "count_characters": not piece.type.video,
         "char_limit": piece.type.char_limit,
         # the folder these drafts are in, opened on the machine running the app
         "open_folder_url": f"{base}/files/open",

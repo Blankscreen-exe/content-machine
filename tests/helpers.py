@@ -7,14 +7,16 @@ from cm import choices
 from cm.models import Mode, PieceType, Platform
 
 # What the migration seeds a real database with; conftest seeds the test database the same way.
+# (name, main file, character limit, video)
 STANDARD_TYPES = [
-    ("blog", "blog.md", None),
-    ("linkedin post", "linkedin.md", 3000),
-    ("x post", "x.md", 280),
-    ("infographic", "spec.md", None),
-    ("carousel", "spec.md", None),
-    ("quote", "quotes.md", None),
-    ("other", "draft.md", None),
+    ("blog", "blog.md", None, False),
+    ("linkedin post", "linkedin.md", 3000, False),
+    ("x post", "x.md", 280, False),
+    ("infographic", "spec.md", None, False),
+    ("carousel", "spec.md", None, False),
+    ("quote", "quotes.md", None, False),
+    ("other", "draft.md", None, False),
+    ("youtube short", "frames.md", None, True),
 ]
 
 

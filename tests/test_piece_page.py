@@ -126,6 +126,13 @@ def test_the_count_carries_the_types_limit(client: TestClient, session: Session,
     assert 'data-limit="3000"' in client.get(f"/pieces/{post.id}").text
 
 
+def test_a_video_piece_has_no_character_count(client: TestClient, session: Session, brand):
+    short = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "youtube short"),
+                              title="A short")
+    page = client.get(f"/pieces/{short.id}").text
+    assert "frames.md" in page and 'class="char-count"' not in page
+
+
 def test_open_folder_opens_the_piece_folder_from_this_machine(session: Session, piece, monkeypatch):
     """The drafts are in the piece folder; the Assets panel's button opens assets/ inside it."""
     opened = []

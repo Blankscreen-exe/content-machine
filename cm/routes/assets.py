@@ -68,9 +68,11 @@ def upload(piece_id: int, request: Request, uploads: list[UploadFile] = File(...
 def serve(piece_id: int, name: str, session: Session = Depends(get_session)):
     folder = workspace.piece_folder(session, _piece(session, piece_id))
     try:
-        return FileResponse(assets.path_of(folder, name))
+        path = assets.path_of(folder, name)
     except (files.UnsafePath, FileNotFoundError) as exc:
         raise HTTPException(404, str(exc)) from exc
+    # Answers range requests, so a video can be scrubbed without downloading all of it.
+    return FileResponse(path, media_type=assets.media_type(path))
 
 
 @router.post("/{name}/delete", response_class=HTMLResponse)

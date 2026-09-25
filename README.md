@@ -103,12 +103,16 @@ terminal session read and write the same files, so there is no import or export.
 
 ## Assets
 
-A piece's images, PDFs (a LinkedIn carousel is posted as one) and Photoshop files live in
-its `assets/` folder. They are uploaded through the browser, so they reach the folder from
-any device: drop several files on the Assets panel, and download or delete them from there.
+A piece's images, PDFs (a LinkedIn carousel is posted as one), Photoshop files, video and
+audio live in its `assets/` folder. They are uploaded through the browser, so they reach the
+folder from any device: drop several files on the Assets panel, and download or delete them
+from there. Video and audio play in the panel.
 
-- Only these types are stored or served; limits are 10 MB for images, 50 MB for PDFs and
-  200 MB for Photoshop files. An HTML or SVG file is never served from the app's address.
+- Only these types are stored or served; limits are 10 MB for images, 50 MB for PDFs,
+  200 MB for Photoshop files, 500 MB for video (MP4, WebM) and 50 MB for audio (MP3, M4A;
+  WAV 200 MB). An HTML or SVG file is never served from the app's address.
+- Each type is served with a content type the app states itself, not one read from the
+  system, and video answers range requests so it can be scrubbed.
 - Each upload is written under a temporary name and renamed once complete, so a failed or
   oversized upload leaves nothing behind.
 - Deleting moves the file to `trash/<brand>/<piece folder>/assets/`.
@@ -183,6 +187,10 @@ tab, not values in the code. Records point at them by id, so renaming one rename
 Turning one off hides it from new choices while the records that use it keep it; one that is in
 use cannot be deleted. Idea statuses, piece stages and priorities stay in code, because the app's
 own behaviour depends on them.
+
+A piece type can be marked **video**: its pieces are frames rendered into a video rather than
+text pasted onto a platform, so it has no character limit. The "youtube short" type starts out
+as one, opening on `frames.md`.
 
 A brand's **voice** and **profile** are stored on the brand and edited on its Manage page. A
 mode has a description. All three are copied into `brief.md` when a session starts, so the

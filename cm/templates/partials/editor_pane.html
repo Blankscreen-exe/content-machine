@@ -6,7 +6,7 @@
      save_url      where Save posts;    open_url  where Reload fetches the saved version
      text, fingerprint, editable, readonly_reason, message, conflict
      upload_url, assets_url             only where pasted images have somewhere to go
-     char_limit                         the most characters the text should run to, if any
+     count_characters, char_limit       whether to count the text, and the most it should run to
      open_folder_url, can_open_folder   only for a piece's drafts, on this machine #}
 <section class="editor-pane" id="editor-pane">
   <nav class="file-tabs">
@@ -50,7 +50,9 @@
       <button class="btn" type="button" data-copy="plain">Copy as plain text</button>
 
       {% if pane.message %}<span class="{{ 'message' if pane.conflict else 'saved' }}">{{ pane.message }}</span>{% endif %}
-      <span class="char-count" {% if pane.char_limit %}data-limit="{{ pane.char_limit }}"{% endif %}></span>
+      {% if pane.count_characters %}
+        <span class="char-count" {% if pane.char_limit %}data-limit="{{ pane.char_limit }}"{% endif %}></span>
+      {% endif %}
     </div>
   </form>
 </section>

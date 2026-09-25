@@ -102,3 +102,32 @@ def test_platform_limits_are_filled_in_for_the_seeded_types(tmp_path: Path):
     with sqlite3.connect(db) as connection:
         limits = dict(connection.execute("SELECT name, char_limit FROM piece_type").fetchall())
     assert limits["linkedin post"] == 3000 and limits["x post"] == 280 and limits["blog"] is None
+
+
+BEFORE_VIDEO = "d0e86772b04c"
+
+
+def test_existing_types_stay_text_and_a_short_type_is_added(tmp_path: Path):
+    db = tmp_path / "content.db"
+    command.upgrade(_config(db), "head")
+    with sqlite3.connect(db) as connection:
+        video = dict(connection.execute("SELECT name, video FROM piece_type").fetchall())
+        main_file = connection.execute(
+            "SELECT main_file FROM piece_type WHERE name = 'youtube short'").fetchone()
+    assert video.pop("youtube short") == 1 and main_file == ("frames.md",)
+    assert set(video.values()) == {0}
+
+
+def test_a_short_type_already_made_by_hand_is_not_added_twice(tmp_path: Path):
+    db = tmp_path / "content.db"
+    config = _config(db)
+    command.upgrade(config, BEFORE_VIDEO)
+    with sqlite3.connect(db) as connection:
+        connection.execute("INSERT INTO piece_type (name, main_file, active) VALUES ('YouTube Short', 'short.md', 1)")
+
+    command.upgrade(config, "head")
+
+    with sqlite3.connect(db) as connection:
+        rows = connection.execute(
+            "SELECT name, main_file FROM piece_type WHERE lower(name) = 'youtube short'").fetchall()
+    assert rows == [("YouTube Short", "short.md")]      # yours is kept as you made it

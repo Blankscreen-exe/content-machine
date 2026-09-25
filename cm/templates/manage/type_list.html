@@ -1,7 +1,7 @@
 <div id="type-list">
   {% if types %}
     <table class="list" id="types-table" data-table>
-      <thead><tr><th>Name</th><th>Main file</th><th class="num">Character limit</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th>Main file</th><th class="num">Character limit</th><th>Video</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
       <tbody>
         {% for piece_type in types %}
           <tr class="{{ '' if piece_type.active else 'inactive' }}">
@@ -15,6 +15,10 @@
             <td class="num" data-label="Character limit" data-order="{{ '%07d' % piece_type.char_limit if piece_type.char_limit else '9999999' }}">
               <input type="number" name="char_limit" min="1" value="{{ piece_type.char_limit or '' }}" placeholder="none"
                      form="type-{{ piece_type.id }}" class="short-number">
+            </td>
+            <td data-label="Video" data-order="{{ 1 if piece_type.video else 0 }}">
+              <input type="checkbox" name="video" value="true" {{ 'checked' if piece_type.video }}
+                     form="type-{{ piece_type.id }}" aria-label="{{ piece_type.name }}: video">
             </td>
             <td data-label="Status">{{ 'on' if piece_type.active else 'off' }}</td>
             <td class="actions-cell" data-label="Actions">

@@ -257,3 +257,38 @@ def test_a_character_limit_must_be_above_zero(client: TestClient):
     response = client.post("/manage/types", data={"name": "thread", "main_file": "thread.md",
                                                   "char_limit": "0"})
     assert response.status_code == 400 and "above zero" in response.json()["detail"]
+
+
+def test_a_type_can_be_made_a_video_and_back(client: TestClient, session: Session):
+    other = choices.by_name(session, PieceType, "other")
+
+    client.post(f"/manage/types/{other.id}", data={"name": "other", "main_file": "draft.md",
+                                                   "video": "true"})
+    session.refresh(other)
+    assert other.video
+
+    # an unticked checkbox sends nothing at all
+    client.post(f"/manage/types/{other.id}", data={"name": "other", "main_file": "draft.md"})
+    session.refresh(other)
+    assert not other.video
+
+
+def test_a_video_type_cannot_have_a_character_limit(client: TestClient, session: Session):
+    response = client.post("/manage/types", data={"name": "reel", "main_file": "frames.md",
+                                                  "video": "true", "char_limit": "500"})
+    assert response.status_code == 400 and "no character limit" in response.json()["detail"]
+
+    # nor can a text type with a limit be ticked as video while keeping it
+    post = choices.by_name(session, PieceType, "linkedin post")
+    response = client.post(f"/manage/types/{post.id}", data={"name": "linkedin post",
+                                                             "main_file": "linkedin.md",
+                                                             "char_limit": "3000", "video": "true"})
+    assert response.status_code == 400
+    session.refresh(post)
+    assert not post.video and post.char_limit == 3000
+
+
+def test_the_types_list_shows_which_are_video(client: TestClient):
+    page = client.get("/manage/types").text
+    assert "<th>Video</th>" in page
+    assert 'value="true" checked' in page and 'aria-label="youtube short: video"' in page

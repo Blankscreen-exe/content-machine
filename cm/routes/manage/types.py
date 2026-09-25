@@ -21,18 +21,22 @@ def types(request: Request, session: Session = Depends(get_session)):
 
 @router.post("", response_class=HTMLResponse)
 def type_create(request: Request, name: str = Form(...), main_file: str = Form(...),
-                char_limit: OptionalInt = Form(None), session: Session = Depends(get_session)):
-    choices.create(session, PieceType, name, main_file=main_file, char_limit=char_limit)
+                char_limit: OptionalInt = Form(None), video: bool = Form(False),
+                session: Session = Depends(get_session)):
+    choices.create(session, PieceType, name, main_file=main_file, char_limit=char_limit, video=video)
     return _list(request, session)
 
 
 @router.post("/{type_id}", response_class=HTMLResponse)
 def type_update(type_id: int, request: Request, name: str = Form(...),
                 main_file: str = Form(...), char_limit: OptionalInt = Form(None),
-                session: Session = Depends(get_session)):
-    """Renaming is safe: pieces point at the type, and their folders keep the name they got."""
+                video: bool = Form(False), session: Session = Depends(get_session)):
+    """Renaming is safe: pieces point at the type, and their folders keep the name they got.
+
+    An unticked checkbox is not sent at all, so a missing `video` means "not video".
+    """
     choices.update(session, page.item_or_404(session, PieceType, type_id),
-                   name=name, main_file=main_file, char_limit=char_limit)
+                   name=name, main_file=main_file, char_limit=char_limit, video=video)
     return _list(request, session)
 
 
