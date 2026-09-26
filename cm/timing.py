@@ -78,5 +78,6 @@ def props(line: Timeline) -> dict:
             "script": scene.frame.script,
             "onScreen": scene.frame.on_screen,
             "animation": scene.frame.animation,
+            "words": None,          # filled in when the captions are timed to a take (captions.py)
         } for scene in line.scenes],
     }

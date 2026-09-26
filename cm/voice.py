@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import BinaryIO
 
-from . import assets
+from . import assets, captions
 
 FOLDER = "voice"
 MIX_FILE = "mix.json"
@@ -84,7 +84,11 @@ def take_path(piece_folder: Path, name: str) -> Path:
 
 def trash_take(piece_folder: Path, name: str, trash_dir: Path) -> Path:
     """Move a take to `trash_dir`. If it was the one used, the mix no longer uses one."""
-    moved = assets.move(take_path(piece_folder, name), trash_dir)
+    take = take_path(piece_folder, name)
+    moved = assets.move(take, trash_dir)
+    heard = captions.heard_path(take)                       # what was heard in it, for captions
+    if heard.is_file():
+        assets.move(heard, trash_dir)
     mix = read_mix(piece_folder)
     if mix.take == name:
         write_mix(piece_folder, Mix(**{**asdict(mix), "take": None}))

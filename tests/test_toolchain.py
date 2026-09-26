@@ -36,6 +36,14 @@ def tools(monkeypatch):
     monkeypatch.setattr(toolchain.shutil, "which", lambda name: f"/bin/{name}")
 
 
+@pytest.fixture(autouse=True)
+def whisper_installs(monkeypatch):
+    """Stands in for fetching whisper.cpp, which would download; records that it was asked."""
+    asked = []
+    monkeypatch.setattr(toolchain.whisper, "install", lambda workspace, say: asked.append(workspace))
+    return asked
+
+
 def _setup(monkeypatch, workspace, run: FakeRun) -> list[str]:
     monkeypatch.setattr(toolchain.subprocess, "run", run)
     said: list[str] = []
@@ -54,6 +62,19 @@ def test_setup_installs_from_the_lockfile_checks_signatures_then_fetches_the_bro
         (["exec", "--no", "--", "remotion", "browser", "ensure"], workspace),
     ]
     assert said[0] == "Node 24.1.0 found." and said[-1] == "The video toolchain is ready."
+
+
+def test_setup_ends_by_installing_what_times_captions_to_the_voice(monkeypatch, workspace, tools, whisper_installs):
+    _setup(monkeypatch, workspace, FakeRun())
+    assert whisper_installs == [workspace]
+
+
+def test_a_whisper_that_cannot_be_installed_is_a_setup_error(monkeypatch, workspace, tools):
+    def refuse(workspace, say):
+        raise toolchain.whisper.WhisperError("did not match its recorded checksum")
+    monkeypatch.setattr(toolchain.whisper, "install", refuse)
+    with pytest.raises(toolchain.ToolchainError, match="did not match its recorded checksum"):
+        _setup(monkeypatch, workspace, FakeRun())
 
 
 def test_a_failed_signature_check_stops_before_the_browser_is_fetched(monkeypatch, workspace, tools):

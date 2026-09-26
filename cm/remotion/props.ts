@@ -3,6 +3,10 @@
 // What the app hands a piece's video when it renders it. A piece's `video/Video.tsx`
 // exports `Video`, a component that takes these props and draws the whole video with its
 // brand's kit. Lengths and positions are in frames.
+// A script word, and when it is said: frames from the start of its scene, which can fall
+// outside the scene when a line runs past its picture. `to` is when the next word starts.
+export type Word = { text: string; from: number; to: number };
+
 export type Scene = {
   title: string;
   from: number;       // the frame it comes on at
@@ -11,6 +15,9 @@ export type Scene = {
   script: string;
   onScreen: string;
   animation: string;
+  // When the captions are timed to a take: the script's words as said. Otherwise null,
+  // and a caption spreads the script over `speech`.
+  words: Word[] | null;
 };
 
 // The voice and music are played by the app, under the video; a video never plays them.

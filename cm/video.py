@@ -49,11 +49,13 @@ class RenderError(RuntimeError):
 
 @dataclass(frozen=True)
 class Progress:
-    step: str           # "bundling", "rendering" or "encoding"
+    step: str           # "hearing" (the voice, for captions), "bundling", "rendering" or "encoding"
     done: int
     total: int
 
     def __str__(self) -> str:
+        if self.step == "hearing":
+            return "Timing the captions to the voice"
         if self.step == "bundling":
             return f"Bundling {self.done}%"
         return f"{self.step.capitalize()} {self.done} / {self.total} frames"
@@ -107,6 +109,20 @@ def render(workspace: Path, video_dir: Path, job: Path, props: dict, scale: floa
         raise RenderError("Remotion finished without writing a video. Run it again; if it keeps "
                           "happening, the output above the last render says why.")
     return out
+
+
+def to_wav(workspace: Path, source: Path, target: Path) -> Path:
+    """`source` as 16 kHz mono WAV, the form speech recognition reads, using the ffmpeg that
+    comes with Remotion."""
+    npm = shutil.which("npm")
+    if not npm or not (workspace / "node_modules" / "remotion").is_dir():
+        raise RenderError("The video toolchain is not installed. Run `cm video setup` first.")
+    argv = [npm, "exec", "--no", "--", "remotion", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-i", str(source), "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", str(target)]
+    run = subprocess.run(argv, cwd=workspace, capture_output=True, text=True, errors="replace", check=False)
+    if run.returncode != 0 or not target.is_file():
+        raise RenderError(f"Could not read {source.name} as audio:\n{run.stderr.strip()[-1500:]}")
+    return target
 
 
 def clear(job: Path) -> None:

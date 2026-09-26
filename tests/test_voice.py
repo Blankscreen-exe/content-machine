@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from cm import crud, renders, resources, video, voice, workspace
+from cm import captions, crud, renders, resources, video, voice, workspace
 from cm.settings import get_settings
 from helpers import type_id
 
@@ -57,8 +57,11 @@ def test_a_take_must_be_audio(folder):
 
 def test_deleting_the_take_in_use_leaves_the_mix_without_one(folder, tmp_path):
     voice.save_take(folder, "take.webm", io.BytesIO(WEBM))
+    captions.save(voice.folder_of(folder) / "take-1.webm", [])
     voice.trash_take(folder, "take-1.webm", tmp_path / "trash")
     assert voice.read_mix(folder).take is None and (tmp_path / "trash" / "take-1.webm").exists()
+    assert (tmp_path / "trash" / "take-1.words.json").exists()                # what was heard goes with it
+    assert list(voice.folder_of(folder).iterdir()) == [voice.folder_of(folder) / voice.MIX_FILE]
 
 
 # --- mix.json ----------------------------------------------------------------------------
@@ -126,6 +129,7 @@ def test_a_render_plan_carries_the_files_it_plays(session: Session, short, brand
     music.mkdir(parents=True)
     (music / "theme.mp3").write_bytes(b"ID3")
     voice.write_mix(folder, voice.Mix(take="take-1.webm", music="theme.mp3"))
+    captions.save(voice.folder_of(folder) / "take-1.webm", [])      # heard already, by an earlier render
 
     plan = renders.plan(session, short)
 

@@ -1,11 +1,14 @@
 """Rendering a piece: drafts replace each other, finals are all kept, and nothing is left behind."""
 from __future__ import annotations
 
+import io
+
 import pytest
 from sqlmodel import Session
 
-from cm import crud, frames, renders, video, workspace
+from cm import crud, frames, renders, video, voice, workspace
 from cm.settings import get_settings
+from cm.whisper import Heard
 from helpers import type_id
 
 FRAMES = "## Hook (2s)\nScript: Hello there.\n"
@@ -82,6 +85,43 @@ def test_a_video_that_cannot_be_put_in_place_is_kept_and_said_where(session: Ses
         renders.render_piece(session, short, draft=True)
     kept = rendered[0]["job"] / "out.mp4"
     assert str(kept) in str(caught.value) and kept.read_bytes() == b"render 1"
+
+
+def test_captions_are_timed_to_the_chosen_take_heard_once(session: Session, short, rendered, monkeypatch):
+    folder = workspace.piece_folder(session, short)
+    voice.save_take(folder, "take.webm", io.BytesIO(b"voice"))
+    monkeypatch.setattr(renders.whisper, "installed", lambda workspace: True)
+    monkeypatch.setattr(renders.video, "to_wav", lambda workspace, source, target: target)
+    hearings = []
+
+    def hear(workspace, wav):
+        hearings.append(wav)
+        return [Heard("Hello", 0.5), Heard("there.", 1.0)]
+    monkeypatch.setattr(renders.whisper, "transcribe", hear)
+    steps = []
+
+    renders.render_piece(session, short, on_progress=lambda p: steps.append(p.step))
+    renders.render_piece(session, short)
+
+    assert len(hearings) == 1 and steps[0] == "hearing"          # the second render reuses what was heard
+    assert rendered[0]["props"]["scenes"][0]["words"] == [{"text": "Hello", "from": 15, "to": 30},
+                                                          {"text": "there.", "from": 30, "to": 60}]
+
+
+def test_without_whisper_a_render_with_timed_captions_says_how_to_get_it(session: Session, short, monkeypatch):
+    voice.save_take(workspace.piece_folder(session, short), "take.webm", io.BytesIO(b"voice"))
+    monkeypatch.setattr(renders.whisper, "installed", lambda workspace: False)
+    with pytest.raises(video.RenderError, match="Run `cm video setup`"):
+        renders.plan(session, short)
+
+
+def test_with_captions_off_the_take_is_never_heard(session: Session, short, rendered, monkeypatch):
+    folder = workspace.piece_folder(session, short)
+    (folder / "frames.md").write_text("Captions: off\n" + FRAMES, encoding="utf-8")
+    voice.save_take(folder, "take.webm", io.BytesIO(b"voice"))
+    monkeypatch.setattr(renders.whisper, "installed", lambda workspace: False)
+    renders.render_piece(session, short)
+    assert rendered[0]["props"]["scenes"][0]["words"] is None
 
 
 def test_frames_that_cannot_be_read_stop_the_render(session: Session, short, rendered):

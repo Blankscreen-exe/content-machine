@@ -11,6 +11,8 @@ checked rather than trusted:
 - No package runs code while it installs (`--ignore-scripts`, also set in `.npmrc`).
 - `npm audit signatures` checks every package was signed by the npm registry.
 - Remotion's headless Chrome comes from Google's Chrome for Testing downloads.
+- whisper.cpp and its speech model, which time captions to the voice, are checked against
+  SHA-256 checksums recorded in whisper.py before they are kept.
 """
 from __future__ import annotations
 
@@ -19,6 +21,8 @@ import shutil
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
+
+from . import whisper
 
 MIN_NODE = 18
 # What the workspace must hold before anything is installed; `cm init` puts them there.
@@ -47,6 +51,10 @@ def setup(workspace: Path, say: Callable[[str], None] = print) -> None:
     say("Fetching the browser that draws each frame (once, from Google's Chrome for Testing)...")
     _run([npm, "exec", "--no", "--", "remotion", "browser", "ensure"], workspace,
          "Fetching the browser failed. Check the connection and run `cm video setup` again.")
+    try:
+        whisper.install(workspace, say=say)
+    except whisper.WhisperError as exc:
+        raise ToolchainError(str(exc)) from exc
     say("The video toolchain is ready.")
 
 

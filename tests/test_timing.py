@@ -50,5 +50,5 @@ def test_the_props_are_what_the_video_is_handed():
         "fps": 30, "width": FORMATS["square"].width, "height": FORMATS["square"].height,
         "total": 60, "captions": False,
         "scenes": [{"title": "Hook", "from": 0, "duration": 60, "speech": 24, "script": "Hello there.",
-                    "onScreen": "big hello", "animation": "pops"}],
+                    "onScreen": "big hello", "animation": "pops", "words": None}],
     }

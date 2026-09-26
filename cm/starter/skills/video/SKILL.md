@@ -28,7 +28,11 @@ Use once I have finalised a video piece's `frames.md`, and again whenever it cha
 - One `<Sequence from={scene.from} durationInFrames={scene.duration}>` per scene, in order.
   Never write a timing down: time each animation from its scene's start, and anything tied
   to what is said from `scene.speech`. The timings change when `frames.md` does.
-- If `captions` is true, show the kit's `Caption` in every scene with speech.
+- If `captions` is true, place the kit's `Captions` once, over the whole video, not inside
+  a scene: `<Captions scenes={scenes} />`. Once there is a take the app times each word to
+  the voice, and captions follow the voice rather than the cuts between scenes.
+  `scene.words` gives the moment each word is said, for anything else that should move
+  with the voice.
 - Follow each frame's "On screen" and "Animation". Where they are loose, choose something
   in the kit's style and tell me what you chose.
 - Lay out in kit units, as the kit does, so the video works in the format in the brief.

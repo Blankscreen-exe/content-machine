@@ -197,6 +197,24 @@ element nudged into step while playing stalls. The sound output is opened afresh
 Play, on whatever device is current, since a Bluetooth headset is a different device while
 its microphone is in use. Each take also has the browser's own player, to hear it as recorded.
 
+### Captions timed to the voice
+
+With captions on and a take chosen, a render first hears the take with whisper.cpp, on this
+machine, and keeps what it heard beside the take (`take-4.words.json`), so each take is
+heard once; about five seconds for a 36-second take. The script's words are matched to the
+heard ones in order, so a misheard word or one added in the reading does not throw the rest
+out, and a word not heard is placed between its neighbours. Captions show the script as
+written, each word lit as it is said. The kit's `Captions` is placed once over the whole
+video, so a line stays up across a cut between pictures: captions follow the voice. Before
+there is a take, each scene's script is spread over its estimated speech.
+
+`cm video setup` fetches whisper.cpp 1.9.2 and its small English model, `base.en` (about
+150 MB, once), into `.cm/whisper/`, and keeps each only if it matches the SHA-256 recorded in
+`cm/whisper.py`; the model comes from a fixed revision of its repository. Only whisper.cpp's
+ready-made Windows build is set up.
+
+### Sound in a render
+
 A render plays the voice and music itself, under the piece's video, so no video or kit has
 to handle sound. The music loops if it is short and fades out over the last second. The
 files are copied beside the render, so it sees them and nothing else of the workspace.
@@ -294,6 +312,8 @@ cm/
   render_jobs.py  renders started from the page, run in the background and followed
   video_brief.py  the Video section of a video piece's brief
   voice.py        a video's takes, and the mix: which take, lined up and trimmed, and the music
+  whisper.py      speech-to-text on this machine: installing whisper.cpp, and hearing a take
+  captions.py     the script's words placed at the moments the take says them
   remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder

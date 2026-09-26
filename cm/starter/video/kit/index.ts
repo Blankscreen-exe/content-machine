@@ -7,4 +7,4 @@ export { useScale } from "./scale";
 export { Paper } from "./Paper";
 export { Headline, TypeOn, Note } from "./text";
 export { SketchBox, HandArrow } from "./sketch";
-export { Caption, Progress } from "./chrome";
+export { Caption, Captions, Progress } from "./chrome";

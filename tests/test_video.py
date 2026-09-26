@@ -59,7 +59,8 @@ def test_a_render_is_given_an_entry_its_props_and_nothing_else(monkeypatch, work
     entry = (job / "entry.tsx").read_text(encoding="utf-8")
     assert 'from "../../../content/acme-co/2026-09-25-tidy-desk/video/Video"' in entry
     assert 'from "../../../video/props"' in entry and "__VIDEO__" not in entry
-    assert (workspace / "video" / "props.ts").read_text(encoding="utf-8").count("export type") == 4
+    contract = (workspace / "video" / "props.ts").read_text(encoding="utf-8")
+    assert all(f"export type {name} =" in contract for name in ("Word", "Scene", "Voice", "Music", "VideoProps"))
     assert fake.cwd == workspace          # where the packages are
     assert fake.argv[1:9] == ["exec", "--no", "--", "remotion", "render", str(job / "entry.tsx"), "Video", str(out)]
     assert "--scale=0.5" in fake.argv and "--codec=h264" in fake.argv
