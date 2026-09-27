@@ -119,7 +119,7 @@ def check_main_file(name: str) -> str:
     if not name.endswith(".md") or PurePath(name).name != name or name == ".md":
         raise ChoiceError("The main file must be a plain file name ending in .md, like blog.md.")
     if name in GENERATED_FILES:
-        raise ChoiceError(f"{name} is written by the app before every session; pick another name.")
+        raise ChoiceError(f"{name} is written by the app {GENERATED_FILES[name]}; pick another name.")
     return name
 
 

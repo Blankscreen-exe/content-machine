@@ -38,8 +38,10 @@ Use once I have finalised a video piece's `frames.md`, and again whenever it cha
 - Lay out in kit units, as the kit does, so the video works in the format in the brief.
 - Keep every frame the same each time it renders: no `Math.random()`, no dates, a fixed
   `seed` on every rough.js shape.
-- Brand images (a portrait, a logo) are imported by path, as the brief shows. Never
-  invent an image; if a frame needs one I have not given, leave the space and tell me.
+- Brand images (a portrait, a logo) are imported by path, as the brief shows; so are the
+  piece's own images, diagrams and memes in its `assets/`. An animated GIF goes in the
+  kit's `Gif`, not an `<Img>`, which would show only its first frame. Never invent an
+  image; if a frame needs one I have not given, leave the space and tell me.
 
 ## Checking it
 

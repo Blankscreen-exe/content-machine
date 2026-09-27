@@ -9,8 +9,11 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-# Written by the app before every session; editing it would be pointless.
-GENERATED_FILES = {"brief.md"}
+# Written by the app, so editing them would be pointless: each name, and when it is written.
+GENERATED_FILES = {
+    "brief.md": "before every session",
+    "script.md": "with every render, from frames.md",
+}
 
 
 class UnsafePath(ValueError):

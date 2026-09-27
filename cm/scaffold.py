@@ -7,9 +7,9 @@ overwrites a file that already exists unless told to.
 `cm/starter/brand/` holds the templates a new brand's voice and profile, and a new mode's
 description, start from. They are placeholders in square brackets, never a real brand.
 
-`cm/starter/video/` is the video toolchain: the npm packages, pinned by a lockfile, go in
-the workspace root, so every piece folder beneath it finds them; the example brand kit
-goes in `video/example-kit/`, for a real brand's kit to start from.
+`cm/starter/video/kit/` is the example brand kit, copied to `video/example-kit/` for a real
+brand's kit to start from. The pinned npm package list beside it is the app's, not yours:
+`cm video setup` puts it in the workspace each time (toolchain.py).
 """
 from __future__ import annotations
 
@@ -26,9 +26,6 @@ STARTER = Path(__file__).resolve().parent / "starter"
 LAYOUT = {
     "CLAUDE.md": "CLAUDE.md",
     "skills": ".claude/skills",
-    "video/package.json": "package.json",
-    "video/package-lock.json": "package-lock.json",
-    "video/.npmrc": ".npmrc",
     "video/kit": "video/example-kit",
 }
 

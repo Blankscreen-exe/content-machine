@@ -26,8 +26,6 @@ class FakeRun:
 
 @pytest.fixture
 def workspace(tmp_path):
-    for name in toolchain.MANIFESTS:
-        (tmp_path / name).write_text("{}", encoding="utf-8")
     return tmp_path
 
 
@@ -61,7 +59,7 @@ def test_setup_installs_from_the_lockfile_checks_signatures_then_fetches_the_bro
         (["audit", "signatures"], workspace),
         (["exec", "--no", "--", "remotion", "browser", "ensure"], workspace),
     ]
-    assert said[0] == "Node 24.1.0 found." and said[-1] == "The video toolchain is ready."
+    assert "Node 24.1.0 found." in said and said[-1] == "The video toolchain is ready."
 
 
 def test_setup_ends_by_installing_what_times_captions_to_the_voice(monkeypatch, workspace, tools, whisper_installs):
@@ -91,9 +89,25 @@ def test_a_failed_install_stops_everything_after_it(monkeypatch, workspace, tool
     assert len(run.calls) == 2
 
 
-def test_setup_needs_cm_init_first(monkeypatch, tmp_path, tools):
-    with pytest.raises(toolchain.ToolchainError, match="Run `cm init` first"):
-        _setup(monkeypatch, tmp_path, FakeRun())
+def test_a_workspace_too_deep_for_windows_is_refused_before_downloading(monkeypatch, tmp_path, tools):
+    monkeypatch.setattr(toolchain.sys, "platform", "win32")
+    deep = tmp_path / ("x" * toolchain.MAX_WORKSPACE_PATH)
+    run = FakeRun()
+    with pytest.raises(toolchain.ToolchainError, match="Windows cannot start programs from paths over 260"):
+        _setup(monkeypatch, deep, run)
+    assert run.calls == []
+
+
+def test_setup_puts_the_apps_pinned_packages_in_place_and_keeps_them_current(monkeypatch, workspace, tools):
+    said = _setup(monkeypatch, workspace, FakeRun())
+    for name in toolchain.MANIFESTS:
+        assert (workspace / name).read_bytes() == (STARTER / name).read_bytes()
+    assert "Put the app's pinned package-lock.json in the workspace." in said
+
+    (workspace / "package.json").write_text('{"dependencies": {"remotion": "4.0.1"}}', encoding="utf-8")
+    said = _setup(monkeypatch, workspace, FakeRun())       # an older list is replaced; the rest were current
+    assert said.count("Put the app's pinned package.json in the workspace.") == 1
+    assert "Put the app's pinned package-lock.json in the workspace." not in said
 
 
 def test_setup_says_how_to_get_node(monkeypatch, workspace):

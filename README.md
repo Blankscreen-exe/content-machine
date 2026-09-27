@@ -44,6 +44,8 @@ cm render 12      # render video piece 12 into its assets; --draft for a quick h
 cm serve          # this machine only
 cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
+cm export         # pack everything that is yours into one zip, to move to another machine
+cm import x.zip   # unpack it into this machine's empty workspace
 ```
 
 To have `cm` in every terminal, not only with the `.venv` active, register it:
@@ -213,6 +215,20 @@ there is a take, each scene's script is spread over its estimated speech.
 `cm/whisper.py`; the model comes from a fixed revision of its repository. Only whisper.cpp's
 ready-made Windows build is set up.
 
+### A silent video, and what to say over it
+
+Not every video needs its voice and captions drawn in: they can be added later, in the
+Shorts editor for instance. With `Captions: off` in frames.md and no take chosen, a render
+is the pictures alone. Every render also writes what is said beside it, at the timings the
+video was drawn to: `script.md`, each frame's lines with when they start and when they
+should be said by, to read while recording; and `assets/captions.srt`, standard subtitles
+to upload with the video. When the captions are timed to a take, the subtitles follow it.
+`script.md` opens read-only: it is rewritten with each render.
+
+Diagrams, images and memes are imported into a video by path, from the piece's `assets/` or
+the brand's `images/`. An animated GIF plays through the kit's `Gif` (`@remotion/gif`),
+since a plain image shows only its first frame.
+
 ### Sound in a render
 
 A render plays the voice and music itself, under the piece's video, so no video or kit has
@@ -263,8 +279,10 @@ only step that downloads anything for video:
 - Remotion then fetches its headless Chrome, about 110 MB, from Google's Chrome for Testing
   downloads. After that, rendering works offline.
 
-The packages: `remotion` and `@remotion/cli` render; `react` and `react-dom` are what the
-frames are written in; `roughjs` draws the hand-drawn boxes and arrows. They sit at the
+The packages: `remotion` and `@remotion/cli` render; `@remotion/gif` plays animated GIFs;
+`react` and `react-dom` are what the frames are written in; `roughjs` draws the hand-drawn
+boxes and arrows. The package list is the app's, in `cm/starter/video/`: `cm video setup`
+puts it in the workspace each time it runs, so a change to it arrives with the next setup. They sit at the
 workspace root, so every piece folder beneath it finds them.
 
 Remotion is free for individuals and companies of up to three people; larger companies need
@@ -314,6 +332,7 @@ cm/
   voice.py        a video's takes, and the mix: which take, lined up and trimmed, and the music
   whisper.py      speech-to-text on this machine: installing whisper.cpp, and hearing a take
   captions.py     the script's words placed at the moments the take says them
+  script.py       what is said, written out with each render: script.md and captions.srt
   remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
   terminals.py    opening a terminal session in a piece folder
@@ -321,6 +340,7 @@ cm/
   dates.py        stored UTC times to local calendar dates
   security.py     access token
   hangups.py      a browser hanging up, which Windows' event loop reports as an error: not logged
+  transfer.py     moving your work to another machine: cm export, cm import
   settings.py     configuration and workspace location
   templating.py   template setup and the context every page shares
   starter/        what `cm init` copies into a workspace, and what new brands and pieces start from
@@ -398,6 +418,20 @@ from `content.db`: it holds nothing of its own, so deleting it only means the ne
 Recording a publish on a piece's page (platform, link, date) moves the piece to published. The
 platform comes from the managed list, so the same one is always spelled the same way.
 `cm published <id> --platform <name>` does the same from a terminal session.
+
+## Moving to another machine
+
+`cm export` writes one zip of everything that is yours: the database, copied whole even
+while the app runs; every file in the workspace, including brand resources and kits, the
+session rules and skills, and the trash; and the personal folders kept beside the code but
+out of git, `docs/` and `demo/`. It leaves out what the other machine makes for itself,
+installed npm packages wherever they are and the app's own state in `.cm/`, which holds the
+access token: that must never leave a machine.
+
+On the other machine, clone the repository, install `cm`, then `cm import <zip>`. It only
+unpacks into a workspace with no work in it, keeps any personal file already there, refuses
+a zip that would write anywhere else, and brings the database up to the current schema.
+`cm video setup` then fetches the video toolchain again.
 
 ## Deleting
 

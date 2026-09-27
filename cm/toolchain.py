@@ -1,7 +1,9 @@
 """The video toolchain: Node, the npm packages that render video, and the browser they draw in.
 
 `cm video setup` installs it into the workspace, and is the only step that downloads
-anything for video. What it guards against is a tampered package, so each step is
+anything for video. It first puts the app's pinned package list in the workspace
+(package.json, package-lock.json, .npmrc from cm/starter/video/): those files are the app's,
+not yours, so an update to them reaches the workspace the next time setup runs. What it guards against is a tampered package, so each step is
 checked rather than trusted:
 
 - `npm ci` installs exactly what `package-lock.json` lists, and refuses any package whose
@@ -19,14 +21,19 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
 from . import whisper
 
 MIN_NODE = 18
-# What the workspace must hold before anything is installed; `cm init` puts them there.
-MANIFESTS = ("package.json", "package-lock.json")
+# Windows cannot start a program whose path is longer than 260 characters, and Remotion keeps
+# its browser about 120 characters deep inside the workspace. Past this, rendering fails.
+MAX_WORKSPACE_PATH = 130
+# The app's pinned package list, put in the workspace root, where every piece folder finds it.
+STARTER = Path(__file__).resolve().parent / "starter" / "video"
+MANIFESTS = ("package.json", "package-lock.json", ".npmrc")
 
 
 class ToolchainError(RuntimeError):
@@ -35,9 +42,17 @@ class ToolchainError(RuntimeError):
 
 def setup(workspace: Path, say: Callable[[str], None] = print) -> None:
     """Install and check the toolchain in `workspace`, saying what each step does."""
-    missing = [name for name in MANIFESTS if not (workspace / name).is_file()]
-    if missing:
-        raise ToolchainError(f"{', '.join(missing)} not found in {workspace}. Run `cm init` first.")
+    if sys.platform == "win32" and len(str(workspace)) > MAX_WORKSPACE_PATH:
+        raise ToolchainError(f"The workspace path is {len(str(workspace))} characters long. Windows cannot start "
+                             f"programs from paths over 260 characters, and the video toolchain keeps its browser "
+                             f"deep inside the workspace. Use a workspace path of at most {MAX_WORKSPACE_PATH} "
+                             "characters (set CM_WORKSPACE, or move the repository).")
+    workspace.mkdir(parents=True, exist_ok=True)
+    for name in MANIFESTS:
+        source, target = STARTER / name, workspace / name
+        if not target.is_file() or target.read_bytes() != source.read_bytes():
+            shutil.copyfile(source, target)
+            say(f"Put the app's pinned {name} in the workspace.")
     say(f"Node {'.'.join(map(str, node_version()))} found.")
     npm = _tool("npm", "npm comes with Node: https://nodejs.org")
 

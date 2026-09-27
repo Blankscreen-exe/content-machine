@@ -4,7 +4,8 @@ Two steps, so the slow one needs nothing from the database and can run in the ba
 `plan` reads the piece and its frames, which is where mistakes are found; `run` renders.
 
 With captions on and a take chosen, the captions are timed to the take: `run` hears it
-first (captions.py), once per take.
+first (captions.py), once per take. Every render also writes what is said, `script.md`
+and `assets/captions.srt` (script.py), for a voice or captions added elsewhere.
 
 A draft renders at half size, quickly, to check pacing and look; it replaces the last
 draft, `assets/draft.mp4`. A final renders at full size and is kept alongside earlier
@@ -22,7 +23,7 @@ from pathlib import Path
 
 from sqlmodel import Session
 
-from . import assets, captions, crud, files, frames, resources, timing, video, voice, whisper, workspace
+from . import assets, captions, crud, files, frames, resources, script, timing, video, voice, whisper, workspace
 from .models import Piece
 from .settings import get_settings
 
@@ -36,6 +37,7 @@ class Plan:
     """Everything a render needs, read from the piece before it starts."""
 
     piece_id: int
+    title: str
     video_dir: Path
     assets_dir: Path
     props: dict
@@ -52,7 +54,8 @@ def plan(session: Session, piece: Piece) -> Plan:
     if not files.exists(folder, piece.type.main_file):
         raise video.RenderError(f"{piece.type.main_file} has not been written yet. Save it first.")
     text, _ = files.read(folder, piece.type.main_file)
-    line = timing.timeline(frames.parse(text))
+    read = frames.parse(text)
+    line = timing.timeline(read)
     try:
         mix = voice.read_mix(folder)
     except voice.MixError as exc:
@@ -62,7 +65,7 @@ def plan(session: Session, piece: Piece) -> Plan:
     if heard_take and captions.load(heard_take) is None and not whisper.installed(get_settings().workspace):
         raise video.RenderError("Captions are timed to the voice by whisper.cpp, which is not installed. "
                                 "Run `cm video setup`; it installs it once.")
-    return Plan(piece_id=piece.id, video_dir=folder / "video", assets_dir=assets.folder_of(folder),
+    return Plan(piece_id=piece.id, title=read.title or piece.title, video_dir=folder / "video", assets_dir=assets.folder_of(folder),
                 props=timing.props(line) | voice.props(mix, line.fps), public=public, heard_take=heard_take)
 
 
@@ -106,6 +109,7 @@ def run(plan: Plan, draft: bool = False,
                                 f"If something has the old one open, close it and render again. "
                                 f"The new one is kept at {out}.") from exc
     video.clear(job)
+    script.write(props, plan.title, plan.video_dir.parent, plan.assets_dir)
     return target
 
 

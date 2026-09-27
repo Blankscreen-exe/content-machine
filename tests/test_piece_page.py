@@ -223,6 +223,13 @@ def test_an_emptied_frames_file_stays_empty(client: TestClient, session: Session
     assert "## Hook (4s)" not in pane and "No frames yet" in pane
 
 
+def test_the_script_written_by_a_render_opens_read_only(client: TestClient, session: Session, short):
+    (workspace.ensure_folder(session, short) / "script.md").write_text("# Script: A short", encoding="utf-8")
+    pane = client.get(f"/pieces/{short.id}/files/script.md").text
+    assert "script.md is written with every render, from frames.md and cannot be edited here." in pane
+    assert "readonly" in pane
+
+
 def test_other_drafts_of_a_video_are_not_checked_as_frames(client: TestClient, session: Session, short):
     folder = workspace.ensure_folder(session, short)
     (folder / "notes.md").write_text("anything at all", encoding="utf-8")

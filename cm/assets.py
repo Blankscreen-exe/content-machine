@@ -31,6 +31,7 @@ LIMITS = {
     ".mp4": 500 * MB, ".webm": 500 * MB,
     # Music and voice. Uncompressed WAV is about 10 MB a minute.
     ".mp3": 50 * MB, ".m4a": 50 * MB, ".wav": 200 * MB,
+    ".srt": 1 * MB,            # subtitles, written with each render to upload with the video
 }
 # Shown as thumbnails, and the only kind that can be pasted into a draft.
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -48,6 +49,7 @@ MEDIA_TYPES = {
     ".webp": "image/webp", ".pdf": "application/pdf", ".psd": "image/vnd.adobe.photoshop",
     ".mp4": "video/mp4", ".webm": "video/webm",
     ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".wav": "audio/wav",
+    ".srt": "text/plain; charset=utf-8",     # shown as text, never run as a page
 }
 
 PARTIAL = ".part"              # an upload still being written

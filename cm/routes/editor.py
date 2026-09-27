@@ -68,7 +68,7 @@ def pane_context(request: Request, piece: Piece, folder: Path, name: str, text: 
         "text": text,
         "fingerprint": fingerprint,
         "editable": files.is_editable(name),
-        "readonly_reason": f"{name} is generated before every session and cannot be edited here.",
+        "readonly_reason": f"{name} is written {files.GENERATED_FILES.get(name, 'by the app')} and cannot be edited here.",
         "message": message,
         "conflict": conflict,
         # pasted images are stored in the piece folder and served from there

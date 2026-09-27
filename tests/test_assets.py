@@ -157,7 +157,7 @@ def test_the_piece_page_shows_the_panel_and_loads_the_editor(client: TestClient,
     page = client.get(f"/pieces/{piece.id}").text
 
     assert 'id="assets"' in page and 'name="uploads" multiple' in page
-    assert 'accept=".gif,.jpeg,.jpg,.m4a,.mp3,.mp4,.pdf,.png,.psd,.wav,.webm,.webp"' in page
+    assert 'accept=".gif,.jpeg,.jpg,.m4a,.mp3,.mp4,.pdf,.png,.psd,.srt,.wav,.webm,.webp"' in page
     assert "/static/vendor/toastui-editor-all.min.js" in page   # the self-contained build
     assert f'data-upload-url="/pieces/{piece.id}/assets"' in page
     assert "https://" not in page and "http://" not in page     # everything is local

@@ -7,15 +7,18 @@ having to watch the folder.
 from __future__ import annotations
 
 import webbrowser
+from datetime import date
+from pathlib import Path
 
 import typer
 import uvicorn
 from sqlmodel import Session
 
-from . import choices, crud, frames, renders, scaffold, toolchain, video, workspace
+from . import choices, crud, frames, renders, scaffold, toolchain, transfer, video, workspace
 from .database import engine, migrate
 from .models import Platform, Stage
 from .net import lan_ip
+from .paths import REPO_DIR
 from .security import rotate_token, token
 from .settings import get_settings
 
@@ -149,6 +152,35 @@ def where() -> None:
     typer.echo(f"content:   {settings.content_dir}")
     typer.echo(f"resources: {settings.resources_dir}")
     typer.echo(f"trash:     {settings.trash_dir}")
+
+
+@app.command(name="export")
+def export_command(target: Path = typer.Argument(None, help="the zip to write; default content-machine-<date>.zip here")) -> None:
+    """Pack everything that is yours into one zip, to move it to another machine."""
+    target = target or Path(f"content-machine-{date.today().isoformat()}.zip")
+    try:
+        count = transfer.export(get_settings().workspace, REPO_DIR, target.resolve())
+    except transfer.TransferError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"exported {count} files to {target.resolve()}")
+    typer.echo("Left out, made again on the other machine: the video toolchain, and the access token.")
+
+
+@app.command(name="import")
+def import_command(bundle: Path = typer.Argument(..., exists=True, dir_okay=False, help="a zip from `cm export`")) -> None:
+    """Unpack an export into this machine's workspace, which must hold no work yet."""
+    settings = get_settings()
+    try:
+        done = transfer.import_(bundle, settings.workspace, REPO_DIR)
+    except transfer.TransferError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    migrate()                 # an export from an older version comes up to this one's schema
+    typer.echo(f"imported {done.files} files into {settings.workspace}")
+    for name in done.kept_existing:
+        typer.echo(f"  kept the {name} already here")
+    typer.echo("Next: `cm video setup` fetches the video toolchain; then `cm serve`.")
 
 
 @app.command()

@@ -51,6 +51,13 @@ def test_a_piece_renders_its_frames_timed_and_sized(session: Session, short, ren
     assert call["scale"] == 1.0
 
 
+def test_every_render_writes_what_is_said_beside_it(session: Session, short, rendered):
+    renders.render_piece(session, short, draft=True)
+    folder = workspace.piece_folder(session, short)
+    assert (folder / "script.md").read_text(encoding="utf-8").startswith("# Script: A short")
+    assert "Hello there." in (folder / "assets" / "captions.srt").read_text(encoding="utf-8")
+
+
 def test_finals_are_all_kept_and_the_job_is_cleared(session: Session, short, rendered):
     first = renders.render_piece(session, short)
     second = renders.render_piece(session, short)
@@ -73,7 +80,7 @@ def test_a_draft_is_half_size_and_replaces_the_last_draft(session: Session, shor
 
     assert draft.name == "draft.mp4" and draft.read_bytes() == b"render 2"
     assert rendered[1]["scale"] == renders.DRAFT_SCALE
-    assert [p.name for p in draft.parent.iterdir()] == ["draft.mp4"]
+    assert sorted(p.name for p in draft.parent.iterdir()) == ["captions.srt", "draft.mp4"]
 
 
 def test_a_video_that_cannot_be_put_in_place_is_kept_and_said_where(session: Session, short, rendered, monkeypatch):

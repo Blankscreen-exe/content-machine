@@ -8,3 +8,5 @@ export { Paper } from "./Paper";
 export { Headline, TypeOn, Note } from "./text";
 export { SketchBox, HandArrow } from "./sketch";
 export { Caption, Captions, Progress } from "./chrome";
+// An animated GIF, playing in step with the video; an image tag would show its first frame only.
+export { Gif } from "@remotion/gif";

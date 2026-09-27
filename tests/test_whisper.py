@@ -39,7 +39,7 @@ class Response(io.BytesIO):
 
 def test_a_download_is_kept_only_when_it_matches_its_checksum(tmp_path, monkeypatch):
     payload = b"the model"
-    monkeypatch.setattr(whisper.urllib.request, "urlopen", lambda url, timeout: Response(payload))
+    monkeypatch.setattr(whisper.urllib.request, "urlopen", lambda url, timeout, context: Response(payload))
 
     kept = whisper._download("https://example.invalid/model.bin", hashlib.sha256(payload).hexdigest(),
                              tmp_path / "model.bin")
@@ -51,12 +51,20 @@ def test_a_download_is_kept_only_when_it_matches_its_checksum(tmp_path, monkeypa
 
 
 def test_a_download_that_fails_leaves_nothing_behind(tmp_path, monkeypatch):
-    def offline(url, timeout):
+    def offline(url, timeout, context):
         raise OSError("no route to host")
     monkeypatch.setattr(whisper.urllib.request, "urlopen", offline)
     with pytest.raises(whisper.WhisperError, match="Check the connection"):
         whisper._download("https://example.invalid/model.bin", "0" * 64, tmp_path / "model.bin")
     assert list(tmp_path.iterdir()) == []
+
+
+def test_downloads_never_log_session_keys_whatever_the_environment_asks(monkeypatch):
+    """Some antivirus sets SSLKEYLOGFILE to a pipe that crashes OpenSSL in some Python builds."""
+    monkeypatch.setenv("SSLKEYLOGFILE", r"\.\someProxy\keys")
+    context = whisper._tls()
+    assert context.keylog_filename is None
+    assert context.verify_mode == whisper.ssl.CERT_REQUIRED and context.check_hostname
 
 
 def test_only_the_windows_build_is_installed(tmp_path, monkeypatch):

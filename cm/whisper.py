@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import ssl
 import subprocess
 import sys
 import urllib.request
@@ -30,6 +31,18 @@ MODEL_FILE = (f"https://huggingface.co/ggerganov/whisper.cpp/resolve/"
               f"5359861c739e955e79d9a303bcbc70fb988958b1/ggml-{MODEL}.bin",
               "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002")
 CHUNK = 1024 * 1024
+
+
+def _tls() -> ssl.SSLContext:
+    """HTTPS that trusts what the system trusts, without logging session keys.
+
+    ssl.create_default_context() would also start logging keys if SSLKEYLOGFILE is set, and
+    some antivirus (Avast, scanning HTTPS) sets it to a pipe of its own that crashes the
+    OpenSSL in some Python builds outright. A download has no use for key logging.
+    """
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)      # checks certificate and host name
+    context.load_default_certs()
+    return context
 
 
 class WhisperError(RuntimeError):
@@ -86,7 +99,7 @@ def _download(url: str, sha256: str, target: Path) -> Path:
     partial = target.with_name(target.name + ".part")
     digest = hashlib.sha256()
     try:
-        with urllib.request.urlopen(url, timeout=60) as response, partial.open("wb") as out:
+        with urllib.request.urlopen(url, timeout=60, context=_tls()) as response, partial.open("wb") as out:
             while chunk := response.read(CHUNK):
                 digest.update(chunk)
                 out.write(chunk)
