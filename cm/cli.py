@@ -168,19 +168,52 @@ def export_command(target: Path = typer.Argument(None, help="the zip to write; d
 
 
 @app.command(name="import")
-def import_command(bundle: Path = typer.Argument(..., exists=True, dir_okay=False, help="a zip from `cm export`")) -> None:
-    """Unpack an export into this machine's workspace, which must hold no work yet."""
+def import_command(bundle: Path = typer.Argument(..., exists=True, dir_okay=False, help="a zip from `cm export`"),
+                   again: bool = typer.Option(False, "--again",
+                                              help="import an export this machine has had before")) -> None:
+    """Add an export to this machine: whole into an empty workspace, beside the work in one that has some."""
     settings = get_settings()
+    if (settings.workspace / transfer.DATABASE).exists():
+        migrate()             # merging reads this machine's rows, so bring its schema up first
     try:
-        done = transfer.import_(bundle, settings.workspace, REPO_DIR)
+        done = transfer.import_(bundle, settings.workspace, REPO_DIR, again=again)
     except transfer.TransferError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(1) from exc
     migrate()                 # an export from an older version comes up to this one's schema
-    typer.echo(f"imported {done.files} files into {settings.workspace}")
+    _say_what_arrived(done, settings.workspace)
+    typer.echo("Next: `cm video setup` fetches the video toolchain; then `cm serve`.")
+
+
+def _say_what_arrived(done: transfer.Imported, workspace: Path) -> None:
+    """What came in, and what was left exactly as it was."""
+    merged = done.merged
+    if merged is None:
+        typer.echo(f"imported {done.files} files into {workspace}")
+        for name in done.kept_existing:
+            typer.echo(f"  kept the {name} already here")
+        return
+
+    typer.echo(f"merged into the work already in {workspace}")
+    typer.echo(f"  added {merged.ideas} ideas, {merged.pieces} pieces, "
+               f"{merged.publications} publish records and {done.files} files")
+    if merged.brands_joined:
+        typer.echo(f"  joined brands already here: {', '.join(sorted(merged.brands_joined))}")
+    if merged.brands_added:
+        typer.echo(f"  new brands: {', '.join(sorted(merged.brands_added))}")
+    if merged.ideas_already_here:
+        typer.echo(f"  {merged.ideas_already_here} ideas were already here")
+    if merged.already_here:
+        typer.echo(f"  {len(merged.already_here)} pieces were already here, unchanged: "
+                   f"{', '.join(sorted(merged.already_here))}")
+    for landed, taken in merged.copies:
+        typer.echo(f"  {taken} holds different work, so this one came in as {landed}")
+    if done.kept_files:
+        typer.echo(f"  kept {done.kept_files} files already here")
     for name in done.kept_existing:
         typer.echo(f"  kept the {name} already here")
-    typer.echo("Next: `cm video setup` fetches the video toolchain; then `cm serve`.")
+    for difference in merged.differences:
+        typer.echo(f"  {difference}")
 
 
 @app.command()

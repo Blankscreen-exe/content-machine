@@ -45,7 +45,7 @@ cm serve          # this machine only
 cm serve --lan    # also reachable from a phone on the same network
 cm where          # show the workspace paths
 cm export         # pack everything that is yours into one zip, to move to another machine
-cm import x.zip   # unpack it into this machine's empty workspace
+cm import x.zip   # add it to this machine: merged in beside work already here
 ```
 
 To have `cm` in every terminal, not only with the `.venv` active, register it:
@@ -341,6 +341,7 @@ cm/
   security.py     access token
   hangups.py      a browser hanging up, which Windows' event loop reports as an error: not logged
   transfer.py     moving your work to another machine: cm export, cm import
+  merge.py        adding another machine's rows to this one's, on import
   settings.py     configuration and workspace location
   templating.py   template setup and the context every page shares
   starter/        what `cm init` copies into a workspace, and what new brands and pieces start from
@@ -428,10 +429,26 @@ out of git, `docs/` and `demo/`. It leaves out what the other machine makes for 
 installed npm packages wherever they are and the app's own state in `.cm/`, which holds the
 access token: that must never leave a machine.
 
-On the other machine, clone the repository, install `cm`, then `cm import <zip>`. It only
-unpacks into a workspace with no work in it, keeps any personal file already there, refuses
-a zip that would write anywhere else, and brings the database up to the current schema.
-`cm video setup` then fetches the video toolchain again.
+On the other machine, clone the repository, install `cm`, then `cm import <zip>`. An empty
+workspace takes the whole export. A workspace that already has work in it has the incoming
+work **merged in beside it**, and nothing already there is changed:
+
+- A brand is its slug, so the same slug is the same brand and the incoming ideas and pieces
+  join it. What the other machine says about that brand — its name, voice and profile — is
+  reported, not written over. Piece types and platforms match on their name, modes on their
+  name within a brand.
+- Ideas and pieces have no name to match on, so they are always added. A piece whose folder
+  name is already taken comes in beside the one here, under the next free name
+  (`…-2`, then `-3`), and its files follow it there.
+- A setting already set keeps its value, and so does every file already in the workspace or
+  in `docs/` and `demo/`.
+
+The rows go in inside one transaction, so a failure part way leaves the database as it was.
+Each import is written down in `.cm/imports.json`, which never travels, so importing the
+same export twice is refused — `--again` insists, and adds a second copy of the work.
+
+An export from an older version is brought up to the current schema before its rows are
+read. `cm video setup` then fetches the video toolchain again.
 
 ## Deleting
 

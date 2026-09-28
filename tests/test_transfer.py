@@ -76,7 +76,9 @@ def test_everything_arrives_on_the_other_machine(here, tmp_path):
     assert (there / "docs" / "improvements.md").read_text(encoding="utf-8") == "- [ ] next"
     rows = sqlite3.connect(workspace / "content.db").execute("SELECT title FROM piece").fetchall()
     assert rows == [("AI prototype to production",)]
-    assert not (workspace / ".cm").exists() and done.files == 8
+    # .cm holds only what this machine writes for itself: the record of the import, never the token
+    assert [f.name for f in (workspace / ".cm").iterdir()] == ["imports.json"]
+    assert not (workspace / ".cm" / "token").exists() and done.files == 8
 
 
 def test_the_database_is_copied_whole_even_while_it_is_open(here, tmp_path):
@@ -93,13 +95,6 @@ def test_the_database_is_copied_whole_even_while_it_is_open(here, tmp_path):
     snapshot.write_bytes(zipfile.ZipFile(bundle).read("workspace/content.db"))
     assert len(sqlite3.connect(snapshot).execute("SELECT * FROM piece").fetchall()) == 2
     assert "workspace/content.db-wal" not in zipfile.ZipFile(bundle).namelist()
-
-
-def test_an_import_never_lands_on_work(here, tmp_path):
-    bundle, _ = _export(here, tmp_path)
-    repo, workspace = here
-    with pytest.raises(transfer.TransferError, match="already has work in it"):
-        transfer.import_(bundle, workspace, repo)
 
 
 def test_a_personal_file_already_there_is_kept(here, tmp_path):

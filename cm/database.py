@@ -37,11 +37,12 @@ engine = enforce_foreign_keys(create_engine(
 ))
 
 
-def migrate() -> None:
-    """Bring the workspace database up to the latest schema.
+def migrate(url: str | None = None) -> None:
+    """Bring a database up to the latest schema: the workspace's, or the one at `url`.
 
     Alembic owns the schema: running it on start means an older database is upgraded in
-    place instead of silently missing columns.
+    place instead of silently missing columns. An import passes the database it is about to
+    read, so an export written by an older version is brought up before its rows are read.
     """
     from alembic import command
     from alembic.config import Config
@@ -49,7 +50,7 @@ def migrate() -> None:
     repo = Path(__file__).resolve().parent.parent
     config = Config(str(repo / "alembic.ini"))
     config.set_main_option("script_location", str(repo / "alembic"))  # independent of cwd
-    config.set_main_option("sqlalchemy.url", _settings.database_url)
+    config.set_main_option("sqlalchemy.url", url or _settings.database_url)
     config.attributes["configure_logger"] = False   # keep alembic's INFO lines out of our output
     command.upgrade(config, "head")
 
