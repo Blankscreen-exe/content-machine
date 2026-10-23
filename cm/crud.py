@@ -10,7 +10,7 @@ from datetime import date, datetime
 from sqlmodel import Session, func, or_, select
 
 from .choices import ChoiceError
-from .models import (Brand, Event, Idea, IdeaStatus, Mode, Piece, PieceType, Publication,
+from .models import (Actor, Brand, Event, Idea, IdeaStatus, Mode, Piece, PieceType, Publication,
                      Setting, Stage, now)
 from .text import slugify
 
@@ -19,10 +19,26 @@ DEFAULT_SETTINGS = {"theme": "1996", "due_soon_days": "7"}
 
 # ---------- events ----------
 
+def act_as(session: Session, actor: Actor) -> None:
+    """Say who every change made through `session` is by. A session that never says is yours.
+
+    Kept on the session rather than passed to each function, so the code that opens a session
+    for Claude's tools sets it once, and nothing between there and `record` has to carry it.
+    """
+    session.info["actor"] = actor
+
+
 def record(session: Session, entity: str, entity_id: int, to_state: str,
            from_state: str = "", note: str = "") -> None:
-    session.add(Event(entity=entity, entity_id=entity_id,
-                      from_state=from_state, to_state=to_state, note=note))
+    session.add(Event(entity=entity, entity_id=entity_id, from_state=from_state, to_state=to_state,
+                      note=note, actor=session.info.get("actor", Actor.me)))
+
+
+def _changed(row: object, fields: dict) -> list[str]:
+    """The fields whose new value differs from the one `row` holds, apart from its stage or
+    status: a move gets an event of its own."""
+    return [key for key, value in fields.items()
+            if key not in ("stage", "status") and getattr(row, key) != value]
 
 
 # ---------- settings ----------
@@ -131,16 +147,18 @@ def create_idea(session: Session, brand_id: int, **fields) -> Idea:
 def update_idea(session: Session, idea: Idea, **fields) -> Idea:
     if "mode_id" in fields:
         _check_mode(session, idea.brand_id, fields["mode_id"])
-    previous = idea.status
+    previous, edited = idea.status, _changed(idea, fields)
     for key, value in fields.items():
         setattr(idea, key, value)
     idea.updated_at = now()
     session.add(idea)
     session.commit()
     session.refresh(idea)
+    if edited:
+        record(session, "idea", idea.id, to_state="edited", note=", ".join(edited))
     if idea.status != previous:
         record(session, "idea", idea.id, to_state=idea.status.value, from_state=previous.value)
-        session.commit()
+    session.commit()
     return idea
 
 
@@ -211,16 +229,18 @@ def create_piece(session: Session, brand_id: int, type_id: int, title: str, **fi
 
 
 def update_piece(session: Session, piece: Piece, **fields) -> Piece:
-    previous = piece.stage
+    previous, edited = piece.stage, _changed(piece, fields)
     for key, value in fields.items():
         setattr(piece, key, value)
     piece.updated_at = now()
     session.add(piece)
     session.commit()
     session.refresh(piece)
+    if edited:
+        record(session, "piece", piece.id, to_state="edited", note=", ".join(edited))
     if piece.stage != previous:
         record(session, "piece", piece.id, to_state=piece.stage.value, from_state=previous.value)
-        session.commit()
+    session.commit()
     return piece
 
 

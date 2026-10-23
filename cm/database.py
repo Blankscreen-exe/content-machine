@@ -13,16 +13,24 @@ from .settings import get_settings
 _settings = get_settings()
 
 
-def enforce_foreign_keys(target: Engine) -> Engine:
-    """Make SQLite check the links between tables.
+def configure_connections(target: Engine) -> Engine:
+    """Set what SQLite leaves to each connection: links checked, and room for two processes.
 
-    SQLite ignores foreign keys unless each connection switches them on, so without this a
+    SQLite ignores foreign keys unless each connection switches them on, so without that a
     piece could point at an idea that no longer exists and nothing would complain.
+
+    The app and a Claude session's tools are separate processes writing one content.db.
+    WAL lets either read while the other writes, where the default journal shuts readers out
+    for the length of every commit. Writers still take turns, and the busy timeout is how
+    long one waits for its turn before giving up: Python's sqlite3 happens to wait 5 seconds
+    already, and this says so rather than leaning on a default.
     """
     @event.listens_for(target, "connect")
     def _on_connect(dbapi_connection, _record) -> None:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys = ON")
+        cursor.execute("PRAGMA journal_mode = WAL")     # kept in the file; setting it again is a no-op
+        cursor.execute("PRAGMA busy_timeout = 5000")
         cursor.close()
 
     return target
@@ -30,7 +38,7 @@ def enforce_foreign_keys(target: Engine) -> Engine:
 
 # check_same_thread=False: uvicorn serves requests on a thread pool, SQLite defaults to
 # refusing a connection used from more than one thread.
-engine = enforce_foreign_keys(create_engine(
+engine = configure_connections(create_engine(
     _settings.database_url,
     echo=False,
     connect_args={"check_same_thread": False},

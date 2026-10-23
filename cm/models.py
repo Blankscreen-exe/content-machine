@@ -28,6 +28,12 @@ class IdeaStatus(str, Enum):
     dropped = "dropped"
 
 
+class Actor(str, Enum):
+    """Who made a change: Claude when it acts through its own tools, and otherwise you."""
+    me = "me"
+    claude = "claude"
+
+
 # Priority is stored as a number so lists sort by it; people see the name.
 PRIORITIES: dict[int, str] = {1: "high", 2: "normal", 3: "low"}
 
@@ -138,7 +144,7 @@ class Publication(SQLModel, table=True):
 
 
 class Event(SQLModel, table=True):
-    """Audit trail: when a thing changed state, and to what."""
+    """Audit trail: when a thing was made, edited, moved or deleted, and who did it."""
 
     id: int | None = Field(default=None, primary_key=True)
     entity: str = Field(index=True)
@@ -147,6 +153,7 @@ class Event(SQLModel, table=True):
     to_state: str = ""
     at: datetime = Field(default_factory=now)
     note: str = ""
+    actor: Actor = Actor.me
 
 
 class Setting(SQLModel, table=True):

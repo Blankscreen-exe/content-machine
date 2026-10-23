@@ -14,7 +14,7 @@ from sqlmodel.pool import StaticPool  # noqa: E402
 
 from cm import choices, crud, terminals  # noqa: E402
 from cm.app import create_app  # noqa: E402
-from cm.database import enforce_foreign_keys, get_session  # noqa: E402
+from cm.database import configure_connections, get_session  # noqa: E402
 from cm.models import PieceType  # noqa: E402
 from helpers import STANDARD_TYPES  # noqa: E402
 
@@ -24,7 +24,7 @@ TEST_TOKEN = os.environ["CM_TOKEN"]
 @pytest.fixture(name="session")
 def session_fixture():
     # the same foreign-key rules as the real database, or tests would pass on data it refuses
-    engine = enforce_foreign_keys(create_engine("sqlite://", connect_args={"check_same_thread": False},
+    engine = configure_connections(create_engine("sqlite://", connect_args={"check_same_thread": False},
                                                 poolclass=StaticPool))
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:

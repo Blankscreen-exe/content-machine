@@ -131,3 +131,20 @@ def test_a_short_type_already_made_by_hand_is_not_added_twice(tmp_path: Path):
         rows = connection.execute(
             "SELECT name, main_file FROM piece_type WHERE lower(name) = 'youtube short'").fetchall()
     assert rows == [("YouTube Short", "short.md")]      # yours is kept as you made it
+
+
+BEFORE_ACTOR = "5c1d8e2a9f47"
+
+
+def test_everything_recorded_before_claude_had_tools_is_yours(tmp_path: Path):
+    db = tmp_path / "content.db"
+    config = _config(db)
+    command.upgrade(config, BEFORE_ACTOR)
+    with sqlite3.connect(db) as connection:
+        connection.execute("INSERT INTO event (entity, entity_id, from_state, to_state, at, note) "
+                           "VALUES ('piece', 1, 'draft', 'ready', '2026-10-01', '')")
+
+    command.upgrade(config, "head")
+
+    with sqlite3.connect(db) as connection:
+        assert connection.execute("SELECT actor FROM event").fetchall() == [("me",)]

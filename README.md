@@ -389,9 +389,15 @@ A brand's **voice** and **profile** are stored on the brand and edited on its Ma
 mode has a description. All three are copied into `brief.md` when a session starts, so the
 database is their only home and a session still reads everything from one file.
 
-Every status and stage change is written to the **events** table, so the history of a piece is a
-record rather than a single current value: when it was drafted, when it became ready, when it went
-out. Making a piece from an idea promotes that idea out of the pool, because it is now in motion.
+Every status and stage change, and every edit that changes a value, is written to the **events**
+table, so the history of a piece is a record rather than a single current value: when it was
+drafted, when it became ready, when it went out. Each event says who made it: you, or Claude when
+it acts through its own tools. Making a piece from an idea promotes that idea out of the pool,
+because it is now in motion.
+
+The database runs in SQLite's WAL mode, so the app and a session's tools can both use it at once
+without either shutting the other out; that is what the `content.db-wal` and `content.db-shm` files
+beside it are. Keep the workspace on a local disk: WAL does not work on a network share.
 
 The pieces list sorts by due date with undated work last, and marks anything overdue that has not
 been published.

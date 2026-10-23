@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from cm import crud
-from cm.models import Event, IdeaStatus, Piece
+from cm.models import Actor, Event, IdeaStatus, Piece
 from helpers import type_id
 
 
@@ -48,6 +48,31 @@ def test_stage_change_is_recorded(client: TestClient, session: Session, brand):
     events = session.exec(select(Event).where(Event.entity == "piece",
                                               Event.entity_id == piece.id)).all()
     assert [e.to_state for e in events] == ["not started", "wip"]
+
+
+def _events(session: Session, piece: Piece) -> list[Event]:
+    return session.exec(select(Event).where(Event.entity == "piece", Event.entity_id == piece.id)).all()
+
+
+def test_an_edit_is_recorded_with_what_changed_and_a_save_changing_nothing_is_not(client: TestClient,
+                                                                                    session: Session, brand):
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Legacy systems")
+    form = {"title": "Legacy systems age badly", "type_id": type_id(session, "blog"),
+            "stage": "not started", "due_on": "2026-11-02"}
+
+    client.post(f"/pieces/{piece.id}", data=form)
+    client.post(f"/pieces/{piece.id}", data=form)
+
+    assert [(e.to_state, e.note) for e in _events(session, piece)][1:] == [("edited", "title, due_on")]
+
+
+def test_changes_made_through_claudes_tools_are_recorded_as_claudes(session: Session, brand):
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Legacy systems")
+    crud.act_as(session, Actor.claude)
+    crud.update_piece(session, piece, stage="draft", notes="first draft written")
+
+    assert [(e.to_state, e.actor) for e in _events(session, piece)] == [
+        ("not started", Actor.me), ("edited", Actor.claude), ("draft", Actor.claude)]
 
 
 def test_filters_by_stage_and_type(client: TestClient, session: Session, brand):
