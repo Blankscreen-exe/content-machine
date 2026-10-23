@@ -15,13 +15,14 @@ STARTER = Path(__file__).resolve().parent.parent / "cm" / "starter" / "video"
 class FakeRun:
     """Stands in for subprocess.run: records each command, fails the one it is told to."""
 
-    def __init__(self, node: str = "v24.1.0", fail: str | None = None) -> None:
-        self.node, self.fail, self.calls = node, fail, []
+    def __init__(self, node: str = "v24.1.0", npm: str = "11.11.0", fail: str | None = None) -> None:
+        self.node, self.npm, self.fail, self.calls = node, npm, fail, []
 
     def __call__(self, argv, cwd=None, **kwargs):
         self.calls.append((argv[1:], cwd))
         failed = self.fail is not None and self.fail in argv
-        return subprocess.CompletedProcess(argv, 1 if failed else 0, stdout=self.node + "\n")
+        version = self.npm if argv[0].endswith("npm") else self.node
+        return subprocess.CompletedProcess(argv, 1 if failed else 0, stdout=version + "\n")
 
 
 @pytest.fixture
@@ -54,7 +55,8 @@ def test_setup_installs_from_the_lockfile_checks_signatures_then_fetches_the_bro
     said = _setup(monkeypatch, workspace, run)
 
     assert run.calls == [
-        (["--version"], None),
+        (["--version"], None),                  # node
+        (["--version"], None),                  # npm
         (["ci", "--ignore-scripts", "--no-audit", "--no-fund"], workspace),
         (["audit", "signatures"], workspace),
         (["exec", "--no", "--", "remotion", "browser", "ensure"], workspace),
@@ -65,6 +67,14 @@ def test_setup_installs_from_the_lockfile_checks_signatures_then_fetches_the_bro
 def test_setup_ends_by_installing_what_times_captions_to_the_voice(monkeypatch, workspace, tools, whisper_installs):
     _setup(monkeypatch, workspace, FakeRun())
     assert whisper_installs == [workspace]
+
+
+def test_a_system_without_a_whisper_build_still_finishes_setup(monkeypatch, workspace, tools):
+    def no_build(workspace, say):
+        raise toolchain.whisper.NoBuild("captions will be spread over each frame instead")
+    monkeypatch.setattr(toolchain.whisper, "install", no_build)
+    said = _setup(monkeypatch, workspace, FakeRun())
+    assert "captions will be spread over each frame instead" in said and said[-1] == "The video toolchain is ready."
 
 
 def test_a_whisper_that_cannot_be_installed_is_a_setup_error(monkeypatch, workspace, tools):
@@ -86,7 +96,7 @@ def test_a_failed_install_stops_everything_after_it(monkeypatch, workspace, tool
     run = FakeRun(fail="ci")
     with pytest.raises(toolchain.ToolchainError, match="Installing the packages failed"):
         _setup(monkeypatch, workspace, run)
-    assert len(run.calls) == 2
+    assert len(run.calls) == 3
 
 
 def test_a_workspace_too_deep_for_windows_is_refused_before_downloading(monkeypatch, tmp_path, tools):
@@ -112,13 +122,21 @@ def test_setup_puts_the_apps_pinned_packages_in_place_and_keeps_them_current(mon
 
 def test_setup_says_how_to_get_node(monkeypatch, workspace):
     monkeypatch.setattr(toolchain.shutil, "which", lambda name: None)
-    with pytest.raises(toolchain.ToolchainError, match="node is not on PATH. Install Node 18"):
+    with pytest.raises(toolchain.ToolchainError, match="node is not on PATH. Install Node 20"):
         _setup(monkeypatch, workspace, FakeRun())
 
 
 def test_an_old_node_is_refused(monkeypatch, workspace, tools):
-    with pytest.raises(toolchain.ToolchainError, match="v16.20.0 is too old"):
-        _setup(monkeypatch, workspace, FakeRun(node="v16.20.0"))
+    with pytest.raises(toolchain.ToolchainError, match="Node 18.19.1 is too old"):
+        _setup(monkeypatch, workspace, FakeRun(node="v18.19.1"))
+
+
+def test_an_npm_too_old_to_check_signatures_is_refused_before_installing(monkeypatch, workspace, tools):
+    """Ubuntu 24.04's own npm, 9.2, rejects signatures made with the registry's retired key."""
+    run = FakeRun(node="v20.11.0", npm="9.2.0")
+    with pytest.raises(toolchain.ToolchainError, match="npm 9.2.0 is too old: it rejects package signatures"):
+        _setup(monkeypatch, workspace, run)
+    assert not any("ci" in argv for argv, _ in run.calls)
 
 
 # --- what the starter pins ------------------------------------------------------------------

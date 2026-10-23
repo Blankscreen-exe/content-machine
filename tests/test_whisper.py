@@ -67,10 +67,47 @@ def test_downloads_never_log_session_keys_whatever_the_environment_asks(monkeypa
     assert context.verify_mode == whisper.ssl.CERT_REQUIRED and context.check_hostname
 
 
-def test_only_the_windows_build_is_installed(tmp_path, monkeypatch):
-    monkeypatch.setattr(whisper.sys, "platform", "linux")
-    with pytest.raises(whisper.WhisperError, match="Windows build"):
+@pytest.mark.parametrize("system, machine, archive", [
+    ("win32", "AMD64", "whisper-bin-x64.zip"),
+    ("linux", "x86_64", "whisper-bin-ubuntu-x64.tar.gz"),
+])
+def test_each_system_gets_its_own_pinned_build(monkeypatch, system, machine, archive):
+    monkeypatch.setattr(whisper.sys, "platform", system)
+    monkeypatch.setattr(whisper.platform, "machine", lambda: machine)
+    assert whisper.build().archive == archive and len(whisper.build().sha256) == 64
+
+
+def test_a_system_with_no_build_is_told_captions_are_spread_instead(tmp_path, monkeypatch):
+    monkeypatch.setattr(whisper.sys, "platform", "darwin")
+    monkeypatch.setattr(whisper.platform, "machine", lambda: "arm64")
+    with pytest.raises(whisper.NoBuild, match="spread over each frame"):
         whisper.install(tmp_path, say=lambda message: None)
+    assert whisper.installed(tmp_path) is False
+
+
+def test_a_tar_that_would_unpack_outside_its_folder_is_refused(tmp_path, monkeypatch):
+    import io
+    import tarfile
+    archive = tmp_path / "evil.tar.gz"
+    with tarfile.open(archive, "w:gz") as bundle:
+        data = b"x"
+        member = tarfile.TarInfo("../escaped.txt")
+        member.size = len(data)
+        bundle.addfile(member, io.BytesIO(data))
+    monkeypatch.delattr(whisper.tarfile, "data_filter", raising=False)       # the check done by hand
+    with pytest.raises(whisper.WhisperError, match="would land outside"):
+        whisper._unpack(archive, tmp_path / "into")
+    assert not (tmp_path / "escaped.txt").exists()
+
+
+def test_a_missing_linux_library_is_named_with_its_package(tmp_path, monkeypatch):
+    monkeypatch.setattr(whisper, "installed", lambda workspace: True)
+    monkeypatch.setattr(whisper, "_program", lambda workspace: tmp_path / "whisper-cli")
+    monkeypatch.setattr(whisper.subprocess, "run", lambda *a, **k: whisper.subprocess.CompletedProcess(
+        a[0], 127, stdout="", stderr="whisper-cli: error while loading shared libraries: libgomp.so.1: "
+                                     "cannot open shared object file: No such file or directory"))
+    with pytest.raises(whisper.WhisperError, match="needs the system library libgomp.*sudo apt install libgomp1"):
+        whisper.transcribe(tmp_path, tmp_path / "take.wav")
 
 
 def test_hearing_before_installing_says_how_to_install(tmp_path):

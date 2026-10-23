@@ -212,8 +212,9 @@ there is a take, each scene's script is spread over its estimated speech.
 
 `cm video setup` fetches whisper.cpp 1.9.2 and its small English model, `base.en` (about
 150 MB, once), into `.cm/whisper/`, and keeps each only if it matches the SHA-256 recorded in
-`cm/whisper.py`; the model comes from a fixed revision of its repository. Only whisper.cpp's
-ready-made Windows build is set up.
+`cm/whisper.py`; the model comes from a fixed revision of its repository. whisper.cpp's
+ready-made builds for Windows and for Ubuntu on x64 are set up; on any other system setup
+says so and carries on, and captions are spread over each frame instead.
 
 ### A silent video, and what to say over it
 
@@ -264,7 +265,8 @@ trace, and names the cause where Remotion does not.
 ### The video toolchain
 
 Videos are drawn with [Remotion](https://www.remotion.dev): each frame is a React component
-rendered in a headless Chrome. It needs Node 18 or later, and only video needs it; the rest
+rendered in a headless Chrome. It needs Node 20 or later, with npm 10 or later: older npm
+rejects package signatures made with the registry's retired key. Only video needs it; the rest
 of the app never touches Node. `cm video setup` installs it into the workspace, and is the
 only step that downloads anything for video:
 

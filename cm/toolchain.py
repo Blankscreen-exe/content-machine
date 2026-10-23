@@ -27,7 +27,10 @@ from pathlib import Path
 
 from . import whisper
 
-MIN_NODE = 18
+MIN_NODE = 20
+# npm's registry rotated its signing key in January 2025. Older npm rejects signatures made
+# with the retired key, which older packages still carry, as if they had been tampered with.
+MIN_NPM = 10
 # Windows cannot start a program whose path is longer than 260 characters, and Remotion keeps
 # its browser about 120 characters deep inside the workspace. Past this, rendering fails.
 MAX_WORKSPACE_PATH = 130
@@ -55,6 +58,7 @@ def setup(workspace: Path, say: Callable[[str], None] = print) -> None:
             say(f"Put the app's pinned {name} in the workspace.")
     say(f"Node {'.'.join(map(str, node_version()))} found.")
     npm = _tool("npm", "npm comes with Node: https://nodejs.org")
+    say(f"npm {'.'.join(map(str, npm_version(npm)))} found.")
 
     say("Installing the packages in package-lock.json, each checked against its checksum...")
     _run([npm, "ci", "--ignore-scripts", "--no-audit", "--no-fund"], workspace,
@@ -68,6 +72,8 @@ def setup(workspace: Path, say: Callable[[str], None] = print) -> None:
          "Fetching the browser failed. Check the connection and run `cm video setup` again.")
     try:
         whisper.install(workspace, say=say)
+    except whisper.NoBuild as exc:
+        say(str(exc))                    # not a fault: only timed captions need it
     except whisper.WhisperError as exc:
         raise ToolchainError(str(exc)) from exc
     say("The video toolchain is ready.")
@@ -76,14 +82,29 @@ def setup(workspace: Path, say: Callable[[str], None] = print) -> None:
 def node_version() -> tuple[int, ...]:
     """The installed Node's version, or an error saying which is needed."""
     node = _tool("node", f"Install Node {MIN_NODE} or later: https://nodejs.org")
-    output = subprocess.run([node, "--version"], capture_output=True, text=True, check=False).stdout
-    match = re.match(r"v(\d+)\.(\d+)\.(\d+)", output.strip())
-    if not match:
-        raise ToolchainError(f"Could not read Node's version from {output.strip()!r}.")
-    version = tuple(int(part) for part in match.groups())
+    version = _version(node, "Node")
     if version[0] < MIN_NODE:
-        raise ToolchainError(f"Node {output.strip()} is too old; install Node {MIN_NODE} or later.")
+        raise ToolchainError(f"Node {'.'.join(map(str, version))} is too old; install Node {MIN_NODE} or later "
+                             "from https://nodejs.org (a Linux distribution's own package may be older).")
     return version
+
+
+def npm_version(npm: str) -> tuple[int, ...]:
+    """npm's version, or an error saying why an older one cannot check signatures."""
+    version = _version(npm, "npm")
+    if version[0] < MIN_NPM:
+        raise ToolchainError(f"npm {'.'.join(map(str, version))} is too old: it rejects package signatures made "
+                             f"with the registry's retired key as if they were tampered with. Install Node "
+                             f"{MIN_NODE} or later from https://nodejs.org, which brings npm {MIN_NPM} or later.")
+    return version
+
+
+def _version(program: str, name: str) -> tuple[int, ...]:
+    output = subprocess.run([program, "--version"], capture_output=True, text=True, check=False).stdout.strip()
+    match = re.match(r"v?(\d+)\.(\d+)\.(\d+)", output)
+    if not match:
+        raise ToolchainError(f"Could not read {name}'s version from {output!r}.")
+    return tuple(int(part) for part in match.groups())
 
 
 def _tool(name: str, how_to_get_it: str) -> str:

@@ -5,17 +5,22 @@ script's (captions.py). So a small English model is enough, and nothing leaves t
 
 `install` fetches a pinned whisper.cpp release and model into the workspace's `.cm/whisper/`
 and checks each against the SHA-256 recorded here before keeping it, so a file changed at
-its source is refused rather than run. Only the Windows build is fetched: it is the one
-whisper.cpp publishes ready to run and the one this has been tested with. Swapping
-whisper.cpp for another recogniser means changing this module.
+its source is refused rather than run. whisper.cpp publishes ready-built programs for
+Windows and for Ubuntu on x64, and those two are the ones set up. Elsewhere install says so
+and captions are spread over each frame instead. Swapping whisper.cpp for another
+recogniser means changing this module.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import os
+import platform
+import re
 import ssl
 import subprocess
 import sys
+import tarfile
 import urllib.request
 import zipfile
 from collections.abc import Callable
@@ -23,8 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 VERSION = "1.9.2"
-RELEASE = (f"https://github.com/ggml-org/whisper.cpp/releases/download/v{VERSION}/whisper-bin-x64.zip",
-           "49dcc16de826f20bd53d44f947a1ae49dfa81f86cad67a64d80820cb192d674a")
+RELEASES = f"https://github.com/ggml-org/whisper.cpp/releases/download/v{VERSION}"
 MODEL = "base.en"
 # A fixed revision of the model repository, so the file behind the address cannot change.
 MODEL_FILE = (f"https://huggingface.co/ggerganov/whisper.cpp/resolve/"
@@ -49,6 +53,42 @@ class WhisperError(RuntimeError):
     """whisper.cpp could not be installed or run; the message says what to do."""
 
 
+class NoBuild(WhisperError):
+    """whisper.cpp publishes no ready-built program for this system. Not a fault: captions
+    are then spread over each frame rather than timed to the voice."""
+
+
+@dataclass(frozen=True)
+class Build:
+    """One of whisper.cpp's ready-built programs: where it comes from, its checksum, and
+    where the program is inside it once unpacked."""
+
+    archive: str
+    sha256: str
+    program: str
+
+
+# By (system, processor), as sys.platform and platform.machine() name them.
+BUILDS = {
+    ("win32", "amd64"): Build("whisper-bin-x64.zip",
+                              "49dcc16de826f20bd53d44f947a1ae49dfa81f86cad67a64d80820cb192d674a",
+                              "Release/whisper-cli.exe"),
+    ("linux", "x86_64"): Build("whisper-bin-ubuntu-x64.tar.gz",
+                               "46811a3ecf584307480a220b9ef5ff81b7b22dc41577cbc274ce3afc61f753b1",
+                               "whisper-bin-ubuntu-x64/whisper-cli"),
+}
+
+
+def build() -> Build:
+    """The build for this machine, or NoBuild if whisper.cpp publishes none."""
+    found = BUILDS.get((sys.platform, platform.machine().lower()))
+    if found is None:
+        raise NoBuild(f"whisper.cpp publishes no ready-built program for {sys.platform} on "
+                      f"{platform.machine()}, so captions will be spread over each frame instead of "
+                      "timed to the voice. Everything else works.")
+    return found
+
+
 @dataclass(frozen=True)
 class Heard:
     """A word as whisper heard it, and when in the take it is said, in seconds."""
@@ -62,7 +102,7 @@ def folder(workspace: Path) -> Path:
 
 
 def _program(workspace: Path) -> Path:
-    return folder(workspace) / f"whisper-{VERSION}" / "Release" / "whisper-cli.exe"
+    return folder(workspace) / f"whisper-{VERSION}" / build().program
 
 
 def _model(workspace: Path) -> Path:
@@ -70,14 +110,15 @@ def _model(workspace: Path) -> Path:
 
 
 def installed(workspace: Path) -> bool:
-    return _program(workspace).is_file() and _model(workspace).is_file()
+    try:
+        return _program(workspace).is_file() and _model(workspace).is_file()
+    except NoBuild:
+        return False
 
 
 def install(workspace: Path, say: Callable[[str], None] = print) -> None:
     """Fetch and check the pinned release and model, unless they are already in place."""
-    if sys.platform != "win32":
-        raise WhisperError("Captions timed to the voice use whisper.cpp's Windows build, the only one "
-                           "set up here. On another system, captions are spread over each frame instead.")
+    release = build()
     if installed(workspace):
         say(f"whisper.cpp {VERSION} and the {MODEL} model are already in place.")
         return
@@ -85,13 +126,33 @@ def install(workspace: Path, say: Callable[[str], None] = print) -> None:
     target.mkdir(parents=True, exist_ok=True)
     if not _program(workspace).is_file():
         say(f"Fetching whisper.cpp {VERSION}, which times captions to the voice...")
-        archive = _download(*RELEASE, target / "whisper-bin-x64.zip")
-        with zipfile.ZipFile(archive) as bundle:
-            bundle.extractall(target / f"whisper-{VERSION}")
+        archive = _download(f"{RELEASES}/{release.archive}", release.sha256, target / release.archive)
+        _unpack(archive, target / f"whisper-{VERSION}")
         archive.unlink()
     if not _model(workspace).is_file():
         say(f"Fetching the {MODEL} speech model (about 150 MB, once)...")
         _download(*MODEL_FILE, _model(workspace))
+
+
+def _unpack(archive: Path, into: Path) -> None:
+    """Unpack a checked release. The tar filter keeps every file, and the links between the
+    shared libraries, inside `into`."""
+    if archive.name.endswith(".zip"):
+        with zipfile.ZipFile(archive) as bundle:
+            bundle.extractall(into)
+    else:
+        with tarfile.open(archive) as bundle:
+            if hasattr(tarfile, "data_filter"):
+                bundle.extractall(into, filter="data")
+            else:                            # Python before 3.10.12 has no filter: check by hand
+                root = into.resolve()
+                for member in bundle.getmembers():
+                    target = (into / member.name).resolve()
+                    link = (target.parent / member.linkname).resolve() if member.issym() else target
+                    if root not in (target, *target.parents) or root not in link.parents:
+                        raise WhisperError(f"{archive.name} holds {member.name!r}, which would land outside "
+                                           f"{into}. It was not unpacked.")
+                bundle.extractall(into)
 
 
 def _download(url: str, sha256: str, target: Path) -> Path:
@@ -124,11 +185,25 @@ def transcribe(workspace: Path, wav: Path) -> list[Heard]:
             # the full JSON, with a time for each token worked out by DTW, which needs
             # flash attention off to give one
             "-ojf", "-dtw", MODEL, "-nfa", "-np", "-of", str(out)]
-    run = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    # on Linux the program loads its shared libraries from its own folder
+    env = {**os.environ, "LD_LIBRARY_PATH": str(_program(workspace).parent)}
+    run = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                         check=False, env=env)
     result = out.with_suffix(".json")
     if run.returncode != 0 or not result.is_file():
-        raise WhisperError("whisper.cpp could not read the take:\n" + (run.stderr.strip()[-2000:] or "no output"))
+        said = run.stderr.strip()[-2000:] or "no output"
+        missing = re.search(r"error while loading shared libraries: (\S+?)(?:\.so)", said)
+        if missing:                     # Linux: a system library the ready-built program runs on
+            raise WhisperError(f"whisper.cpp needs the system library {missing.group(1)}, which is not "
+                               f"installed. On Ubuntu: sudo apt install {_package(missing.group(1))}\n{said}")
+        raise WhisperError("whisper.cpp could not read the take:\n" + said)
     return words(json.loads(result.read_text(encoding="utf-8")))
+
+
+def _package(library: str) -> str:
+    """The Ubuntu package a shared library comes in, for the ones the build is known to need;
+    otherwise the library's own name, which apt's search finds."""
+    return {"libgomp": "libgomp1"}.get(library, library)
 
 
 def words(result: dict) -> list[Heard]:
