@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlmodel import Session, SQLModel, create_engine  # noqa: E402
 from sqlmodel.pool import StaticPool  # noqa: E402
 
-from cm import choices, crud, terminals  # noqa: E402
+from cm import choices, claude_session, crud, terminals  # noqa: E402
 from cm.app import create_app  # noqa: E402
 from cm.database import configure_connections, get_session  # noqa: E402
 from cm.models import PieceType  # noqa: E402
@@ -68,5 +68,5 @@ def launches_fixture(monkeypatch):
         return ["fake"]
 
     monkeypatch.setattr(terminals, "open_terminal", fake_open)
-    monkeypatch.setattr(terminals, "claude_command", lambda prompt: ["claude", prompt])
+    monkeypatch.setattr(claude_session, "command", lambda brand_slug, prompt: ["claude", prompt])
     return calls

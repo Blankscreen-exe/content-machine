@@ -78,6 +78,7 @@ The address printed on start carries a one-time token; the app refuses requests 
 | Schema changes | Alembic | The database will hold real work, so changes have to migrate rather than be recreated |
 | Pages | Jinja2 templates + htmx | Server-rendered fragments, no build step, no frontend framework for what is a CRUD screen |
 | CLI | Typer | Same operations as the UI, without a browser |
+| Claude's tools | MCP Python SDK | The protocol Claude Code speaks to tools; see [Claude sessions](#claude-sessions) |
 | Editor | Toast UI Editor | Markdown and WYSIWYG in one component, with a toggle, and no build step |
 | Paged lists | DataTables 3 | Paging, rows per page and column sorting on the lists, with no dependencies of its own; it keeps its place when htmx redraws a list |
 | Video | Remotion (Node) | Frames written as React components, rendered frame by frame; see [Videos](#videos) |
@@ -128,6 +129,26 @@ from there. Video and audio play in the panel.
 
 The page the app opens on: what is due today or overdue, what is in progress, the pool ideas
 to start next, and what went out last, each linking through. It follows the brand filter.
+
+## Claude sessions
+
+"Work on this" on a piece opens a terminal on this machine running Claude Code in the piece's
+folder, with its brief. The session is started so that the rules hold without trusting it to
+keep them (`claude_session.py`):
+
+- **Restricted mode.** No Bash, PowerShell or other way to run code, and settings files it could
+  edit to loosen this are ignored.
+- **One brand's folders.** The file tools reach only `content/<brand>/`, `resources/<brand>/`
+  and the example kit. Another brand's work, the database and `.cm/` are outside.
+- **The database through tools only.** `cm mcp --brand <slug>` serves the content machine tools
+  over stdio (`mcp_server.py`, rules in `claude_tools.py`); Claude Code starts it itself from a
+  config written to `.cm/sessions/`. The tools read and file ideas and pieces, move a piece to
+  draft or wip, add notes, search drafts, and render and look at a draft video. There is no tool
+  to move a piece to ready, publish, delete, or change a brand, the settings or the lists: those
+  stay yours. Everything a session changes is recorded as Claude's.
+
+Drafts are still plain files: the session writes them with its own file tools, in the folder
+the tools give back.
 
 ## Repurposing
 
@@ -312,7 +333,7 @@ cm/
   cli.py          the `cm` command
   routes/         page routes, one module per screen; htmx swaps the fragments
     manage/       the Manage tab, one module per section
-  crud.py         database operations, shared by the web app and the CLI
+  crud.py         database operations, shared by the web app, the CLI and Claude's tools
   choices.py      the rules the managed lists share: unique names, turn off, delete if unused
   models.py       tables: brands, modes, piece types, platforms, ideas, pieces, publications
   scaffold.py     starter files for `cm init`, and the text new brands and modes begin with
@@ -337,7 +358,10 @@ cm/
   script.py       what is said, written out with each render: script.md and captions.srt
   remotion/       the TypeScript side of that: the props a video gets, the entry that registers it
   resources.py    what a brand reuses across pieces: images, music, its video kit
-  terminals.py    opening a terminal session in a piece folder
+  terminals.py    opening a terminal in a piece folder
+  claude_session.py  how a Claude session starts: restricted, one brand's folders, our tools
+  claude_tools.py what a session may do to the database, as plain functions over crud
+  mcp_server.py   those tools served to Claude Code over stdio: `cm mcp`
   desktop.py      opening a folder in the system's file manager
   dates.py        stored UTC times to local calendar dates
   security.py     access token
@@ -426,7 +450,7 @@ from `content.db`: it holds nothing of its own, so deleting it only means the ne
 
 Recording a publish on a piece's page (platform, link, date) moves the piece to published. The
 platform comes from the managed list, so the same one is always spelled the same way.
-`cm published <id> --platform <name>` does the same from a terminal session.
+`cm published <id> --platform <name>` does the same from a terminal.
 
 ## Moving to another machine
 

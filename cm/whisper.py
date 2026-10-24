@@ -187,8 +187,8 @@ def transcribe(workspace: Path, wav: Path) -> list[Heard]:
             "-ojf", "-dtw", MODEL, "-nfa", "-np", "-of", str(out)]
     # on Linux the program loads its shared libraries from its own folder
     env = {**os.environ, "LD_LIBRARY_PATH": str(_program(workspace).parent)}
-    run = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                         check=False, env=env)
+    run = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8",
+                         errors="replace", check=False, env=env)
     result = out.with_suffix(".json")
     if run.returncode != 0 or not result.is_file():
         said = run.stderr.strip()[-2000:] or "no output"

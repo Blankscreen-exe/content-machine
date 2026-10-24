@@ -12,8 +12,8 @@ Use once I have finalised a video piece's `frames.md`, and again whenever it cha
 1. Read `brief.md`, especially its Video section and the Brand profile.
 2. If the Video section lists problems with `frames.md`, stop and tell me. Do not fix my
    frames unless I ask.
-3. If the brand has no kit yet, stop and ask. With my go-ahead, copy the example kit named
-   in the brief into the brand's kit folder, then restyle it from the Brand profile and any
+3. If the brand has no kit yet, stop and ask. With my go-ahead, `start_kit()` copies the
+   example kit into the brand's kit folder; then restyle it from the Brand profile and any
    reference images I give you: colours, fonts, shapes. Fonts go in the kit's `fonts/`
    folder as files, never fetched from the internet.
 
@@ -45,12 +45,10 @@ Use once I have finalised a video piece's `frames.md`, and again whenever it cha
 
 ## Checking it
 
-1. Render a draft: `cm render <piece id> --draft`. If it fails, the error says why; fix it
+1. Render a draft with `render_draft(<piece id>)`. If it fails, the error says why; fix it
    and render again.
-2. Look at it. From the workspace root, pull a still from the middle of each scene
-   (seconds = frame / 30):
-   `npm exec --no -- remotion ffmpeg -y -ss <seconds> -i <piece folder>/assets/draft.mp4 -frames:v 1 <piece folder>/still.png`
-   Read each still, fix what is off, and delete the stills when you are done.
+2. Look at it: `still(<piece id>, <seconds>)` for the middle of each scene
+   (seconds = frame / 30). Fix what is off.
 3. Tell me what you built and anything you chose or added. Do not render a final: that
    waits until my voice is on it.
-4. `cm note <piece id> "Built the video from frames.md"`.
+4. `add_note(<piece id>, "Built the video from frames.md")`.

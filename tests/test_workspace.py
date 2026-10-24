@@ -83,7 +83,7 @@ def test_brief_holds_what_a_session_needs(session: Session, brand):
     assert "cheap now, expensive later" in text
     assert "cheap code; cheap hosting" in text
     assert "### Mode: advisor" in text and "calm and diagnostic" in text
-    assert f"cm stage {piece.id}" in text          # how to report back
+    assert f"Piece id: {piece.id}" in text         # what the tools call it
     assert (brief.parent / "assets").is_dir()      # images have somewhere to go
 
 

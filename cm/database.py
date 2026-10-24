@@ -14,26 +14,36 @@ _settings = get_settings()
 
 
 def configure_connections(target: Engine) -> Engine:
-    """Set what SQLite leaves to each connection: links checked, and room for two processes.
+    """Set what SQLite leaves to each connection: links checked, and a wait for a busy file.
 
     SQLite ignores foreign keys unless each connection switches them on, so without that a
     piece could point at an idea that no longer exists and nothing would complain.
 
-    The app and a Claude session's tools are separate processes writing one content.db.
-    WAL lets either read while the other writes, where the default journal shuts readers out
-    for the length of every commit. Writers still take turns, and the busy timeout is how
-    long one waits for its turn before giving up: Python's sqlite3 happens to wait 5 seconds
-    already, and this says so rather than leaning on a default.
+    The app and a Claude session's tools are separate processes writing one content.db, and
+    writers take turns. The busy timeout is how long one waits for its turn before giving up:
+    Python's sqlite3 happens to wait 5 seconds already, and this says so rather than leaning
+    on a default.
     """
     @event.listens_for(target, "connect")
     def _on_connect(dbapi_connection, _record) -> None:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys = ON")
-        cursor.execute("PRAGMA journal_mode = WAL")     # kept in the file; setting it again is a no-op
         cursor.execute("PRAGMA busy_timeout = 5000")
         cursor.close()
 
     return target
+
+
+def use_wal(target: Engine) -> None:
+    """Put the database file in WAL mode, so one process can read while another writes;
+    the default journal shuts readers out for the length of every commit.
+
+    The mode is kept in the file, so this is a one-time change to it, made with the schema's
+    (see migrate) rather than on every connection: two processes making the very first switch
+    at the same moment can have one refused outright, without the busy timeout's wait.
+    """
+    with target.connect() as connection:
+        connection.exec_driver_sql("PRAGMA journal_mode = WAL")
 
 
 # check_same_thread=False: uvicorn serves requests on a thread pool, SQLite defaults to
@@ -51,6 +61,9 @@ def migrate(url: str | None = None) -> None:
     Alembic owns the schema: running it on start means an older database is upgraded in
     place instead of silently missing columns. An import passes the database it is about to
     read, so an export written by an older version is brought up before its rows are read.
+
+    The workspace's database is also put in WAL mode, as the app and a session's tools share
+    it. Everything that opens it runs this first: the app, the `cm` commands, the tools.
     """
     from alembic import command
     from alembic.config import Config
@@ -61,6 +74,8 @@ def migrate(url: str | None = None) -> None:
     config.set_main_option("sqlalchemy.url", url or _settings.database_url)
     config.attributes["configure_logger"] = False   # keep alembic's INFO lines out of our output
     command.upgrade(config, "head")
+    if url is None:
+        use_wal(engine)
 
 
 def get_session() -> Iterator[Session]:

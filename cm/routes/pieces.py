@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlmodel import Session
 
-from .. import choices, crud, files, schedule, search, terminals, workspace
+from .. import choices, claude_session, crud, files, schedule, search, terminals, workspace
 from ..database import get_session
 from ..models import Piece, PieceType, Stage
 from ..templating import STAGES, page_context, templates
@@ -238,7 +238,7 @@ def _open_session(session: Session, piece: Piece, prompt: str) -> str:
         terminals.open_terminal(
             cwd=folder,
             title=f"{piece.title} ({piece.type.name})",
-            command=terminals.claude_command(prompt),
+            command=claude_session.command(crud.brand_slug(session, piece.brand_id), prompt),
             key=crud.get_settings_map(session).get("terminal"),
         )
     except terminals.TerminalError as exc:

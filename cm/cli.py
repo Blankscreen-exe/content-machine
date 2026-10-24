@@ -1,8 +1,7 @@
 """Command line entry point.
 
-`cm serve` runs the web app. The other commands exist so a terminal session working on a
-piece can report back — moving a stage or recording a publication — without the web app
-having to watch the folder.
+`cm serve` runs the web app and `cm mcp` the tools a Claude session reports back through.
+The rest look after the workspace: setting it up, moving it between machines, rendering.
 """
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ from sqlmodel import Session
 
 from . import choices, crud, frames, renders, scaffold, toolchain, transfer, video, workspace
 from .database import engine, migrate
-from .models import Platform, Stage
+from .models import Platform
 from .net import lan_ip
 from .paths import REPO_DIR
 from .security import rotate_token, token
@@ -67,36 +66,6 @@ def pieces(brand: str = typer.Option(None, help="limit to one brand slug")) -> N
 
 
 @app.command()
-def stage(piece_id: int, stage: str) -> None:
-    """Move a piece to a stage: not started, draft, wip, ready, published."""
-    migrate()
-    try:
-        target = Stage(stage)
-    except ValueError as exc:
-        raise typer.BadParameter(f"stage must be one of: {', '.join(s.value for s in Stage)}") from exc
-
-    with Session(engine) as session:
-        piece = crud.get_piece(session, piece_id)
-        if not piece:
-            raise typer.BadParameter(f"no piece with id {piece_id}")
-        crud.update_piece(session, piece, stage=target)
-        typer.echo(f"{piece.title}: {target.value}")
-
-
-@app.command()
-def note(piece_id: int, text: str) -> None:
-    """Append a note to a piece."""
-    migrate()
-    with Session(engine) as session:
-        piece = crud.get_piece(session, piece_id)
-        if not piece:
-            raise typer.BadParameter(f"no piece with id {piece_id}")
-        joined = f"{piece.notes}\n{text}".strip() if piece.notes else text
-        crud.update_piece(session, piece, notes=joined)
-        typer.echo("noted")
-
-
-@app.command()
 def published(piece_id: int,
               platform: str = typer.Option(..., help="one of the platforms under Manage"),
               url: str = typer.Option("", help="link to the published post")) -> None:
@@ -124,6 +93,18 @@ def brief(piece_id: int) -> None:
         if not piece:
             raise typer.BadParameter(f"no piece with id {piece_id}")
         typer.echo(str(workspace.write_brief(session, piece)))
+
+
+@app.command()
+def mcp(brand: str = typer.Option(..., help="the brand slug the session works for")) -> None:
+    """Serve a Claude session's tools over stdin and stdout. Claude Code starts this itself."""
+    from . import claude_tools, mcp_server     # here: the MCP library is only needed by this command
+
+    try:
+        mcp_server.serve(brand)
+    except claude_tools.Refused as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc
 
 
 @app.command()

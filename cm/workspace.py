@@ -101,7 +101,7 @@ def write_brief(session: Session, piece: Piece) -> Path:
         f"- Stage: {piece.stage.value}",
         f"- Due: {piece.due_on.isoformat() if piece.due_on else 'not scheduled'}",
         f"- Brand: {brand.name} ({brand.slug})",
-        f"- Piece id: {piece.id}  (use `cm stage {piece.id} <stage>` when the stage changes)",
+        f"- Piece id: {piece.id}  (what the content machine tools call it)",
     ]
     if piece.notes:
         lines += ["", "### Notes", piece.notes]

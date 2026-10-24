@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from cm import crud, terminals
+from cm import claude_session, crud, terminals
 from cm.settings import get_settings
 from helpers import type_id
 
@@ -61,7 +61,7 @@ def test_a_missing_terminal_is_reported_not_swallowed(local_client: TestClient, 
     def boom(*args, **kwargs):
         raise terminals.TerminalError("No supported terminal found.")
 
-    monkeypatch.setattr(terminals, "claude_command", lambda prompt: ["claude", prompt])
+    monkeypatch.setattr(claude_session, "command", lambda brand_slug, prompt: ["claude", prompt])
     monkeypatch.setattr(terminals, "open_terminal", boom)
 
     response = local_client.post(f"/pieces/{piece.id}/session")

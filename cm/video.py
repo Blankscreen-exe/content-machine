@@ -119,9 +119,25 @@ def to_wav(workspace: Path, source: Path, target: Path) -> Path:
         raise RenderError("The video toolchain is not installed. Run `cm video setup` first.")
     argv = [npm, "exec", "--no", "--", "remotion", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
             "-i", str(source), "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", str(target)]
-    run = subprocess.run(argv, cwd=workspace, capture_output=True, text=True, errors="replace", check=False)
+    run = subprocess.run(argv, cwd=workspace, stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                         errors="replace", check=False)
     if run.returncode != 0 or not target.is_file():
         raise RenderError(f"Could not read {source.name} as audio:\n{run.stderr.strip()[-1500:]}")
+    return target
+
+
+def still(workspace: Path, source: Path, seconds: float, target: Path) -> Path:
+    """The frame of the video `source` at `seconds`, as a PNG, using Remotion's ffmpeg."""
+    npm = shutil.which("npm")
+    if not npm or not (workspace / "node_modules" / "remotion").is_dir():
+        raise RenderError("The video toolchain is not installed. Run `cm video setup` first.")
+    argv = [npm, "exec", "--no", "--", "remotion", "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-ss", f"{seconds:.3f}", "-i", str(source), "-frames:v", "1", str(target)]
+    run = subprocess.run(argv, cwd=workspace, stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                         errors="replace", check=False)
+    if run.returncode != 0 or not target.is_file():
+        raise RenderError(f"Could not take a still at {seconds} seconds from {source.name}; is it inside "
+                          f"the video?\n{run.stderr.strip()[-1500:]}")
     return target
 
 
@@ -146,8 +162,9 @@ def _run(argv: list[str], cwd: Path, on_progress: Callable[[Progress], None]) ->
     explain a failure."""
     tail: deque[str] = deque(maxlen=TAIL)
     try:
-        process = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                   text=True, encoding="utf-8", errors="replace")
+        # stdin is not the render's: under the MCP server it is Claude Code's line to the tools
+        process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
     except OSError as exc:
         raise RenderError(f"Could not start the render: {exc}") from exc
     for line in process.stdout:

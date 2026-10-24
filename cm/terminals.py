@@ -130,11 +130,3 @@ def open_terminal(cwd: Path, title: str, command: list[str], key: str | None = N
     except OSError as exc:
         raise TerminalError(f"Could not start {terminal.label}: {exc}") from exc
     return argv
-
-
-def claude_command(prompt: str) -> list[str]:
-    """The command a session runs. Fails loudly if Claude Code is not installed."""
-    executable = shutil.which("claude")
-    if not executable:
-        raise TerminalError("Claude Code is not on PATH. Install it, or open the folder yourself.")
-    return [executable, prompt]

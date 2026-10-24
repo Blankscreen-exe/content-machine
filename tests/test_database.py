@@ -7,20 +7,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from sqlalchemy import create_engine, text
 
-from cm.database import configure_connections
+from cm.database import configure_connections, use_wal
 
 REPO = Path(__file__).resolve().parent.parent
 
-# Says it is ready, waits for the word, then writes in many small transactions, as a batch
-# filing pieces one by one would.
+# Connects as it starts, as the app and the tools do, says it is ready, waits for the word,
+# then writes in many small transactions, as a batch filing pieces one by one would.
 WRITER = """
 import sys
 from sqlalchemy import create_engine, text
 from cm.database import configure_connections
 
 engine = configure_connections(create_engine(f"sqlite:///{sys.argv[1]}"))
+with engine.connect():
+    pass
 print("ready", flush=True)
 sys.stdin.readline()
 for n in range(200):
@@ -30,30 +33,37 @@ for n in range(200):
 """
 
 
-def _database(tmp_path: Path) -> Path:
+@pytest.fixture(name="database")
+def database_fixture(tmp_path: Path) -> Path:
+    """A database as migrate() leaves the workspace's: in WAL mode."""
     path = tmp_path / "content.db"
-    with sqlite3.connect(path) as connection:
-        connection.execute("CREATE TABLE note (writer TEXT, n INTEGER)")
-    connection.close()
+    engine = configure_connections(create_engine(f"sqlite:///{path}"))
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE note (writer TEXT, n INTEGER)"))
+    use_wal(engine)
+    engine.dispose()
     return path
 
 
-def test_two_processes_writing_at_once_both_finish(tmp_path):
-    database = _database(tmp_path)
+def test_two_processes_writing_at_once_both_finish(database, tmp_path):
     # the app's settings read the workspace and a .env from where they start: keep both here
     env = {**os.environ, "CM_WORKSPACE": str(tmp_path / "workspace"), "PYTHONPATH": str(REPO)}
     writers = [subprocess.Popen([sys.executable, "-c", WRITER, str(database), name], cwd=tmp_path, env=env,
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True)
                for name in ("app", "session")]
-    for writer in writers:
-        assert writer.stdout.readline().strip() == "ready", writer.stderr.read()
-    for writer in writers:                    # both start together, so their writes overlap
-        writer.stdin.write("go\n")
-        writer.stdin.flush()
-    for writer in writers:
-        _, errors = writer.communicate(timeout=120)
-        assert writer.returncode == 0, errors
+    try:
+        for writer in writers:
+            assert writer.stdout.readline().strip() == "ready", writer.stderr.read()
+        for writer in writers:                    # both start together, so their writes overlap
+            writer.stdin.write("go\n")
+            writer.stdin.flush()
+        for writer in writers:
+            _, errors = writer.communicate(timeout=120)
+            assert writer.returncode == 0, errors
+    finally:
+        for writer in writers:                    # one failing must not leave the other waiting
+            writer.kill()
 
     with sqlite3.connect(database) as connection:
         counts = dict(connection.execute("SELECT writer, count(*) FROM note GROUP BY writer").fetchall())
@@ -61,24 +71,17 @@ def test_two_processes_writing_at_once_both_finish(tmp_path):
     assert counts == {"app": 200, "session": 200}
 
 
-def test_a_write_in_progress_does_not_shut_readers_out(tmp_path):
+def test_a_write_in_progress_does_not_shut_readers_out(database):
     """The default journal locks readers out while a commit is written; WAL never does."""
-    database = _database(tmp_path)
-    engine = configure_connections(create_engine(f"sqlite:///{database}"))
-    with engine.connect() as connection:          # the first connection puts the file in WAL
-        connection.execute(text("INSERT INTO note VALUES ('app', 0)"))
-        connection.commit()
-
     writer = sqlite3.connect(database, isolation_level=None)
     try:
         writer.execute("BEGIN EXCLUSIVE")         # the lock the default journal takes to commit
         writer.execute("INSERT INTO note VALUES ('session', 0)")
         reader = sqlite3.connect(database, timeout=0)   # not waiting: shut out would fail at once
         try:
-            assert reader.execute("SELECT count(*) FROM note").fetchone() == (1,)
+            assert reader.execute("SELECT count(*) FROM note").fetchone() == (0,)
         finally:
             reader.close()
         writer.execute("COMMIT")
     finally:
         writer.close()
-        engine.dispose()

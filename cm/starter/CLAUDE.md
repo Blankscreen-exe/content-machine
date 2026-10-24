@@ -38,11 +38,15 @@ do those.
 
 ## Reporting back
 
-The web app tracks stages. When something changes, say so:
+The web app tracks ideas and pieces, and you reach it through the content machine tools
+(`mcp__cm__...`), never by running commands. When something changes, say so:
 
-```
-cm stage <piece id> draft      # not started | draft | wip | ready | published
-cm note <piece id> "what you did"
-```
+- `set_stage(<piece id>, "draft")` once a first version is written, `"wip"` while you rework
+  it. Ready and published are mine.
+- `add_note(<piece id>, "what you did")`.
 
-The piece id is in `brief.md`.
+The piece id is in `brief.md`. `brand_context`, `list_pieces` and `search_drafts` show the
+rest of the brand's work; `create_idea` and `create_piece` file new work, and the piece's
+folder comes back with it.
+
+A session sees only its own brand. If you need something outside it, ask me.

@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from cm import crud, terminals, workspace
+from cm import claude_session, crud, terminals, workspace
 from cm.app import create_app
 from cm.database import get_session
 from cm.settings import get_settings
@@ -34,7 +34,7 @@ def launches_fixture(monkeypatch):
     calls = []
     monkeypatch.setattr(terminals, "open_terminal",
                         lambda cwd, title, command, key=None: calls.append(command) or ["fake"])
-    monkeypatch.setattr(terminals, "claude_command", lambda prompt: ["claude", prompt])
+    monkeypatch.setattr(claude_session, "command", lambda brand_slug, prompt: ["claude", prompt])
     return calls
 
 
