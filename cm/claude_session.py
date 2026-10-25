@@ -8,6 +8,10 @@ content and resources, and the example kit to copy from. Another brand's folders
 database and the app's state are all outside. Restricted mode also ignores the settings
 files a session could edit to loosen any of this.
 
+It ignores the workspace's own CLAUDE.md and skills too: to Claude Code those are project
+settings. So the session is handed them, the rules appended to its system prompt and the
+skills loaded as a plugin, from where `cm init` puts them (scaffold.py).
+
 The config Claude Code starts the tools from is written to `.cm/sessions/`, which never
 leaves this machine: it names this machine's Python and workspace.
 """
@@ -18,7 +22,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import resources
+from . import resources, scaffold
 from .settings import get_settings
 from .terminals import TerminalError
 
@@ -33,14 +37,29 @@ def command(brand_slug: str, prompt: str) -> list[str]:
     executable = shutil.which("claude")
     if not executable:
         raise TerminalError("Claude Code is not on PATH. Install it, or open the folder yourself.")
+    rules, plugin = starter_files()
     return [executable,
             "--restricted",
+            "--append-system-prompt-file", str(rules),
+            "--plugin-dir", str(plugin),
             "--strict-mcp-config",                 # these tools only, not any configured elsewhere
             "--mcp-config", str(write_config(brand_slug)),
             "--allowedTools", f"mcp__{SERVER_NAME}",
             "--add-dir", *(str(folder) for folder in folders(brand_slug)),
             "--",                                  # the options above take several values: end them
             prompt]
+
+
+def starter_files() -> tuple[Path, Path]:
+    """The workspace's rules and skills plugin. A session without them would work without
+    its rules, so their absence stops it starting."""
+    workspace = get_settings().workspace
+    rules, plugin = workspace / scaffold.RULES_FILE, workspace / scaffold.PLUGIN_DIR
+    missing = [path.name for path in (rules, plugin) if not path.exists()]
+    if missing:
+        raise TerminalError(f"The workspace has no {' or '.join(missing)}: run `cm init` to put the "
+                            "session rules and skills in place.")
+    return rules, plugin
 
 
 def folders(brand_slug: str) -> list[Path]:

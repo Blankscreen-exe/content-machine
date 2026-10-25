@@ -37,7 +37,7 @@ def section(piece: Piece, folder: Path, brand_slug: str) -> list[str]:
         names = ", ".join(f"`{image.name}`" for image in images)
         lines.append(f"- Brand images, imported by path (`import image from \"{_relative(video_dir, images_dir)}"
                      f"/{images[0].name}\";`): {names}")
-    lines.append(f"- Render a draft to check it: `cm render {piece.id} --draft`")
+    lines.append(f"- Render a draft to check it: `render_draft({piece.id})`, then `still({piece.id}, <seconds>)`")
     return lines
 
 

@@ -62,10 +62,10 @@ runs the code in this repo (a `git pull` needs no reinstall) and the default wor
 leaves PATH alone, `--native-tls` / `-NativeTls` uses the system's certificates on networks
 that inspect HTTPS. If PowerShell blocks scripts: `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
 
-`cm init` copies the session rules and skills from `cm/starter/` into the workspace. Brands
-are added under Manage in the app; a new brand's voice and profile start from the
-placeholder templates in `cm/starter/brand/`. Real brands only ever live in the workspace
-database, never in this repository.
+`cm init` copies the session rules (`CLAUDE.md`) and skills (`plugin/`) from `cm/starter/`
+into the workspace. Brands are added under Manage in the app; a new brand's voice and
+profile start from the placeholder templates in `cm/starter/brand/`. Real brands only ever
+live in the workspace database, never in this repository.
 
 The address printed on start carries a one-time token; the app refuses requests without it.
 
@@ -146,6 +146,10 @@ keep them (`claude_session.py`):
   draft or wip, add notes, search drafts, and render and look at a draft video. There is no tool
   to move a piece to ready, publish, delete, or change a brand, the settings or the lists: those
   stay yours. Everything a session changes is recorded as Claude's.
+- **Rules and skills handed over.** Restricted mode also ignores a project's own `CLAUDE.md`
+  and `.claude/skills/`, so the session is given the workspace's `CLAUDE.md` as part of its
+  system prompt, and the skills as a Claude Code plugin from `plugin/` (named `cm`, so they
+  show as `cm:video` and so on). A workspace missing either will not start a session.
 
 Drafts are still plain files: the session writes them with its own file tools, in the folder
 the tools give back.
@@ -189,8 +193,8 @@ is on. A brand without a kit is asked about first; its kit starts from the examp
 
 Who does what changes with it: in the workspace's `CLAUDE.md`, videos and the brand's kit
 are the session's work, while images, diagrams and the voice stay yours. An existing
-workspace keeps its own `CLAUDE.md` (`cm init` never overwrites it), so copy that change
-across by hand, or run `cm init --force` if you have not edited the starter files.
+workspace keeps its own `CLAUDE.md` and skills (`cm init` never overwrites them), so copy
+that change across by hand, or run `cm init --force` if you have not edited the starter files.
 
 ### Voice
 

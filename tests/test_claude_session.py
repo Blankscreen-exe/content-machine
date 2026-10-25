@@ -13,6 +13,8 @@ from cm.settings import get_settings
 def workspace_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(get_settings(), "workspace", tmp_path)
     monkeypatch.setattr(claude_session.shutil, "which", lambda name: f"/bin/{name}")
+    (tmp_path / "CLAUDE.md").write_text("Never publish anything.", encoding="utf-8")
+    (tmp_path / "plugin" / "skills").mkdir(parents=True)
     return tmp_path
 
 
@@ -23,6 +25,21 @@ def test_a_session_cannot_run_code_and_reaches_the_app_only_through_its_tools(wo
     assert "--restricted" in argv and "--strict-mcp-config" in argv
     assert argv[argv.index("--allowedTools") + 1] == "mcp__cm"
     assert argv[-2:] == ["--", "Read brief.md"]     # never read as one more folder or config
+
+
+def test_a_session_is_handed_its_rules_and_skills(workspace_dir):
+    """Restricted mode ignores the workspace's own CLAUDE.md and skills, so nothing is left
+    to Claude Code to find."""
+    argv = claude_session.command("personal", "Read brief.md")
+
+    assert argv[argv.index("--append-system-prompt-file") + 1] == str(workspace_dir / "CLAUDE.md")
+    assert argv[argv.index("--plugin-dir") + 1] == str(workspace_dir / "plugin")
+
+
+def test_a_workspace_without_its_rules_will_not_start_a_session(workspace_dir):
+    (workspace_dir / "CLAUDE.md").unlink()
+    with pytest.raises(claude_session.TerminalError, match="no CLAUDE.md: run `cm init`"):
+        claude_session.command("personal", "Read brief.md")
 
 
 def test_a_session_may_touch_its_own_brand_and_nothing_else(workspace_dir):

@@ -18,8 +18,9 @@ def test_init_creates_rules_skills_and_the_content_folder(workspace_dir):
 
     assert (workspace_dir / "CLAUDE.md").exists()
     assert (workspace_dir / "content").is_dir()
+    assert (workspace_dir / "plugin" / ".claude-plugin" / "plugin.json").exists()
     for name in ("outline", "derive", "spec", "video"):
-        skill = workspace_dir / ".claude" / "skills" / name / "SKILL.md"
+        skill = workspace_dir / "plugin" / "skills" / name / "SKILL.md"
         assert skill.exists(), f"missing skill: {name}"
         assert skill.read_text(encoding="utf-8").startswith("---\nname:")
     assert not (workspace_dir / "brands").exists()      # brands live in the database now

@@ -25,7 +25,7 @@ def here(tmp_path):
         "content/personal/short/frames.md": "## Hook\nScript: Hi.",
         "content/personal/short/voice/take-1.webm": "voice",
         "resources/personal/kit/tokens.ts": "export const color = {};",
-        ".claude/skills/video/SKILL.md": "---\nname: video\n---",
+        "plugin/skills/video/SKILL.md": "---\nname: video\n---",
         "CLAUDE.md": "my rules",
         ".cm/token": "secret-token",
         ".cm/whisper/ggml-base.en.bin": "model",
@@ -53,7 +53,7 @@ def test_the_export_holds_the_work_and_the_personal_notes(here, tmp_path):
     _, names = _export(here, tmp_path)
     for name in ("workspace/content.db", "workspace/content/personal/short/frames.md",
                  "workspace/content/personal/short/voice/take-1.webm", "workspace/resources/personal/kit/tokens.ts",
-                 "workspace/.claude/skills/video/SKILL.md", "workspace/CLAUDE.md", "personal/docs/improvements.md",
+                 "workspace/plugin/skills/video/SKILL.md", "workspace/CLAUDE.md", "personal/docs/improvements.md",
                  transfer.MANIFEST):
         assert name in names, name
 

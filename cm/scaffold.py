@@ -20,12 +20,18 @@ from .settings import get_settings
 
 STARTER = Path(__file__).resolve().parent / "starter"
 
-# Where each part of the starter goes. Skills live in `.claude/skills/` in the workspace
-# because that is where Claude Code looks; in the package they are a plain folder so no
-# packaging tool treats them as hidden.
+# What a session is handed (claude_session.py): the standing rules, and the skills packaged
+# as a Claude Code plugin. Restricted mode ignores a project's own CLAUDE.md and
+# `.claude/skills/`, so neither is left to Claude Code to find.
+RULES_FILE = "CLAUDE.md"
+PLUGIN_DIR = "plugin"
+
+# Where each part of the starter goes. In the package the plugin's manifest and skills are
+# plain files and folders, so no packaging tool treats them as hidden.
 LAYOUT = {
-    "CLAUDE.md": "CLAUDE.md",
-    "skills": ".claude/skills",
+    "CLAUDE.md": RULES_FILE,
+    "plugin.json": f"{PLUGIN_DIR}/.claude-plugin/plugin.json",
+    "skills": f"{PLUGIN_DIR}/skills",
     "video/kit": "video/example-kit",
 }
 
