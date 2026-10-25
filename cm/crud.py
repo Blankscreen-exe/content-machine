@@ -9,9 +9,10 @@ from datetime import date, datetime
 
 from sqlmodel import Session, func, or_, select
 
+from . import cadence
 from .choices import ChoiceError
-from .models import (Actor, Brand, Event, Idea, IdeaStatus, Mode, Piece, PieceType, Publication,
-                     Setting, Stage, now)
+from .models import (Actor, Brand, Cadence, Event, Idea, IdeaStatus, Mode, Piece, PieceType,
+                     Publication, Setting, Stage, now)
 from .text import slugify
 
 DEFAULT_SETTINGS = {"theme": "1996", "due_soon_days": "7"}
@@ -110,6 +111,45 @@ def create_brand(session: Session, slug: str, name: str | None = None, **fields)
     session.commit()
     session.refresh(brand)
     return brand
+
+
+# ---------- cadence ----------
+
+def list_cadences(session: Session, brand_id: int) -> dict[int, Cadence]:
+    """A brand's cadences, by piece type id."""
+    rows = session.exec(select(Cadence).where(Cadence.brand_id == brand_id)).all()
+    return {row.type_id: row for row in rows}
+
+
+def get_cadence(session: Session, brand_id: int, type_id: int) -> Cadence | None:
+    return session.exec(select(Cadence).where(Cadence.brand_id == brand_id,
+                                              Cadence.type_id == type_id)).first()
+
+
+def set_cadence(session: Session, brand_id: int, type_id: int, rule: cadence.Rule | None) -> None:
+    """Give a brand's piece type a rule, or none: no rhythm for it."""
+    row = get_cadence(session, brand_id, type_id)
+    if rule is None:
+        if row:
+            session.delete(row)
+    else:
+        row = row or Cadence(brand_id=brand_id, type_id=type_id, rule=rule.kind)
+        row.rule, row.every_days, row.weekday = rule.kind, rule.every_days, rule.weekday
+        session.add(row)
+    session.commit()
+
+
+def next_slots(session: Session, brand_id: int, type_id: int, count: int, start: date) -> list[date]:
+    """The next `count` free due dates for a brand's piece type from `start`, by its cadence.
+    Every piece of the type counts, published or not: each has had its day."""
+    row = get_cadence(session, brand_id, type_id)
+    if not row:
+        name = session.get(PieceType, type_id).name
+        raise cadence.BadRule(f"There is no cadence for {name} in this brand yet: set one on the "
+                              "brand's page under Manage.")
+    taken = session.exec(select(Piece.due_on).where(Piece.brand_id == brand_id, Piece.type_id == type_id,
+                                                    Piece.due_on.is_not(None))).all()
+    return cadence.next_slots(cadence.Rule.of(row), taken, count, start)
 
 
 # ---------- ideas ----------

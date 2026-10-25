@@ -143,7 +143,8 @@ keep them (`claude_session.py`):
 - **The database through tools only.** `cm mcp --brand <slug>` serves the content machine tools
   over stdio (`mcp_server.py`, rules in `claude_tools.py`); Claude Code starts it itself from a
   config written to `.cm/sessions/`. The tools read and file ideas and pieces, move a piece to
-  draft or wip, add notes, search drafts, and render and look at a draft video. There is no tool
+  draft or wip, add notes, search drafts, find the next free due dates by the brand's cadence,
+  and render and look at a draft video. There is no tool
   to move a piece to ready, publish, delete, or change a brand, the settings or the lists: those
   stay yours. Everything a session changes is recorded as Claude's.
 - **Rules and skills handed over.** Restricted mode also ignores a project's own `CLAUDE.md`
@@ -343,6 +344,7 @@ cm/
   scaffold.py     starter files for `cm init`, and the text new brands and modes begin with
   database.py     engine, sessions, foreign keys, migrate-on-start
   schedule.py     what is overdue or due soon
+  cadence.py      how often a brand publishes each piece type, and the free due dates that gives
   history.py      a piece's events in words: when, who, what changed
   month.py        a month laid out in weeks, with the pieces due on each day
   search.py       full-text search over the drafts (SQLite FTS5), kept in step with the files
@@ -413,6 +415,12 @@ own behaviour depends on them.
 A piece type can be marked **video**: its pieces are frames rendered into a video rather than
 text pasted onto a platform, so it has no character limit. The "youtube short" type starts out
 as one, opening on `frames.md`.
+
+A brand's **cadence** says how often it publishes each piece type: every weekday, every N
+days, or weekly on a day, set on the brand's Manage page. The next free due dates for a type
+follow from it, skipping dates the brand's other pieces of that type already have; every N
+days keeps each piece at least N days from the rest, so a gap is filled before later dates
+are used. A session asks for them with `next_slots`, which is how a batch dates its pieces.
 
 A brand's **voice** and **profile** are stored on the brand and edited on its Manage page. A
 mode has a description. All three are copied into `brief.md` when a session starts, so the

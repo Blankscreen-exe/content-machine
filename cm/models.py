@@ -46,6 +46,13 @@ class Stage(str, Enum):
     published = "published"
 
 
+class CadenceRule(str, Enum):
+    """How often a brand publishes a piece type. Few, so each is plain from its name."""
+    weekdays = "weekdays"
+    every_n_days = "every n days"
+    weekly = "weekly"
+
+
 class Brand(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     slug: str = Field(index=True, unique=True)      # names the brand's folders; fixed at creation
@@ -140,6 +147,21 @@ class Piece(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=now)
 
     type: "PieceType" = Relationship()
+
+
+class Cadence(SQLModel, table=True):
+    """How often one brand publishes one piece type, which is what its due dates are picked
+    by (cadence.py). A type with no cadence has no rhythm yet."""
+
+    __table_args__ = (UniqueConstraint("brand_id", "type_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    brand_id: int = Field(foreign_key="brand.id", index=True)
+    # A type is deleted only once no piece uses it; its cadences go with it.
+    type_id: int = Field(foreign_key="piece_type.id", ondelete="CASCADE", index=True)
+    rule: CadenceRule
+    every_days: int | None = None       # every n days: the n
+    weekday: int | None = None          # weekly: the day, 0 for Monday
 
 
 class Publication(SQLModel, table=True):

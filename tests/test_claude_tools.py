@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from sqlmodel import Session, select
 
-from cm import crud
+from cm import cadence, crud
 from cm.claude_tools import Refused, Tools
-from cm.models import Actor, Event, IdeaStatus, Stage
+from cm.models import Actor, CadenceRule, Event, IdeaStatus, Stage
 from cm.settings import get_settings
 from helpers import type_id
 
@@ -149,3 +149,21 @@ def test_a_still_needs_a_draft_render_first(tools):
     piece = _blog(tools)
     with pytest.raises(Refused, match="no draft render yet. Run render_draft first"):
         tools.still(piece["id"], 1.5)
+
+
+# --- due dates --------------------------------------------------------------------------------
+
+def test_a_session_gets_the_next_free_dates_by_the_brands_cadence(tools, session, brand):
+    crud.set_cadence(session, brand.id, type_id(session, "blog"), cadence.from_form(CadenceRule.weekly, weekday=4))
+
+    assert tools.next_slots("blog", 2, date(2026, 10, 26)) == ["2026-10-30", "2026-11-06"]
+
+
+def test_a_type_with_no_cadence_is_refused_with_where_to_set_one(tools):
+    with pytest.raises(Refused, match="no cadence for blog"):
+        tools.next_slots("blog", 1)
+
+
+def test_dates_are_asked_for_a_sensible_number_at_a_time(tools):
+    with pytest.raises(Refused, match="1 to 100 dates"):
+        tools.next_slots("blog", 0)

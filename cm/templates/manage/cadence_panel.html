@@ -1,0 +1,41 @@
+{# How often this brand publishes each piece type. A batch picks its due dates by these: each
+   new piece gets the next date its type's rule allows that no other piece of the type has. #}
+<section class="panel" id="cadence">
+  <h2>Cadence</h2>
+
+  {% if message %}<p class="saved">{{ message }}</p>{% endif %}
+  {% if problem %}<p class="message">{{ problem }}</p>{% endif %}
+
+  <table class="plain">
+    {% for kind, rule in cadence_rows %}
+      <tr>
+        <th>{{ kind.name }}{% if not kind.active %} <span class="hint">(off)</span>{% endif %}</th>
+        <td>
+          <form class="inline-form" hx-post="/manage/brands/{{ brand.id }}/cadence/{{ kind.id }}"
+                hx-target="#cadence" hx-swap="outerHTML">
+            <select name="rule" aria-label="How often">
+              <option value="" {% if not rule %}selected{% endif %}>no rhythm</option>
+              {% for value, label in rule_labels.items() %}
+                <option value="{{ value.value }}" {% if rule and rule.kind == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <label class="inline">N <input type="number" name="every_days" min="1" max="365"
+                   value="{{ rule.every_days if rule and rule.every_days else '' }}"></label>
+            <select name="weekday" aria-label="Day">
+              <option value="">day</option>
+              {% for day in weekdays %}
+                <option value="{{ loop.index0 }}" {% if rule and rule.weekday == loop.index0 %}selected{% endif %}>{{ day }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn" type="submit">Save</button>
+          </form>
+        </td>
+        <td>{{ rule.describe() if rule else '' }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  <p class="hint">Every N days keeps each piece of the type at least N days from the others,
+    so a gap is filled before dates further on are used. A date another piece of the type
+    already has is never given twice.</p>
+</section>

@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
-from . import brands, modes, platforms, resources, types
+from . import brands, cadences, modes, platforms, resources, types
 
 router = APIRouter(prefix="/manage")
 
@@ -16,6 +16,7 @@ def manage_home() -> RedirectResponse:
 
 router.include_router(brands.router)
 router.include_router(resources.router)
+router.include_router(cadences.router)
 router.include_router(modes.router)
 router.include_router(types.router)
 router.include_router(platforms.router)

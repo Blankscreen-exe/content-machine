@@ -24,7 +24,7 @@ from pathlib import Path
 from sqlalchemy.engine import Engine
 from sqlmodel import Session
 
-from . import choices, crud, frames, renders, resources, search, video, workspace
+from . import cadence, choices, crud, frames, renders, resources, search, video, workspace
 from .models import PRIORITIES, Actor, Idea, IdeaStatus, Mode, Piece, PieceType, Stage
 from .settings import get_settings
 
@@ -33,6 +33,8 @@ CLAUDE_STAGES = (Stage.draft, Stage.wip)
 MOVABLE_STAGES = (Stage.not_started, Stage.draft, Stage.wip)
 # An idea goes back to the pool or on into pieces; parking or dropping one is your call.
 CLAUDE_STATUSES = (IdeaStatus.pool, IdeaStatus.promoted)
+# Enough dates for a few months of daily posts; more is a mistake, not a plan.
+MOST_SLOTS = 100
 
 
 class Refused(Exception):
@@ -57,7 +59,7 @@ class Tools:
         with a picture, so the server adds it on its own."""
         return [self.brand_context, self.list_piece_types,
                 self.list_ideas, self.get_idea, self.create_idea, self.update_idea,
-                self.list_pieces, self.get_piece, self.create_piece, self.update_piece,
+                self.list_pieces, self.get_piece, self.create_piece, self.update_piece, self.next_slots,
                 self.set_stage, self.add_note, self.search_drafts,
                 self.start_kit, self.render_draft]
 
@@ -156,6 +158,17 @@ class Tools:
             fields = {"title": _title(title) if title is not None else None, "due_on": due_on}
             return _piece(session, crud.update_piece(session, piece, **_given(fields)))
 
+    def next_slots(self, type: str, count: int, start: date | None = None) -> list[str]:
+        """The next `count` free due dates for a piece type, by the brand's cadence for it,
+        from `start` (today if not given). Give each new piece of the type one of them, in
+        order, as its due_on."""
+        if not 1 <= count <= MOST_SLOTS:
+            raise Refused(f"Ask for 1 to {MOST_SLOTS} dates at a time.")
+        with self._session() as session:
+            kind = self._type(session, type)
+            days = crud.next_slots(session, self.brand_id, kind.id, count, start or date.today())
+            return [day.isoformat() for day in days]
+
     def set_stage(self, piece_id: int, stage: Stage) -> dict:
         """Move a piece to draft (a first version is written) or wip (being reworked). Ready
         and published are mine: I move a piece there once I have proofread or posted it."""
@@ -237,7 +250,8 @@ class Tools:
             crud.act_as(session, Actor.claude)
             try:
                 yield session
-            except crud.ChoiceError as exc:       # crud's own refusals, such as a mode of another brand
+            except (crud.ChoiceError, cadence.BadRule) as exc:
+                # crud's own refusals: a mode of another brand, a type with no cadence
                 raise Refused(str(exc)) from exc
 
     def _piece(self, session: Session, piece_id: int) -> Piece:
