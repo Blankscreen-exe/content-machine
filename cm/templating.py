@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
 
 from . import crud, schedule
-from .dates import local_date
+from .dates import local_date, local_time
 from .models import PRIORITIES, IdeaStatus, Stage
 from .paths import TEMPLATES_DIR, THEMES_DIR
 from .terminals import available_terminals
@@ -43,6 +43,7 @@ templates.env.filters["status_class"] = status_class
 templates.env.filters["priority_name"] = priority_name
 templates.env.filters["filesize"] = filesize
 templates.env.filters["local_date"] = lambda moment: local_date(moment).isoformat()
+templates.env.filters["local_time"] = lambda moment: local_time(moment).strftime("%Y-%m-%d %H:%M")
 templates.env.globals["priorities"] = PRIORITIES
 
 

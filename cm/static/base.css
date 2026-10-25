@@ -85,6 +85,10 @@ body { margin: 0; }
 .panel { margin: 0 0 18px; padding: 14px 16px; }
 .panel h2 { margin: 0 0 12px; }
 .panel .hint { margin: 10px 0 0; }
+/* a panel that folds away: its heading is what opens it */
+.panel > summary { cursor: pointer; }
+.panel > summary h2 { display: inline; margin: 0; }
+.panel[open] > summary { margin-bottom: 12px; }
 .hint code { overflow-wrap: anywhere; }   /* a workspace path must not widen the page */
 /* messages carry file names and paths, which have nothing a browser would break on */
 .saved, .message { overflow-wrap: anywhere; }

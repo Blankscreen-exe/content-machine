@@ -95,7 +95,15 @@ class Mode(SQLModel, table=True):
     active: bool = True
 
 
+# An idea's or piece's id is never handed out twice. Plain SQLite reuses the highest id once
+# that row is deleted, and the new row would then inherit the old one's history in `event`,
+# and a session still holding the old id would reach the new piece. AUTOINCREMENT stops that.
+NEVER_REUSE_IDS = {"sqlite_autoincrement": True}
+
+
 class Idea(SQLModel, table=True):
+    __table_args__ = NEVER_REUSE_IDS
+
     id: int | None = Field(default=None, primary_key=True)
     brand_id: int = Field(foreign_key="brand.id", index=True)
     title: str
@@ -114,6 +122,8 @@ class Idea(SQLModel, table=True):
 
 class Piece(SQLModel, table=True):
     """One thing that gets published. An idea can produce several; each moves on its own."""
+
+    __table_args__ = NEVER_REUSE_IDS
 
     id: int | None = Field(default=None, primary_key=True)
     brand_id: int = Field(foreign_key="brand.id", index=True)

@@ -1,0 +1,13 @@
+{% if entries %}
+  <table class="plain">
+    {% for entry in entries %}
+      <tr>
+        <th>{{ entry.at | local_time }}</th>
+        <td>{{ entry.who }}</td>
+        <td>{{ entry.what }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p class="hint">Nothing recorded yet.</p>
+{% endif %}

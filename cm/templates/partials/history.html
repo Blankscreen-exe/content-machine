@@ -1,0 +1,8 @@
+{# What happened to this piece and who did it. Fetched each time it is opened rather than
+   with the page, so what a session changed since the page loaded is there too. #}
+<details class="panel" id="history"
+         hx-get="/pieces/{{ piece.id }}/history" hx-trigger="toggle[target.open]"
+         hx-target="find .history-entries">
+  <summary><h2>History</h2></summary>
+  <div class="history-entries"></div>
+</details>

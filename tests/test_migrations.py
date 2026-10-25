@@ -148,3 +148,46 @@ def test_everything_recorded_before_claude_had_tools_is_yours(tmp_path: Path):
 
     with sqlite3.connect(db) as connection:
         assert connection.execute("SELECT actor FROM event").fetchall() == [("me",)]
+
+
+BEFORE_NEVER_REUSE_IDS = "7e3a91c4d2b6"
+
+
+def test_a_deleted_pieces_id_is_never_handed_out_again(tmp_path: Path):
+    """The newest piece here was deleted: a new one must not take its id, and its history."""
+    db = tmp_path / "content.db"
+    config = _config(db)
+    command.upgrade(config, BEFORE_NEVER_REUSE_IDS)
+    with sqlite3.connect(db) as connection:
+        connection.executescript("""
+            INSERT INTO brand (id, slug, name, voice, profile, active, created_at)
+              VALUES (1, 'acme', 'Acme Co', '', '', 1, '2026-01-01');
+            INSERT INTO idea (id, brand_id, title, angle, talking_points, notes, source, status,
+                              priority, created_at, updated_at)
+              VALUES (1, 1, 'One', '', '', '', '', 'promoted', 2, '2026-01-01', '2026-01-01');
+            INSERT INTO piece (id, brand_id, idea_id, type_id, title, slug, stage, notes, created_at, updated_at)
+              VALUES (1, 1, 1, 1, 'One', 'one', 'draft', 'kept', '2026-01-01', '2026-01-01');
+            INSERT INTO event (entity, entity_id, from_state, to_state, at, note, actor)
+              VALUES ('piece', 2, 'draft', 'deleted', '2026-01-02', 'Two', 'me');
+        """)
+
+    command.upgrade(config, "head")
+
+    with sqlite3.connect(db) as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
+        kept = connection.execute("SELECT id, idea_id, notes FROM piece").fetchall()
+        new_id = connection.execute(
+            "INSERT INTO piece (brand_id, type_id, title, slug, stage, notes, created_at, updated_at) "
+            "VALUES (1, 1, 'Three', 'three', 'draft', '', '2026-01-03', '2026-01-03')").lastrowid
+        idea_id = connection.execute(
+            "INSERT INTO idea (brand_id, title, angle, talking_points, notes, source, status, priority, "
+            "created_at, updated_at) VALUES (1, 'Two', '', '', '', '', 'pool', 2, '2026-01-03', '2026-01-03')"
+        ).lastrowid
+        links = {row[2] for row in connection.execute("PRAGMA foreign_key_list(piece)")}
+    assert kept == [(1, 1, "kept")]
+    assert new_id == 3 and idea_id == 2       # past the deleted piece 2; the idea count is its own
+    assert links == {"brand", "idea", "piece", "piece_type"}      # the links survive the rebuild
+
+    command.downgrade(config, BEFORE_NEVER_REUSE_IDS)
+    with sqlite3.connect(db) as connection:
+        assert connection.execute("SELECT count(*) FROM piece").fetchone() == (2,)

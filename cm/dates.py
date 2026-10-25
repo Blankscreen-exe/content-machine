@@ -11,9 +11,14 @@ from datetime import date, datetime, time, timezone
 
 def local_date(moment: datetime) -> date:
     """The date on this machine's calendar for a stored moment."""
+    return local_time(moment).date()
+
+
+def local_time(moment: datetime) -> datetime:
+    """A stored moment as this machine's clock shows it."""
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
-    return moment.astimezone().date()
+    return moment.astimezone()
 
 
 def moment_on(day: date) -> datetime:

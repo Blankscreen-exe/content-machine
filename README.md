@@ -343,6 +343,7 @@ cm/
   scaffold.py     starter files for `cm init`, and the text new brands and modes begin with
   database.py     engine, sessions, foreign keys, migrate-on-start
   schedule.py     what is overdue or due soon
+  history.py      a piece's events in words: when, who, what changed
   month.py        a month laid out in weeks, with the pieces due on each day
   search.py       full-text search over the drafts (SQLite FTS5), kept in step with the files
   workspace.py    a piece's folder: where it is, its brief, moving it to the trash
@@ -367,7 +368,7 @@ cm/
   claude_tools.py what a session may do to the database, as plain functions over crud
   mcp_server.py   those tools served to Claude Code over stdio: `cm mcp`
   desktop.py      opening a folder in the system's file manager
-  dates.py        stored UTC times to local calendar dates
+  dates.py        stored UTC times to local dates and times
   security.py     access token
   hangups.py      a browser hanging up, which Windows' event loop reports as an error: not logged
   transfer.py     moving your work to another machine: cm export, cm import
@@ -420,8 +421,14 @@ database is their only home and a session still reads everything from one file.
 Every status and stage change, and every edit that changes a value, is written to the **events**
 table, so the history of a piece is a record rather than a single current value: when it was
 drafted, when it became ready, when it went out. Each event says who made it: you, or Claude when
-it acts through its own tools. Making a piece from an idea promotes that idea out of the pool,
-because it is now in motion.
+it acts through its own tools. A piece's page shows it under **History**, newest first, fetched
+each time it is opened so a session's changes since the page loaded are there.
+
+An idea's or piece's id is never handed out twice (SQLite's AUTOINCREMENT): plain SQLite would
+give a deleted newest piece's id to the next one, which would then inherit its history, and a
+session still holding the old id would reach it.
+
+Making a piece from an idea promotes that idea out of the pool, because it is now in motion.
 
 The database runs in SQLite's WAL mode, so the app and a session's tools can both use it at once
 without either shutting the other out; that is what the `content.db-wal` and `content.db-shm` files

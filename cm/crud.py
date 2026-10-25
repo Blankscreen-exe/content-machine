@@ -19,6 +19,10 @@ DEFAULT_SETTINGS = {"theme": "1996", "due_soon_days": "7"}
 
 # ---------- events ----------
 
+# The state an edit is recorded under; its note names the fields that changed.
+EDITED = "edited"
+
+
 def act_as(session: Session, actor: Actor) -> None:
     """Say who every change made through `session` is by. A session that never says is yours.
 
@@ -32,6 +36,12 @@ def record(session: Session, entity: str, entity_id: int, to_state: str,
            from_state: str = "", note: str = "") -> None:
     session.add(Event(entity=entity, entity_id=entity_id, from_state=from_state, to_state=to_state,
                       note=note, actor=session.info.get("actor", Actor.me)))
+
+
+def list_events(session: Session, entity: str, entity_id: int) -> list[Event]:
+    """What happened to one idea or piece, newest first."""
+    return list(session.exec(select(Event).where(Event.entity == entity, Event.entity_id == entity_id)
+                             .order_by(Event.at.desc(), Event.id.desc())).all())
 
 
 def _changed(row: object, fields: dict) -> list[str]:
@@ -155,7 +165,7 @@ def update_idea(session: Session, idea: Idea, **fields) -> Idea:
     session.commit()
     session.refresh(idea)
     if edited:
-        record(session, "idea", idea.id, to_state="edited", note=", ".join(edited))
+        record(session, "idea", idea.id, to_state=EDITED, note=", ".join(edited))
     if idea.status != previous:
         record(session, "idea", idea.id, to_state=idea.status.value, from_state=previous.value)
     session.commit()
@@ -237,7 +247,7 @@ def update_piece(session: Session, piece: Piece, **fields) -> Piece:
     session.commit()
     session.refresh(piece)
     if edited:
-        record(session, "piece", piece.id, to_state="edited", note=", ".join(edited))
+        record(session, "piece", piece.id, to_state=EDITED, note=", ".join(edited))
     if piece.stage != previous:
         record(session, "piece", piece.id, to_state=piece.stage.value, from_state=previous.value)
     session.commit()
