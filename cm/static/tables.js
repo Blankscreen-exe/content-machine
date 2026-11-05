@@ -15,6 +15,13 @@
     searching: false,
     stateSave: true,
     autoWidth: false,                // widths come from the stylesheet, not measured once
+    // nothing above the list but its own toolbar: the page size sits with the paging under it
+    layout: {
+      topStart: null,
+      topEnd: null,
+      bottomStart: ["info", "pageLength"],
+      bottomEnd: "paging",
+    },
     columnDefs: [
       { targets: "no-sort", orderable: false },
       // Cells sort by text, or by a data-order written to sort as text (ISO dates, single

@@ -45,13 +45,16 @@ def test_the_window_comes_from_settings(session: Session, dated):
     assert _titles(schedule.due(session, TODAY).soon) == ["Today"]
 
 
-def test_the_calendar_shows_the_panel_and_its_tab_the_count(client: TestClient, session: Session,
-                                                            brand):
+def test_the_calendar_shows_what_is_due_and_its_tab_the_count(client: TestClient, session: Session,
+                                                              brand):
     crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Late one",
                       due_on=date.today() - timedelta(days=1))
     page = client.get("/calendar").text
 
-    assert 'id="due" class="panel due">' in page and "Late one" in page
+    strip = page[page.index('id="due"'):page.index('<table class="month">')]
+    assert "Late one" in strip
+    # late says so in a word, not by colour alone
+    assert 'class="chip overdue"' in strip and '<span class="late">overdue</span>' in strip
     calendar_tab = page[page.index('href="/calendar'):page.index(">Manage")]
     assert 'class="due-badge"' in calendar_tab and ">1</span>" in calendar_tab
 
@@ -62,7 +65,7 @@ def test_the_pieces_page_no_longer_lists_what_is_due(client: TestClient, brand):
 
 def test_nothing_due_hides_both(client: TestClient, brand):
     page = client.get("/calendar").text
-    assert 'id="due" class="panel due" hidden>' in page
+    assert '<div id="due" class="due-strip" hidden>' in page
     assert '<span id="due-badge" class="due-badge" hidden' in page
 
 

@@ -21,34 +21,44 @@ body { margin: 0; }
 .due-badge { display: inline-block; min-width: 1.4em; margin-left: 4px; padding: 0 5px;
              text-align: center; font-size: 12px; line-height: 1.5; }
 /* both set a display of their own, which would otherwise override `hidden` */
-.due-badge[hidden], .due[hidden] { display: none; }
-
-/* what is due, above the month on the Calendar tab */
-.due-list { margin: 0; padding-left: 20px; }
-.due-list li { margin: 2px 0; }
+.due-badge[hidden], .due-strip[hidden] { display: none; }
 
 /* brand filter: its own row, directly above the list it controls */
 .scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 14px 0 0; }
 .scope select { width: auto; min-width: 200px; }
 
-/* one piece: heading, then its drafts */
+/* where a page sits, above its title: a way back that is not one of its actions */
+.crumb { display: inline-block; margin: 16px 0 -8px; }
+
+/* a page about one thing: its title and facts, with what can be done to it beside them */
 .piece-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;
               justify-content: space-between; margin: 14px 0; }
 .piece-head h2 { margin: 0 0 4px; }
 .piece-meta { margin: 0; }
-.piece-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.piece-actions .btn { text-decoration: none; display: inline-flex; align-items: center; }
-.derive-form { margin: -4px 0 14px; }
+.piece-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.piece-actions .btn { display: inline-flex; align-items: center; }
 
+/* controls joined into one, such as "Make a [type] from this" */
+.join { display: inline-flex; align-items: stretch; margin: 0; }
+.join > * { margin: 0; }
+.join > * + * { margin-left: -1px; }
+.join > span { display: inline-flex; align-items: center; padding: 0 10px; }
+.join select { width: auto; padding-top: 6px; padding-bottom: 6px; }
+
+/* the writing pane: the files as tabs with their folder beside them, the draft, its actions */
 .editor-pane { margin: 14px 0 18px; }
+.file-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+            gap: 8px; margin-bottom: 8px; }
 .file-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.file-bar .file-tabs { margin: 0; }
 .file-tabs a { cursor: pointer; padding: 6px 12px; }
 .draft { width: 100%; min-height: 460px; font-family: Consolas, monospace; line-height: 1.5; }
-/* the writing area, with the piece's assets in a sidebar beside it */
-.workbench { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 18px;
+.editor-pane > form > .actions { margin-top: 10px; }
+/* the writing area, with the piece's files in a sidebar beside it */
+.workbench { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px;
              align-items: start; }
 .workbench-main, .workbench-side { min-width: 0; }
-.workbench .editor-pane { margin-top: 0; }
+.workbench .editor-pane, .workbench .editor { margin-top: 0; }
 /* only while it really is a sidebar: one file per row, each image as wide as the column
    and as tall as it needs to be, with the list scrolling under the controls above it */
 @media (min-width: 901px) {
@@ -60,7 +70,6 @@ body { margin: 0; }
   .workbench-side .asset-file { min-height: 64px; }
   .workbench-side .asset-media video { max-height: 320px; }
   .workbench-side .asset-scroll { max-height: 460px; overflow-y: auto; }
-  .workbench-side .drop-zone { padding: 10px; }
 }
 
 /* assets: the drop zone and the folder, then the files below them */
@@ -74,17 +83,36 @@ body { margin: 0; }
 .asset-media video { width: 100%; max-height: 240px; background: #000; }
 .asset-media audio { width: 100%; }
 .asset-name { font-size: 12px; word-break: break-all; }
+/* a kind of file within a panel's files, such as a brand's images and its music */
+.asset-kind { margin: 16px 0 0; }
 .asset-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .asset-actions .btn { min-height: 0; padding: 3px 10px; text-decoration: none; }
-.drop-zone { padding: 14px; text-align: center; }
-.drop-zone p { margin: 4px 0; }
-.drop-zone progress { width: 100%; }
+/* two short lines: where to drop, and what it takes */
+.drop-zone { padding: 10px 12px; text-align: center; }
+.drop-zone p { margin: 0; }
+.drop-zone .hint { margin: 4px 0 0; }
+.drop-zone progress { width: 100%; margin-top: 6px; }
 .drop-zone label.btn { display: inline-block; }
+/* where the files are kept, folded away until asked for */
+.folder-path { margin: 10px 0 0; }
+.folder-path summary { cursor: pointer; }
+.folder-path p { margin: 4px 0 0; }
+.folder-path code { display: block; margin-top: 4px; overflow-wrap: anywhere; }
 
 /* panels: one box per group of settings */
 .panel { margin: 0 0 18px; padding: 14px 16px; }
+/* a page that opens straight onto its panels, as Settings does, gives them room to start */
+.masthead + .panel { margin-top: 14px; }
 .panel h2 { margin: 0 0 12px; }
-.panel .hint { margin: 10px 0 0; }
+/* a hint paragraph sits a little apart; a hint inside a line stays in it */
+.panel > p.hint { margin: 10px 0 0; }
+/* a panel's heading, with its one link or action on the right */
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+              gap: 6px 12px; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; }
+.panel-head .btn { min-height: 0; padding: 3px 10px; }
+/* what a panel is for, under its heading rather than below everything in it */
+.panel-sub { margin: -6px 0 12px; }
 /* a panel that folds away: its heading is what opens it */
 .panel > summary { cursor: pointer; }
 .panel > summary h2 { display: inline; margin: 0; }
@@ -92,10 +120,24 @@ body { margin: 0; }
 .hint code { overflow-wrap: anywhere; }   /* a workspace path must not widen the page */
 /* messages carry file names and paths, which have nothing a browser would break on */
 .saved, .message { overflow-wrap: anywhere; }
+.actions .saved, .actions .message { margin: 0; }
 /* what stops a video's frames file being read, listed under the editor */
 .frames-problems { margin-top: 10px; }
 .frames-problems p { margin: 0; }
 .frames-problems ul { margin: 4px 0 0; padding-left: 20px; }
+
+/* making a video, as the steps it is: build, voice, render */
+.steps { list-style: none; margin: 0; padding: 0; display: grid;
+         grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: step; }
+.steps > li { counter-increment: step; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+              padding: 12px; }
+.steps h3 { margin: 0; }
+.steps h3::before { content: counter(step); display: inline-block; width: 1.5em; height: 1.5em;
+                    margin-right: 6px; line-height: 1.5em; text-align: center; }
+.steps p, .steps .message, .steps .saved { margin: 0; }
+.steps .step-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.steps .inline-form { margin: 0; }
+
 /* the Voice page: the draft and teleprompter, with the takes and settings beside them */
 .studio { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
 .studio-main, .studio-side { min-width: 0; }
@@ -105,7 +147,10 @@ body { margin: 0; }
 .studio-countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
                     font-size: 120px; font-weight: 700; color: #fff; background: rgb(0 0 0 / 45%); }
 .studio-countdown[hidden] { display: none; }
+/* everything that drives a take in one row: play, where it is, and record at the far end */
 .transport { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.transport .push { margin-left: auto; }
+.btn-record::before { content: "●"; margin-right: 6px; }
 .clock { font-family: Consolas, monospace; font-variant-numeric: tabular-nums; }
 /* the strip under the video: frames on top, the take below, a playhead; pressed to seek */
 .timeline { display: block; width: 100%; height: 110px; margin-top: 8px; cursor: pointer; touch-action: none; }
@@ -120,12 +165,19 @@ body { margin: 0; }
 .takes input[type=radio] { width: auto; }         /* inputs are full width by default */
 .take-player { width: 100%; height: 36px; }
 .studio-side label { display: block; margin: 8px 0; }
+/* the takes, the line-up and the music: one form, three sections with room between them */
+.studio-side h2:not(:first-child) { margin-top: 20px; }
 .nudge { display: inline-flex; gap: 4px; align-items: center; }
 @media (max-width: 900px) { .studio { grid-template-columns: minmax(0, 1fr); } }
 /* a failed render: Remotion's own words, kept as it laid them out */
 .render-error { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; max-height: 320px;
                 overflow-y: auto; margin: 8px 0 0; }
 .panel .inline-form { margin-bottom: 4px; }
+
+/* recording where a piece went out: one row, the link taking the room */
+.publish-form { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px;
+                align-items: end; margin-top: 12px; }
+.publish-form label { display: flex; flex-direction: column; gap: 4px; margin: 0; }
 
 /* a borderless table for showing paths and other read-only facts */
 .plain { border-collapse: collapse; }
@@ -140,10 +192,6 @@ body { margin: 0; }
 .list th.actions-head { text-align: right; }
 .list td.actions-cell { text-align: right; }
 
-/* sub-sections inside the editor (e.g. pieces made from an idea) */
-.subsection { margin-top: 18px; padding-top: 14px; }
-.subsection h3 { margin: 0 0 8px; }
-.pieces-of-idea { margin: 0 0 12px; padding-left: 20px; }
 .inline-form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .inline-form .inline { display: flex; align-items: center; gap: 6px; margin: 0; }
 .inline-form input, .inline-form select { width: auto; }   /* sized by the `size` attribute */
@@ -152,20 +200,20 @@ body { margin: 0; }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0; }
 .bar .search { flex: 1 1 220px; min-width: 0; }
 .bar .count { white-space: nowrap; }
+.bar .btn { display: inline-flex; align-items: center; }
 
 /* list */
 .list { width: 100%; border-collapse: collapse; }
 .list th, .list td { text-align: left; }
 .list th.num, .list td.num { text-align: right; white-space: nowrap; }
-.list tbody tr { cursor: pointer; }
-.list td.title { cursor: pointer; }
 .list td select { width: auto; max-width: 100%; }   /* inline stage picker stays compact */
 
-/* paging controls (DataTables): a compact row above and below the list. The look of the
-   buttons and the table cells is each theme's, through DataTables' own variables.
-   Scoped under .app to outrank DataTables' stylesheet, which loads after this one. */
+/* paging controls (DataTables): one row under the list, the page size beside where you are.
+   The look of the buttons and the table cells is each theme's, through DataTables' own
+   variables. Scoped under .app to outrank DataTables' stylesheet, which loads after this one. */
 .app div.dt-container .dt-layout-row { display: flex; flex-wrap: wrap; align-items: center;
                                        justify-content: space-between; gap: 8px 14px; margin: 10px 0; }
+.app div.dt-container .dt-layout-cell { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .app div.dt-container .dt-length { display: flex; align-items: center; gap: 8px; }
 .app div.dt-container .dt-length select { width: auto; }
 .app div.dt-container .dt-paging nav { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -174,16 +222,32 @@ body { margin: 0; }
 /* a status or stage shown as a badge; each theme colours .status-<name> */
 span.status { display: inline-block; padding: 1px 8px; white-space: nowrap; }
 
-/* editor */
+/* lateness, said in a word, never by colour alone; each theme colours it */
+.late { display: inline-block; padding: 0 6px; margin: 0 4px; font-size: 11px; line-height: 1.6;
+        vertical-align: middle; white-space: nowrap; }
+
+/* a form on a page of its own, or the idea and piece pages' own forms */
 .editor { margin-top: 18px; }
 .editor h2 { margin: 0 0 14px; }
-.editor label { display: block; margin-bottom: 12px; }
+.editor label, .stacked-form label { display: block; margin-bottom: 12px; }
 .editor .row { display: flex; flex-wrap: wrap; gap: 14px; }
 .editor .row label { flex: 1 1 150px; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.actions .push { margin-left: auto; }
+/* a form at a width that reads well, under its back link */
+.form-page { max-width: 680px; }
+.form-page .editor { margin-top: 0; }
+/* hints that belong to one field sit tight under it */
+.field-hint { margin: -8px 0 12px; }
+
+/* smaller buttons, and buttons joined into one group */
+.btn.btn-small { min-height: 0; padding: 3px 10px; }       /* .btn sets a height; this outranks it */
+.btn-group { display: inline-flex; align-items: center; }
+.btn-group .btn + .btn { margin-left: -1px; }
+.btn-group .label { padding-right: 8px; }
 
 /* the writing pane's status: unsaved, and the length */
-.char-count { margin-left: auto; font-size: 13px; }
+.char-count { font-size: 13px; }
 .short-number { max-width: 9em; }
 
 /* draft search results, above the pieces list */
@@ -191,16 +255,25 @@ span.status { display: inline-block; padding: 1px 8px; white-space: nowrap; }
 .hit-list li { margin: 0 0 12px; }
 .snippet { margin: 4px 0 0; }
 
-/* Dashboard: four short lists, two by two; one column on a phone */
+/* Dashboard: what is due across the top, then two by two; one column on a phone */
 .dashboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin-top: 14px; }
+.dashboard .wide { grid-column: 1 / -1; }
 .dash-list { list-style: none; margin: 0; padding: 0; }
 .dash-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 0 0 8px; }
+.dash-list .late { margin: 0; }
+.dash-now .dash-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
 
-/* Calendar: a month grid, one column per weekday */
+/* Calendar: what is due as a strip of chips, then a month grid, one column per weekday */
+.calendar { margin-top: 14px; }
 .calendar-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
                 gap: 10px; margin-bottom: 12px; }
 .calendar-bar h2 { margin: 0; }
 .calendar-nav { display: flex; gap: 6px; }
+.due-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 12px; padding: 8px 10px; }
+.due-strip .label { margin-right: 2px; }
+.due-strip .settings { margin-left: auto; }
+.chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 2px 10px; }
+.chip .late { margin: 0 0 0 -4px; }
 .month { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .month th { padding: 4px 6px; text-align: left; }
 .month td.day { vertical-align: top; height: 96px; padding: 4px 6px; overflow: hidden; }
@@ -214,20 +287,50 @@ span.status { display: inline-block; padding: 1px 8px; white-space: nowrap; }
 .manage-nav { grid-column: 1; display: flex; flex-direction: column; gap: 4px; align-self: start; }
 .manage-nav a { display: block; padding: 8px 12px; }
 .manage-main { grid-column: 2 / span 4; min-width: 0; }
+.manage-main > .crumb { margin-top: 0; }
 .actions-cell .inline-form { display: inline-flex; }
-.stacked-form label { display: block; margin-bottom: 12px; }
-.item-card { margin-bottom: 14px; padding: 12px 14px; }
+/* a brand page's sections, named at its top */
+.subnav { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 14px; }
+.subnav a { padding: 5px 12px; }
+/* one managed item as a row: what it is, then what can be done to it */
+.item-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; padding: 10px 12px;
+            margin-bottom: 8px; }
+.item-row .gist { flex: 1 1 200px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-row .btn { min-height: 0; padding: 3px 10px; }
+
+/* an idea's page: what was made from it, beside it */
+.idea-pieces { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 10px; }
+.idea-pieces li { display: flex; flex-direction: column; gap: 2px; }
+
+/* a form over the page, in the browser's own <dialog>; the theme gives it and its backdrop
+   their look */
+.modal { width: min(640px, calc(100% - 28px)); max-height: calc(100vh - 12vh); margin: 8vh auto auto;
+         padding: 18px 20px; overflow-y: auto; }
+.modal .error-banner { position: static; margin: -4px 0 12px; }
+.modal-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.modal-head h2 { margin: 0; }
+.modal-close { min-height: 0; padding: 0 4px; font-size: 22px; line-height: 1; cursor: pointer; }
+.modal .actions { margin-top: 4px; }
+/* a cadence asks only for what its rule uses: a number for "every N days", a day for "weekly" */
+.cadence-form .rule-n, .cadence-form .rule-day { display: none; }
+.cadence-form:has(option[value="every n days"]:checked) .rule-n,
+.cadence-form:has(option[value="weekly"]:checked) .rule-day { display: block; }
+/* the voice and profile's own hint, at the top of the pane they are written in */
+.editor-pane > .panel-sub { margin: 0 0 10px; }
 
 /* controls: 16px stops iOS zooming on focus */
 input, textarea, select, button { font: inherit; font-size: 16px; max-width: 100%; }
 input, textarea, select { width: 100%; }
+input[type=checkbox], input[type=radio] { width: auto; }
 .bar select { width: auto; }
 textarea { resize: vertical; }
 .btn { cursor: pointer; min-height: 38px; padding: 6px 14px; }
+.check { display: flex; align-items: center; gap: 8px; }
 
-/* ---------- narrow window: the assets sidebar moves below the drafts ---------- */
+/* ---------- narrow window: the sidebars move below the main column ---------- */
 @media (max-width: 900px) {
   .workbench { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---------- phone: the table becomes stacked cards ---------- */
@@ -249,7 +352,7 @@ textarea { resize: vertical; }
   /* search on its own line, then filter + action side by side, then the count */
   .bar .search { flex: 1 1 100%; }
   .bar select { flex: 1 1 0; min-width: 0; order: 2; }
-  .bar .btn { flex: 1 1 0; min-width: 0; order: 3; }
+  .bar .btn { flex: 1 1 0; min-width: 0; order: 3; justify-content: center; }
   .bar .count { order: 4; flex: 1 1 100%; }
   .btn { min-height: 44px; }          /* thumb-sized */
 
@@ -259,6 +362,8 @@ textarea { resize: vertical; }
   .actions-cell .btn { min-height: 40px; padding: 8px 14px; }
   .plain th, .plain td { display: block; padding: 2px 0; }
   .editor .row label { flex: 1 1 100%; }
+  .publish-form { grid-template-columns: minmax(0, 1fr); }
+  .dash-now .dash-list { grid-template-columns: minmax(0, 1fr); }
 
   /* Calendar: seven columns do not fit, so the month becomes a list of the days that
      have something on them */

@@ -32,7 +32,7 @@ def test_page_opens_the_main_draft_for_the_type(client: TestClient, piece):
     assert piece.title in page
     assert "blog.md" in page
     assert 'id="draft-text"' in page
-    assert "Copy as markdown" in page and "Copy as plain text" in page
+    assert 'data-copy="markdown"' in page and 'data-copy="plain"' in page
 
 
 def test_saving_creates_the_file(client: TestClient, session: Session, piece):
@@ -134,7 +134,8 @@ def test_a_video_piece_has_no_character_count(client: TestClient, session: Sessi
 
 
 def test_open_folder_opens_the_piece_folder_from_this_machine(session: Session, piece, monkeypatch):
-    """The drafts are in the piece folder; the Assets panel's button opens assets/ inside it."""
+    """The drafts are in the piece folder; the Assets panel's button opens assets/ inside it.
+    Each button says which folder it opens."""
     opened = []
     monkeypatch.setattr(desktop, "open_folder", lambda path: opened.append(path))
     app = create_app(run_migrations=False)
@@ -142,14 +143,16 @@ def test_open_folder_opens_the_piece_folder_from_this_machine(session: Session, 
     cookies = {"cm_token": os.environ["CM_TOKEN"]}
 
     with TestClient(app, cookies=cookies, client=("192.168.1.20", 50000)) as remote:
-        assert "Open folder" not in remote.get(f"/pieces/{piece.id}").text
+        page = remote.get(f"/pieces/{piece.id}").text
+        assert "Drafts folder" not in page and "Assets folder" not in page
         refused = remote.post(f"/pieces/{piece.id}/files/open")
         assert "only be opened on the machine running the app" in refused.text
 
     with TestClient(app, cookies=cookies, client=("127.0.0.1", 50000)) as local:
         page = local.get(f"/pieces/{piece.id}").text
-        assert page.count("Open folder") == 2            # the drafts folder, and assets/
+        assert "Drafts folder" in page and "Assets folder" in page
         assert f'hx-post="/pieces/{piece.id}/files/open"' in page
+        assert 'hx-target="#pane-message"' in page       # it reports beside Save, in the pane
         assert "Opened" in local.post(f"/pieces/{piece.id}/files/open").text
 
     assert opened == [workspace.piece_folder(session, piece)]

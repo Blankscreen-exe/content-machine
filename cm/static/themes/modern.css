@@ -78,12 +78,10 @@ body {
 .cal-piece { border-radius: 6px; font-weight: 500; }
 .cal-piece.overdue { box-shadow: inset 3px 0 0 var(--danger); }
 
-/* Manage sidebar and item cards */
+/* Manage sidebar */
 .manage-nav a { color: var(--text-muted); text-decoration: none; font-weight: 500; border-radius: var(--radius-small); }
 .manage-nav a:hover { color: var(--text); }
 .manage-nav a.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
-.item-card { background: var(--surface-muted); border: 1px solid var(--line); border-radius: var(--radius-small); }
-.item-card.inactive { opacity: .65; }
 
 /* brand filter: a labelled dropdown */
 .scope { margin-top: 0; }
@@ -133,10 +131,9 @@ input:focus, textarea:focus, select:focus {
 .list td.title a { color: var(--text); font-weight: 500; text-decoration: none; }
 .list td.title a:hover { color: var(--accent); }
 .list tr:hover td { background: #fafbff; }
-.list tr.sel td { background: var(--accent-soft); }
 .list tr.overdue td.num { color: var(--danger); font-weight: 600; }
 .due-badge { background: var(--danger-soft); color: var(--danger); border-radius: 999px; font-weight: 600; }
-.due-list li.overdue, .dash-list li.overdue { color: var(--danger); font-weight: 600; }
+.dash-list li.overdue a { color: var(--danger); }
 .list tr.inactive td { color: var(--text-muted); font-style: italic; }
 
 /* paging (DataTables): its variables, matched to the list and buttons above */
@@ -180,14 +177,12 @@ div.dt-container .dt-info, div.dt-container .dt-length label { font-size: 13px; 
   border-radius: var(--radius); box-shadow: var(--shadow);
 }
 .editor { padding: 18px 20px; }
-.editor h2, .panel h2 { font-size: 16px; font-weight: 600; }
-.editor label, .panel label { font-size: 13px; font-weight: 500; color: var(--label); }
-.subsection { border-top: 1px solid var(--line); }
-.subsection h3 { font-size: 14px; font-weight: 600; }
+.editor h2, .panel h2, .modal h2 { font-size: 16px; font-weight: 600; }
+.editor label, .panel label, .modal label { font-size: 13px; font-weight: 500; color: var(--label); }
 .empty-inline { font-size: 14px; color: var(--text-muted); margin: 0 0 12px; }
 
 .hint { font-size: 13px; color: var(--text-muted); }
-.hint code, .plain code, .image-list code {
+.hint code, .plain code {
   font-family: var(--mono); font-size: 12px;
   background: #f2f4f7; border-radius: 6px; padding: 1px 6px;
 }
@@ -213,7 +208,6 @@ div.dt-container .dt-info, div.dt-container .dt-length label { font-size: 13px; 
   border: 1px solid var(--line-strong); border-radius: var(--radius-small);
   font-family: var(--mono); font-size: 14px; padding: 10px;
 }
-.image-list img { border: 1px solid var(--line); border-radius: var(--radius-small); }
 
 /* error banner */
 .error-banner {
@@ -263,6 +257,53 @@ div.dt-container .dt-info, div.dt-container .dt-length label { font-size: 13px; 
   .list td { border-bottom: none; }
   .tabs { display: flex; }
 }
+
+/* the layout's newer pieces */
+.crumb { font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none; }
+.crumb:hover { color: var(--accent); }
+.join > * { border-radius: 0; }
+.join > :first-child { border-radius: var(--radius-small) 0 0 var(--radius-small); }
+.join > :last-child { border-radius: 0 var(--radius-small) var(--radius-small) 0; }
+.join > span { font-size: 14px; color: var(--text-muted); background: var(--surface-muted);
+               border: 1px solid var(--line-strong); }
+.join select { font-size: 14px; }
+.btn-small { font-size: 13px; }
+.btn-group .btn { border-radius: 0; }
+.btn-group .btn:first-of-type { border-radius: var(--radius-small) 0 0 var(--radius-small); }
+.btn-group .btn:last-of-type { border-radius: 0 var(--radius-small) var(--radius-small) 0; }
+.btn-group .label { font-size: 13px; color: var(--text-muted); }
+.panel-head .more { font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: none; }
+.panel-head .more:hover { text-decoration: underline; }
+.panel-sub, .field-hint, .folder-path { font-size: 13px; color: var(--text-muted); }
+.asset-kind { font-size: 14px; font-weight: 600; }
+.steps > li { background: var(--surface-muted); border: 1px solid var(--line); border-radius: var(--radius-small); }
+.steps h3 { font-size: 14px; font-weight: 600; }
+.steps h3::before { border-radius: 999px; background: var(--accent); color: #fff; font-size: 12px; }
+.steps p { font-size: 13px; color: var(--text-muted); }
+.due-strip { background: var(--surface-muted); border-radius: var(--radius-small); font-size: 13px; }
+.due-strip .label { font-weight: 600; color: var(--text-muted); }
+.due-strip .settings { color: var(--text-muted); }
+.chip { background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+        color: var(--text); text-decoration: none; }
+.chip small { color: var(--text-muted); }
+.chip.overdue { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.subnav a { font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none;
+            background: var(--surface-muted); border: 1px solid var(--line); border-radius: var(--radius-small); }
+.subnav a:hover { color: var(--text); }
+.item-row { background: var(--surface-muted); border: 1px solid var(--line); border-radius: var(--radius-small); }
+.item-row.inactive { opacity: .65; }
+.item-row .name { font-weight: 600; }
+.item-row .gist { font-size: 13px; color: var(--text-muted); }
+.idea-pieces a { color: var(--text); font-weight: 500; text-decoration: none; }
+.idea-pieces a:hover { color: var(--accent); }
+.late { background: var(--danger); color: #fff; border-radius: 999px; font-weight: 700; }
+.btn-record { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-record:hover { background: #b42318; }
+.modal { border: none; border-radius: var(--radius); background: var(--surface); color: var(--text);
+         box-shadow: 0 20px 48px rgb(16 24 40 / 25%); }
+.modal::backdrop { background: rgb(16 24 40 / 45%); }
+.modal-close { border: none; background: none; color: var(--text-muted); }
+.modal-close:hover { color: var(--text); }
 
 /* status and stage colours: soft pills */
 span.status { border-radius: 999px; font-size: 12px; font-weight: 600; padding: 2px 10px; }

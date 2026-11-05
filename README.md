@@ -11,27 +11,33 @@ raise its own reminders, and sit next to the files and generation steps that pro
 
 The screenshots show made-up brands and content; real work never leaves the workspace.
 
-**Dashboard** — what is due now, what is in progress, what to start next, what went out last.
+**Dashboard** — what is due now across the top, then what else is in progress, what to start
+next, and what went out last.
 
 ![The dashboard](screenshots/dashboard.png)
 
 **Pieces** — every piece with its stage, paged and sortable, with a search that looks inside
-the drafts themselves.
+the drafts themselves. A piece's details are edited on a page of their own, and an idea has a
+page of its own too, with the pieces made from it beside it.
 
 ![The pieces list](screenshots/pieces.png)
 
 **A piece** — its drafts in a markdown editor, the files that go with it in a sidebar, and
-where it was published underneath.
+where it was published underneath. A video piece has its steps between the two: build, voice,
+render.
 
 ![One piece, with its drafts and assets](screenshots/piece.png)
 
-**Calendar** — what is due, then the month laid out by due date, coloured by stage.
+**Calendar** — the month laid out by due date, coloured by stage, with what is due as a
+strip across its top.
 
 ![The calendar](screenshots/calendar.png)
 
-**Manage** — brands with their voice and profile, each brand's modes, piece types, platforms.
+**Manage** — brands, each with a page of its own for its voice and profile, its modes, its
+cadence and its resources; piece types; platforms. Their short forms open in a dialog over the
+list they change.
 
-![Managing a brand's modes](screenshots/manage-modes.png)
+![A brand's page](screenshots/manage-brand.png)
 
 ## Running it
 
@@ -104,7 +110,8 @@ terminal session read and write the same files, so there is no import or export.
 - Unsaved typing is marked next to Save, Ctrl+S saves, and leaving the page or switching to
   another file asks first.
 - A piece type can carry a character limit (LinkedIn's 3,000, X's 280). The count under the
-  editor is of the text as "Copy as plain text" produces it, which is what the platform gets.
+  editor is of the text as copying it as plain text produces it, which is what the platform
+  gets.
 - Copying falls back to the older select-and-copy command where the clipboard API is not
   available, as on plain http from another device on the local network.
 
@@ -123,12 +130,14 @@ from there. Video and audio play in the panel.
 - Each upload is written under a temporary name and renamed once complete, so a failed or
   oversized upload leaves nothing behind.
 - Deleting moves the file to `trash/<brand>/<piece folder>/assets/`.
-- "Open folder" opens it in the file manager, and only appears on the machine running the app.
+- "Assets folder" opens it in the file manager, as "Drafts folder" opens the piece's folder,
+  and both only appear on the machine running the app.
 
 ## Dashboard
 
-The page the app opens on: what is due today or overdue, what is in progress, the pool ideas
-to start next, and what went out last, each linking through. It follows the brand filter.
+The page the app opens on: what is due today or overdue across the top, then what else is in
+progress (a piece due now is not listed twice), the pool ideas to start next, and what went out
+last, each linking through. It follows the brand filter.
 
 ## Claude sessions
 
@@ -275,12 +284,12 @@ Timing comes from `frames.md`: a frame with a length runs exactly that long; oth
 runs as long as its script takes to say at about 150 words a minute, plus a breath. The
 voice is recorded to this pace afterwards.
 
-The Render panel on a video piece's page, or `cm render <id>`, renders the saved frames at
+The render step of a video piece's Video panel, or `cm render <id>`, renders the saved frames at
 full size into the piece's assets as `video.mp4`, keeping earlier ones as `video-2.mp4` and
 on. A draft (`--draft`) renders at half size, quickly, replacing `draft.mp4`. Rendering
 never changes the piece's stage.
 
-From the page, the render runs in the background and the panel shows how far it has got;
+From the page, the render runs in the background and the step shows how far it has got;
 when it is done the video appears in the Assets panel. Any device can start one, since it
 renders on the machine running the app, and a piece renders once at a time from the page.
 Each render works in a folder of its own under `.cm/renders/`, so a render from the page and
@@ -343,7 +352,7 @@ cm/
   models.py       tables: brands, modes, piece types, platforms, ideas, pieces, publications
   scaffold.py     starter files for `cm init`, and the text new brands and modes begin with
   database.py     engine, sessions, foreign keys, migrate-on-start
-  schedule.py     what is overdue or due soon
+  schedule.py     what is overdue or due soon, and whether one piece is late
   cadence.py      how often a brand publishes each piece type, and the free due dates that gives
   history.py      a piece's events in words: when, who, what changed
   month.py        a month laid out in weeks, with the pieces due on each day
@@ -377,10 +386,12 @@ cm/
   merge.py        adding another machine's rows to this one's, on import
   settings.py     configuration and workspace location
   templating.py   template setup and the context every page shares
+  themes.py       which themes exist, and the one a page wears
   starter/        what `cm init` copies into a workspace, and what new brands and pieces start from
     video/        the pinned npm packages, and the example brand kit
   templates/      base page and htmx partials
-  static/         base.css (layout), themes/ (appearance), vendor/
+  static/         base.css (layout), themes/ (appearance), vendor/; modal.js, the dialog the
+                  short forms open in
 alembic/          migrations
 tests/
 workspace/        your content and the database (not in git)
@@ -390,13 +401,14 @@ workspace/        your content and the database (not in git)
 
 `static/base.css` holds structure and the responsive rules; a theme file holds only colours,
 fonts and borders. Drop a stylesheet into `static/themes/` and it appears in the theme picker;
-the choice is stored in the database, so it follows you to whatever device you open it on.
+the choice is stored in the database, so it follows you to whatever device you open it on. A
+chosen theme that is later taken out of the folder falls back to the default (`themes.py`).
 
-The same page in the three themes that ship with it — modern, 1996 and scholar:
+The same page in the three themes that ship with it — modern, 1996 and cyberdeck:
 
-| Modern | 1996 | Scholar |
+| Modern | 1996 | Cyberdeck |
 |---|---|---|
-| ![Modern](screenshots/theme-modern.png) | ![1996](screenshots/theme-1996.png) | ![Scholar](screenshots/theme-scholar.png) |
+| ![Modern](screenshots/theme-modern.png) | ![1996](screenshots/theme-1996.png) | ![Cyberdeck](screenshots/theme-cyberdeck.png) |
 
 ## Data model
 
@@ -407,7 +419,7 @@ due date. An idea can also stand alone as a single piece.
 Stages: not started → draft → wip → ready → published.
 
 **Piece types**, **platforms** and each brand's **modes** are lists you manage under the Manage
-tab, not values in the code. Records point at them by id, so renaming one renames it everywhere.
+tab (a brand's modes on its page there), not values in the code. Records point at them by id, so renaming one renames it everywhere.
 Turning one off hides it from new choices while the records that use it keep it; one that is in
 use cannot be deleted. Idea statuses, piece stages and priorities stay in code, because the app's
 own behaviour depends on them.
@@ -452,8 +464,9 @@ its stage's colour; published work stays on it. Months are plain addresses (`/ca
 so they can be bookmarked. On a phone the grid becomes a list of the days that have something on them.
 
 Unpublished pieces that are overdue, or due within a window set in Settings (a week by default),
-are listed above the month on the Calendar tab and counted on that tab. There is no background process: the
-reminder is wherever you already look.
+are shown as a strip across the top of the month and counted on the Calendar tab. There is no
+background process: the reminder is wherever you already look. A late piece says "overdue" in
+words wherever it appears, on the list, the dashboard and its own page, never by colour alone.
 
 ## Searching drafts
 

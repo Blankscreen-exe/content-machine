@@ -1,0 +1,26 @@
+{# A piece type's details, new or existing, in the dialog. Each hint sits under the field it
+   explains. Saving redraws the list behind the dialog, which closes it. #}
+{% with title = "Edit piece type" if piece_type else "Add a piece type" %}{% include "partials/modal_head.html" %}{% endwith %}
+<form class="stacked-form" hx-post="/manage/types{{ '/' ~ piece_type.id if piece_type }}"
+      hx-target="#type-list" hx-swap="outerHTML">
+  <label>Name <input name="name" value="{{ piece_type.name if piece_type else '' }}" placeholder="newsletter" required autofocus></label>
+  <p class="hint field-hint">Renaming is safe: existing pieces keep their folders.</p>
+
+  <label>Main file <input name="main_file" value="{{ piece_type.main_file if piece_type else '' }}" placeholder="newsletter.md" required></label>
+  <p class="hint field-hint">The draft a piece of this type opens on, and creates on its first save.</p>
+
+  <label>Character limit
+    <input type="number" name="char_limit" min="1" class="short-number" placeholder="none"
+           value="{{ piece_type.char_limit if piece_type and piece_type.char_limit else '' }}">
+  </label>
+  <p class="hint field-hint">Shown against the draft as it is written, counted as it will read once
+    pasted. Leave it empty for none.</p>
+
+  <label class="check"><input type="checkbox" name="video" value="true" {{ 'checked' if piece_type and piece_type.video }}>
+    Video: its pieces are frames rendered into a video, so it has no character limit</label>
+
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">{{ "Save" if piece_type else "Add type" }}</button>
+    <button class="btn" type="button" data-close-modal>Cancel</button>
+  </div>
+</form>

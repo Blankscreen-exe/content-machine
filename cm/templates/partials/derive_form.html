@@ -1,13 +1,13 @@
 {# Make a piece of another type from this one: a LinkedIn post from a blog post, say.
-   The new piece keeps the idea and title, and its brief points back at this draft. #}
+   The new piece keeps the idea and title, and its brief points back at this draft.
+   One joined control among the heading's actions, as it is one of them. #}
 {% if derive_types %}
-  <form class="inline-form derive-form" hx-post="/pieces/{{ piece.id }}/derive"
+  <form class="join derive-form" hx-post="/pieces/{{ piece.id }}/derive"
         hx-target="#session-message" hx-swap="innerHTML">
-    <label class="inline">Make a
-      <select name="type_id">
-        {% for piece_type in derive_types %}<option value="{{ piece_type.id }}">{{ piece_type.name }}</option>{% endfor %}
-      </select>
-    </label>
+    <span>Make a</span>
+    <select name="type_id" aria-label="The type to make">
+      {% for piece_type in derive_types %}<option value="{{ piece_type.id }}">{{ piece_type.name }}</option>{% endfor %}
+    </select>
     <button class="btn" type="submit">from this</button>
   </form>
 {% endif %}

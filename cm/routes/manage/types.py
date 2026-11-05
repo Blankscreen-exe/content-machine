@@ -19,6 +19,18 @@ def types(request: Request, session: Session = Depends(get_session)):
     return page.render(request, session, "types", "manage/types.html", **_list_context(session))
 
 
+@router.get("/new", response_class=HTMLResponse)
+def type_new(request: Request):
+    """The form for a new type, opened in the dialog."""
+    return page.partial(request, "manage/type_form.html", piece_type=None)
+
+
+@router.get("/{type_id}/edit", response_class=HTMLResponse)
+def type_edit(type_id: int, request: Request, session: Session = Depends(get_session)):
+    return page.partial(request, "manage/type_form.html",
+                        piece_type=page.item_or_404(session, PieceType, type_id))
+
+
 @router.post("", response_class=HTMLResponse)
 def type_create(request: Request, name: str = Form(...), main_file: str = Form(...),
                 char_limit: OptionalInt = Form(None), video: bool = Form(False),

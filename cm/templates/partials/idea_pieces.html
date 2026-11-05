@@ -1,0 +1,32 @@
+{# What was made from an idea, each a link to its piece, and making another. Making one
+   promotes an idea still in the pool, so the heading is redrawn with it. #}
+<section class="panel" id="idea-pieces">
+  <h2>Pieces from this idea</h2>
+  {% if pieces %}
+    <ul class="idea-pieces">
+      {% for piece in pieces %}
+        <li>
+          <a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+          <span class="hint">{{ piece.type.name }} &middot;
+            <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
+            {%- if piece.due_on %} &middot; due {{ piece.due_on.isoformat() }}{% endif %}
+            {%- if is_late(piece) %} <span class="late">overdue</span>{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty-inline">None yet.</p>
+  {% endif %}
+
+  <form class="stacked-form" hx-post="/ideas/{{ idea.id }}/pieces"
+        hx-target="#idea-pieces" hx-swap="outerHTML">
+    <label>Type
+      <select name="type_id">
+        {% for piece_type in types %}<option value="{{ piece_type.id }}">{{ piece_type.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Due <input type="date" name="due_on"></label>
+    <button class="btn btn-primary" type="submit">Make a piece</button>
+  </form>
+</section>
+{% if head_oob %}{% include "partials/idea_head.html" %}{% endif %}

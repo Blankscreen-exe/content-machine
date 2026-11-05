@@ -1,12 +1,11 @@
 {% extends "base.html" %}
-{# What is due, then a month of pieces by due date. Plain links throughout: moving between
-   months is a new address, so a month can be bookmarked and the back button works. #}
+{# A month of pieces by due date, with what is due as a strip across its top. Plain links
+   throughout: moving between months is a new address, so a month can be bookmarked and the
+   back button works. #}
 {% block body %}
 
 {% include "partials/masthead.html" %}
 {% include "partials/brand_scope.html" %}
-
-{% include "partials/due.html" %}
 
 {% set brand_param = '&brand_id=' ~ brand_id if brand_id else '' %}
 <section class="panel calendar">
@@ -18,6 +17,8 @@
       <a class="btn" href="/calendar?month={{ month.next.strftime('%Y-%m') }}{{ brand_param }}" aria-label="Next month">&rsaquo;</a>
     </nav>
   </div>
+
+  {% include "partials/due.html" %}
 
   <table class="month">
     <thead>
@@ -32,8 +33,8 @@
                 <span class="day-name">{{ day.on.strftime('%a') }}</span> {{ day.on.day }}
               </span>
               {% for piece in day.pieces %}
-                <a class="cal-piece status {{ piece.stage.value | status_class }}{% if day.on < today and piece.stage.value != 'published' %} overdue{% endif %}"
-                   href="/pieces/{{ piece.id }}" title="{{ piece.type.name }} · {{ piece.stage.value }}">{{ piece.title }}</a>
+                <a class="cal-piece status {{ piece.stage.value | status_class }}{% if is_late(piece) %} overdue{% endif %}"
+                   href="/pieces/{{ piece.id }}" title="{{ piece.type.name }} · {{ piece.stage.value }}{{ ' · overdue' if is_late(piece) }}">{{ piece.title }}</a>
               {% endfor %}
             </td>
           {% endfor %}

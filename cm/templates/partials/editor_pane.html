@@ -8,15 +8,25 @@
      upload_url, assets_url             only where pasted images have somewhere to go
      count_characters, char_limit       whether to count the text, and the most it should run to
      open_folder_url, can_open_folder   only for a piece's drafts, on this machine
-     frames_summary, frames_problems    only for a video's frames file: what it reads as #}
+     frames_summary, frames_problems    only for a video's frames file: what it reads as
+     intro                              what the texts are for, said above them #}
 <section class="editor-pane" id="editor-pane">
-  <nav class="file-tabs">
-    {% for tab in pane.tabs %}
-      <a class="{{ 'on' if tab.on }}"
-         hx-get="{{ tab.url }}"
-         hx-target="#editor-pane" hx-swap="outerHTML">{{ tab.label }}</a>
-    {% endfor %}
-  </nav>
+  {% if pane.intro %}<p class="panel-sub">{{ pane.intro }}</p>{% endif %}
+  <div class="file-bar">
+    <nav class="file-tabs">
+      {% for tab in pane.tabs %}
+        <a class="{{ 'on' if tab.on }}"
+           hx-get="{{ tab.url }}"
+           hx-target="#editor-pane" hx-swap="outerHTML">{{ tab.label }}</a>
+      {% endfor %}
+    </nav>
+    {% if pane.can_open_folder and pane.open_folder_url %}
+      {# reports beside Save, so the pane and anything unsaved in it stay put #}
+      <button class="btn btn-small" type="button" title="The folder these drafts are in"
+              hx-post="{{ pane.open_folder_url }}"
+              hx-target="#pane-message" hx-swap="innerHTML">Drafts folder</button>
+    {% endif %}
+  </div>
 
   <form hx-post="{{ pane.save_url }}"
         hx-target="#editor-pane" hx-swap="outerHTML">
@@ -27,6 +37,7 @@
               {% if pane.conflict %}data-unsaved="true"{% endif %}
               {% if not pane.editable %}readonly{% endif %}>{{ pane.text }}</textarea>
 
+    {# Save and what it says on the left; copying and the length on the right #}
     <div class="actions">
       {% if pane.editable %}
         <button class="btn btn-primary" type="submit" title="Ctrl+S">Save</button>
@@ -40,17 +51,15 @@
       {% else %}
         <span class="hint">{{ pane.readonly_reason }}</span>
       {% endif %}
-
-      {% if pane.can_open_folder and pane.open_folder_url %}
-        {# reports into the message area, so the pane and anything unsaved in it stay put #}
-        <button class="btn" type="button" title="The folder these drafts are in"
-                hx-post="{{ pane.open_folder_url }}"
-                hx-target="#session-message" hx-swap="innerHTML">Open folder</button>
-      {% endif %}
-      <button class="btn" type="button" data-copy="markdown">Copy as markdown</button>
-      <button class="btn" type="button" data-copy="plain">Copy as plain text</button>
-
       {% if pane.message %}<span class="{{ 'message' if pane.conflict else 'saved' }}">{{ pane.message }}</span>{% endif %}
+      <div id="pane-message"></div>
+
+      <span class="push"></span>
+      <span class="btn-group">
+        <span class="label">Copy as</span>
+        <button class="btn btn-small" type="button" data-copy="markdown">Markdown</button>
+        <button class="btn btn-small" type="button" data-copy="plain">Plain text</button>
+      </span>
       {% if pane.count_characters %}
         <span class="char-count" {% if pane.char_limit %}data-limit="{{ pane.char_limit }}"{% endif %}></span>
       {% endif %}

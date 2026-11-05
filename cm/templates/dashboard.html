@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{# The landing page: four short lists, each linking to where the work is. #}
+{# The landing page: what is due now across the top, then three short lists, each heading
+   linking to where that work is. #}
 {% block body %}
 
 {% include "partials/masthead.html" %}
@@ -8,26 +9,33 @@
 {% set brand_param = '?brand_id=' ~ brand_id if brand_id else '' %}
 <div class="dashboard">
 
-  <section class="panel dash-now">
-    <h2>Due now</h2>
+  <section class="panel dash-now wide">
+    <div class="panel-head">
+      <h2>Due now</h2>
+      <a class="more" href="/calendar{{ brand_param }}">What is coming up &rarr;</a>
+    </div>
     {% if due_now %}
       <ul class="dash-list">
         {% for piece in due_now %}
-          <li class="{{ 'overdue' if piece.due_on < today }}">
+          {% set late = piece.due_on < today %}
+          <li class="{{ 'overdue' if late }}">
             <a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
+            {% if late %}<span class="late">overdue</span>{% endif %}
             <span class="hint">{{ piece.type.name }} &middot;
-              {{ "due today" if piece.due_on == today else "was due " ~ piece.due_on.isoformat() }}</span>
+              {{ "was due " ~ piece.due_on.isoformat() if late else "due today" }}</span>
           </li>
         {% endfor %}
       </ul>
     {% else %}
       <p class="empty-inline">Nothing overdue or due today.</p>
     {% endif %}
-    <p class="hint"><a href="/calendar{{ brand_param }}">What is coming up</a></p>
   </section>
 
   <section class="panel">
-    <h2>In progress</h2>
+    <div class="panel-head">
+      <h2>In progress</h2>
+      <a class="more" href="/pieces{{ brand_param }}">All pieces &rarr;</a>
+    </div>
     {% if in_progress %}
       <ul class="dash-list">
         {% for piece in in_progress %}
@@ -39,18 +47,20 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="empty-inline">Nothing started. Pick an idea below.</p>
+      <p class="empty-inline">Nothing else started. Pick an idea from Next up.</p>
     {% endif %}
-    <p class="hint"><a href="/pieces{{ brand_param }}">All pieces</a></p>
   </section>
 
   <section class="panel">
-    <h2>Next up</h2>
+    <div class="panel-head">
+      <h2>Next up</h2>
+      <a class="more" href="/ideas{{ brand_param }}">The idea pool &rarr;</a>
+    </div>
     {% if next_ideas %}
       <ul class="dash-list">
         {% for idea in next_ideas %}
           <li>
-            <a href="/ideas{{ brand_param }}">{{ idea.title }}</a>
+            <a href="/ideas/{{ idea.id }}">{{ idea.title }}</a>
             <span class="hint">{{ idea.priority | priority_name }} priority{% if idea.mode %} &middot; {{ idea.mode.name }}{% endif %}</span>
           </li>
         {% endfor %}
@@ -58,10 +68,9 @@
     {% else %}
       <p class="empty-inline">The idea pool is empty.</p>
     {% endif %}
-    <p class="hint"><a href="/ideas{{ brand_param }}">The idea pool</a></p>
   </section>
 
-  <section class="panel">
+  <section class="panel wide">
     <h2>Recently published</h2>
     {% if published %}
       <ul class="dash-list">

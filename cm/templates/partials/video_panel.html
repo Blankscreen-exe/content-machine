@@ -1,0 +1,28 @@
+{# Making a video piece, as the steps it is: a session builds the video from the frames,
+   a voice is recorded over it, and a render puts them together. Each step reports inside
+   itself. Only the render step redraws itself while a render runs (render_panel.html). #}
+<section class="panel" id="video">
+  <div class="panel-head">
+    <h2>Video</h2>
+    <span class="hint">Uses the saved {{ piece.type.main_file }}</span>
+  </div>
+  <ol class="steps">
+    <li>
+      <h3>Build</h3>
+      <p>A session on this machine writes the video from the frames, with the brand's kit.</p>
+      <div id="build-message"></div>
+      <div class="step-actions">
+        <button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/build-video"
+                hx-target="#build-message" hx-swap="innerHTML">Build video</button>
+      </div>
+    </li>
+    <li>
+      <h3>Voice</h3>
+      <p>Read along to the draft, line the take up and choose the music, on a page of its own.</p>
+      <div class="step-actions">
+        <a class="btn" href="/pieces/{{ piece.id }}/voice">Record voice &rarr;</a>
+      </div>
+    </li>
+    {% include "partials/render_panel.html" %}
+  </ol>
+</section>

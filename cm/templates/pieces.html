@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{# The pieces: filters, then the list. A piece's details are edited on a page of their own. #}
 {% block body %}
 
 {% include "partials/masthead.html" %}
@@ -25,13 +26,10 @@
     {% endfor %}
   </select>
   <span class="count" id="piece-count">{{ counts.get('total', 0) }} pieces &middot; {{ counts.get('published', 0) }} published</span>
-  <button class="btn btn-primary" hx-get="/pieces/new?brand_id={{ brand_id or '' }}"
-          hx-target="#piece-editor" hx-swap="innerHTML">New piece</button>
+  <a class="btn btn-primary" href="/pieces/new?brand_id={{ brand_id or '' }}&amp;next={{ back | urlencode }}">New piece</a>
 </div>
 
 <div id="search-results"></div>
 {% include "partials/pieces.html" %}
-
-<div id="piece-editor"></div>
 
 {% endblock %}

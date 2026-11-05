@@ -37,7 +37,6 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .list th { background: #000080; color: #fff; padding: 6px 9px; font-size: 15px; }
 .list td { padding: 7px 9px; border-bottom: 1px solid #c0c0c0; }
 .list td.title a { color: #0000ee; text-decoration: underline; }
-.list tr.sel td { background: #ffffcc; }
 .list tr:hover td { background: #f0f0d0; }
 .empty { background: #fff; border: 2px inset #fff; font-size: 15px; }
 
@@ -49,7 +48,6 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 @media (max-width: 760px) {
   .list { border: none; background: none; }
   .list tr { background: #fff; border: 2px outset #fff; }
-  .list tr.sel { background: #ffffcc; }
 }
 
 /* tabs: the active view looks pressed in */
@@ -80,16 +78,13 @@ input, textarea, select { border: 2px inset #fff; background: #fff; padding: 4px
 .month td.today .day-number { font-weight: bold; }
 .cal-piece.overdue { outline: 2px solid #800000; }
 
-/* Manage sidebar and item cards */
+/* Manage sidebar */
 .manage-nav { background: #dcdcdc; border: 2px outset #fff; padding: 6px; }
 .manage-nav a { color: #0000ee; text-decoration: underline; }
 .manage-nav a.on { color: #000; font-weight: bold; text-decoration: none; background: #c0c0c0; border: 2px inset #fff; }
-.item-card { background: #fff; border: 2px inset #fff; }
-.item-card.inactive { opacity: .65; }
-.subsection { border-top: 1px solid #808080; }
 .list tr.overdue td.num { color: #800000; font-weight: bold; }
 .due-badge { background: #800000; color: #fff; font-weight: bold; text-decoration: none; }
-.due-list li.overdue, .dash-list li.overdue { color: #800000; font-weight: bold; }
+.dash-list li.overdue a { color: #800000; font-weight: bold; }
 .empty-inline { font-size: 14px; color: #555; margin: 0 0 12px; }
 
 /* panels and settings */
@@ -188,6 +183,42 @@ div.dt-container .dt-info { font-family: "Courier New", monospace; font-size: 13
 
 /* error banner: the classic alert box */
 .error-banner { background: #ffffcc; color: #800000; border-bottom: 3px solid #800000; font-weight: bold; }
+
+/* the layout's newer pieces */
+.crumb { color: #0000ee; text-decoration: underline; font-size: 15px; }
+.join > span { background: #dcdcdc; border: 2px outset #fff; font-size: 15px; }
+.btn-group .label { font-size: 14px; }
+.btn-small { font-size: 14px; }
+.panel-head .more { color: #0000ee; text-decoration: underline; font-size: 15px; }
+.panel-head h2 { border-bottom: none; padding-bottom: 0; }
+.panel-sub, .field-hint, .folder-path { font-size: 13px; color: #444; }
+.asset-kind { font-size: 16px; }
+.steps > li { background: #fff; border: 2px inset #fff; }
+.steps h3 { font-size: 16px; }
+.steps h3::before { background: #000080; color: #fff; font-family: "Courier New", monospace; font-weight: bold; }
+.steps p { font-size: 14px; color: #333; }
+.due-strip { background: #dcdcdc; border: 2px groove #fff; font-size: 14px; }
+.due-strip .label { font-weight: bold; }
+.due-strip .label::after { content: ":"; }
+.chip { background: #fff; border: 1px solid #808080; color: #0000ee; }
+.chip small { color: #444; font-family: "Courier New", monospace; }
+.chip.overdue { background: #ffffcc; border: 2px solid #800000; color: #800000; }
+.due-strip .settings { color: #0000ee; }
+.subnav a { background: #c0c0c0; border: 2px outset #fff; color: #0000ee; font-size: 14px; }
+.item-row { background: #fff; border: 2px inset #fff; }
+.item-row.inactive { opacity: .65; }
+.item-row .name { font-weight: bold; }
+.item-row .gist { font-size: 14px; color: #444; }
+.idea-pieces a { color: #0000ee; }
+.late { background: #800000; color: #fff; font-family: "Courier New", monospace; font-weight: bold;
+        text-transform: uppercase; }
+.btn-record { color: #800000; font-weight: bold; }
+.modal { background: #dcdcdc; color: #000; border: 2px outset #fff; padding-top: 0; }
+.modal::backdrop { background: rgb(0 0 0 / 35%); }
+/* a window's title bar */
+.modal-head { background: #000080; color: #fff; margin: 0 -20px 14px; padding: 4px 6px 4px 12px; align-items: center; }
+.modal-head h2 { font-size: 17px; }
+.modal-close { background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 16px; padding: 0 6px; }
 
 /* status and stage colours: the old web's highlight palette */
 span.status { border: 1px solid #808080; font-size: 14px; }

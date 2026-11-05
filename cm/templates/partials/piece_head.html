@@ -1,23 +1,14 @@
-{# The top of a piece's page. Saving its details redraws only this, so an open draft
-   below it is never reloaded or lost. #}
-<section class="piece-head" id="piece-head"{% if head_oob %} hx-swap-oob="true"{% endif %}>
+{# The top of a piece's page: its title and facts, and what can be done to it. Its details
+   are edited on a page of their own; recording a publish redraws only the facts. #}
+<section class="piece-head" id="piece-head">
   <div>
     <h2>{{ piece.title }}</h2>
-    <p class="piece-meta">
-      {{ piece.type.name }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
-      &middot; due {{ piece.due_on.isoformat() if piece.due_on else "not scheduled" }}
-      {% if idea %}&middot; from <a href="/ideas?brand_id={{ piece.brand_id }}">{{ idea.title }}</a>{% endif %}
-    </p>
+    {% include "partials/piece_meta.html" %}
   </div>
   <div class="piece-actions">
-    <button class="btn" hx-get="/pieces/{{ piece.id }}/form?origin=page"
-            hx-target="#piece-editor" hx-swap="innerHTML">Edit details</button>
+    {% include "partials/derive_form.html" %}
+    <a class="btn" href="/pieces/{{ piece.id }}/edit?next=/pieces/{{ piece.id }}">Edit details</a>
     <button class="btn btn-primary" hx-post="/pieces/{{ piece.id }}/session"
             hx-target="#session-message" hx-swap="innerHTML">Work on this</button>
-    <a class="btn" href="/pieces?brand_id={{ piece.brand_id }}">Back to pieces</a>
   </div>
 </section>
-{% if oob %}
-  <div id="piece-editor" hx-swap-oob="true"></div>
-  {% include "partials/due_badge.html" %}
-{% endif %}

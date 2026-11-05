@@ -13,6 +13,7 @@
   <script src="/static/vendor/datatables.min.js" defer></script>
   <script src="/static/tables.js" defer></script>
   <script src="/static/errors.js" defer></script>
+  <script src="/static/modal.js" defer></script>
   {# the writing helpers do nothing on pages without a draft #}
   <script src="/static/plain_text.js" defer></script>
   <script src="/static/copy.js" defer></script>
@@ -26,5 +27,13 @@
     <button class="btn error-close" type="button">Dismiss</button>
   </div>
   <div class="app">{% block body %}{% endblock %}</div>
+  {# where the short forms open (modal.js); each form brings its own heading #}
+  <dialog class="modal" id="modal">
+    <div class="error-banner" role="alert" hidden>
+      <span class="error-text"></span>
+      <button class="btn error-close" type="button">Dismiss</button>
+    </div>
+    <div id="modal-body"></div>
+  </dialog>
 </body>
 </html>

@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Literal
+from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlmodel import Session
 
@@ -15,13 +16,14 @@ from ..templating import STAGES, page_context, templates
 from .assets import panel_context
 from .editor import opening_text, pane_context
 from .local import from_this_machine
-from .params import OptionalId
+from .params import OptionalId, back_to
 from .publications import publications_context
 from .render import panel_context as render_context
 
 router = APIRouter(prefix="/pieces")
 
-# Where the details form was opened, which decides what saving it redraws.
+# Where a delete was asked for: from the list, which is redrawn, or from a page of the
+# piece's own, which no longer exists afterwards.
 Origin = Literal["list", "page"]
 
 
@@ -40,7 +42,15 @@ def _list_context(request: Request, session: Session, brand_id: int | None,
         "types": choices.all_items(session, PieceType),
         "today": date.today(),
         "due": schedule.due(session, date.today(), brand_id),     # for the Calendar tab's count
+        # the list as it stands, for an edit page to come back to
+        "back": _list_url(brand_id, stage, type_id),
     }
+
+
+def _list_url(brand_id: int | None, stage: str | None, type_id: int | None) -> str:
+    query = urlencode({key: value for key, value in
+                       {"brand_id": brand_id, "stage": stage, "type_id": type_id}.items() if value})
+    return f"/pieces?{query}" if query else "/pieces"
 
 
 @router.get("", response_class=HTMLResponse)
@@ -62,14 +72,10 @@ def piece_list(request: Request, session: Session = Depends(get_session),
 # matches, and would read "new" as a piece id and reject it.
 @router.get("/new", response_class=HTMLResponse)
 def piece_new(request: Request, session: Session = Depends(get_session),
-              brand_id: OptionalId = None, idea_id: OptionalId = None, title: str = ""):
-    return templates.TemplateResponse(
-        request, "partials/piece_editor.html",
-        {"request": request, "piece": None, "origin": "list", "brand_id": brand_id,
-         "view_brand_id": brand_id, "idea_id": idea_id, "idea_title": title,
-         "brands": crud.list_brands(session), "stages": STAGES,
-         "types": choices.options(session, PieceType)},
-    )
+              brand_id: OptionalId = None, next_url: str | None = Query(None, alias="next")):
+    """The details form for a new piece, on a page of its own. `brand_id` is the brand the
+    list was showing: the new piece's, unless that was all of them."""
+    return _form_page(request, session, None, brand_id, back_to(next_url, "/pieces"))
 
 
 # Declared before `/{piece_id}` for the same reason as `/new`.
@@ -115,40 +121,51 @@ def piece_page(piece_id: int, request: Request, session: Session = Depends(get_s
     return templates.TemplateResponse(request, "piece.html", context)
 
 
-@router.get("/{piece_id}/form", response_class=HTMLResponse)
-def piece_form(piece_id: int, request: Request, session: Session = Depends(get_session),
-               origin: Origin = "list", brand_id: OptionalId = None):
-    """The details form. `/pieces/{id}` itself is reserved for the piece's own page.
+@router.get("/{piece_id}/edit", response_class=HTMLResponse)
+def piece_edit(piece_id: int, request: Request, session: Session = Depends(get_session),
+               next_url: str | None = Query(None, alias="next")):
+    """A piece's details, on a page of their own. `/pieces/{id}` is the piece itself.
 
-    `brand_id` is the brand the list is showing, carried so saving redraws that view.
+    `next` is the page the form was opened from, which saving and Cancel go back to.
     """
     piece = crud.get_piece(session, piece_id)
     if not piece:
         raise HTTPException(404, "piece not found")
-    return templates.TemplateResponse(
-        request, "partials/piece_editor.html",
-        {"request": request, "piece": piece, "origin": origin, "brand_id": piece.brand_id,
-         "view_brand_id": brand_id, "stages": STAGES, "types": _type_options(session, piece)},
-    )
+    return _form_page(request, session, piece, piece.brand_id, back_to(next_url, f"/pieces/{piece.id}"))
+
+
+def _form_page(request: Request, session: Session, piece: Piece | None, brand_id: int | None,
+               back: str) -> HTMLResponse:
+    context = page_context(request, session, "pieces", brand_id)
+    context |= {
+        "piece": piece,
+        "back": back,
+        # the back link names the page it goes to: the piece, or the list
+        "back_label": piece.title if piece and back == f"/pieces/{piece.id}" else "Pieces",
+        "stages": STAGES,
+        "types": _type_options(session, piece) if piece else choices.options(session, PieceType),
+    }
+    return templates.TemplateResponse(request, "piece_edit.html", context)
 
 
 @router.post("", response_class=HTMLResponse)
-def piece_create(request: Request, session: Session = Depends(get_session),
+def piece_create(session: Session = Depends(get_session),
                  brand_id: int = Form(...), title: str = Form(...), type_id: int = Form(...),
                  stage: Stage = Form(Stage.not_started), due_on: date | None = Form(None),
-                 notes: str = Form(""), idea_id: OptionalId = Form(None),
-                 view_brand_id: OptionalId = Form(None)):
-    crud.create_piece(session, brand_id=brand_id, type_id=type_id, title=title, stage=stage,
-                      due_on=due_on, notes=notes, idea_id=idea_id)
-    return _refresh(request, session, view_brand_id)
+                 notes: str = Form("")):
+    """A new piece opens on its own page, ready to be written."""
+    if not choices.get(session, PieceType, type_id):
+        raise choices.ChoiceError("That piece type does not exist.")
+    piece = crud.create_piece(session, brand_id=brand_id, type_id=type_id, title=title.strip(),
+                              stage=stage, due_on=due_on, notes=notes)
+    return _go(f"/pieces/{piece.id}")
 
 
 @router.post("/{piece_id}", response_class=HTMLResponse)
-def piece_update(piece_id: int, request: Request, session: Session = Depends(get_session),
+def piece_update(piece_id: int, session: Session = Depends(get_session),
                  title: str = Form(...), type_id: int = Form(...),
                  stage: Stage = Form(Stage.not_started), due_on: date | None = Form(None),
-                 notes: str = Form(""), origin: Origin = Form("list"),
-                 view_brand_id: OptionalId = Form(None)):
+                 notes: str = Form(""), next_url: str | None = Form(None, alias="next")):
     piece = crud.get_piece(session, piece_id)
     if not piece:
         raise HTTPException(404, "piece not found")
@@ -156,14 +173,12 @@ def piece_update(piece_id: int, request: Request, session: Session = Depends(get
         raise choices.ChoiceError("That piece type does not exist.")
     crud.update_piece(session, piece, title=title.strip(), type_id=type_id, stage=stage,
                       due_on=due_on, notes=notes)
-    if origin == "page":
-        return templates.TemplateResponse(
-            request, "partials/piece_head.html",
-            {"request": request, "piece": piece, "oob": True,
-             "idea": crud.get_idea(session, piece.idea_id) if piece.idea_id else None,
-             "due": schedule.due(session, date.today(), piece.brand_id)},
-        )
-    return _refresh(request, session, view_brand_id)
+    return _go(back_to(next_url, f"/pieces/{piece.id}"))
+
+
+def _go(path: str) -> Response:
+    """Tell htmx to load another page: the forms on pages of their own answer this way."""
+    return Response(status_code=204, headers={"HX-Redirect": path})
 
 
 @router.post("/{piece_id}/stage", response_class=HTMLResponse)
@@ -267,8 +282,7 @@ def piece_delete(piece_id: int, request: Request, session: Session = Depends(get
                                  "and try again.") from exc
     if origin == "page":
         # the page being looked at no longer exists, so go back to its brand's list
-        return Response(status_code=204,
-                        headers={"HX-Redirect": f"/pieces?brand_id={own_brand_id}"})
+        return _go(f"/pieces?brand_id={own_brand_id}")
     return _refresh(request, session, brand_id)
 
 
@@ -277,5 +291,5 @@ def _type_options(session: Session, piece: Piece) -> list[PieceType]:
 
 
 def _refresh(request: Request, session: Session, brand_id: int | None) -> HTMLResponse:
-    context = _list_context(request, session, brand_id, None, None) | {"oob": True, "close_editor": True}
+    context = _list_context(request, session, brand_id, None, None) | {"oob": True}
     return templates.TemplateResponse(request, "partials/pieces.html", context)

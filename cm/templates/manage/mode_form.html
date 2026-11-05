@@ -1,0 +1,15 @@
+{# A mode, new or existing, in the dialog. A new one starts from the questions its description
+   should answer. Saving redraws the brand's list of modes behind the dialog. #}
+{% with title = "Edit mode" if mode else "Add a mode" %}{% include "partials/modal_head.html" %}{% endwith %}
+<form class="stacked-form" hx-post="/manage/modes{{ '/' ~ mode.id if mode }}"
+      hx-target="#mode-list" hx-swap="outerHTML">
+  {% if not mode %}<input type="hidden" name="brand_id" value="{{ brand_id }}">{% endif %}
+  <label>Name <input name="name" value="{{ mode.name if mode else '' }}" placeholder="advisor" required autofocus></label>
+  <label>Description <textarea name="description" rows="8">{{ mode.description if mode else starter }}</textarea></label>
+  <p class="hint field-hint">It goes into the brief of every piece whose idea uses this mode, as it
+    is, so write it for the session that will read it.</p>
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">{{ "Save" if mode else "Add mode" }}</button>
+    <button class="btn" type="button" data-close-modal>Cancel</button>
+  </div>
+</form>

@@ -1,36 +1,37 @@
 {# The files that go with a piece. Uploads come through the browser, so they work from any
-   device; "Open folder" only shows on the machine running the app, where it can be seen.
+   device; the folder button only shows on the machine running the app, where it can be seen.
 
-   The things there is only one of — the drop zone, the folder, the message — sit at the
-   top, so they stay put as the list of files below them grows. #}
+   The things there is only one of — the folder button, the drop zone, the message — sit at
+   the top and are kept short, so the files below start near the top and stay in view. #}
 <section class="panel" id="assets"
          hx-get="/pieces/{{ piece.id }}/assets" hx-trigger="assets-changed from:body" hx-swap="outerHTML">
-  <h2>Assets</h2>
+  <div class="panel-head">
+    <h2>Assets</h2>
+    {% if can_open_folder %}
+      <button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/assets/open"
+              hx-target="#assets" hx-swap="outerHTML">Assets folder</button>
+    {% endif %}
+  </div>
 
   <form class="drop-zone" hx-post="/pieces/{{ piece.id }}/assets/files" hx-encoding="multipart/form-data"
         hx-target="#assets" hx-swap="outerHTML" data-drop-zone>
     <p>Drop files here, or
-      <label class="btn">choose files<input type="file" name="uploads" multiple accept="{{ accepted }}" hidden
+      <label class="btn btn-small">choose files<input type="file" name="uploads" multiple accept="{{ accepted }}" hidden
              hx-on:change="this.form.requestSubmit()"></label>
     </p>
     <progress value="0" max="100" hidden></progress>
-    <p class="hint">Images up to 10 MB, PDF up to 50 MB, Photoshop files up to 200 MB,
-      video up to 500 MB, audio up to 50 MB (WAV 200 MB).
-      An image pasted into the editor is stored here too.</p>
+    <p class="hint">Images 10 MB · PDF 50 MB · Photoshop 200 MB · video 500 MB · audio 50 MB, WAV 200 MB</p>
   </form>
 
   {% if message %}<p class="saved">{{ message }}</p>{% endif %}
   {% for problem in problems %}<p class="message">{{ problem }}</p>{% endfor %}
 
-  {% if can_open_folder %}
-    <p><button class="btn" type="button" hx-post="/pieces/{{ piece.id }}/assets/open"
-               hx-target="#assets" hx-swap="outerHTML">Open folder</button></p>
-  {% endif %}
-
-  <p class="hint">
-    Images do not travel through copy and paste — upload them again on the platform.
-    Folder: <code>{{ assets_folder }}</code>
-  </p>
+  <details class="folder-path">
+    <summary>Where they are, and why images need uploading again</summary>
+    <p>An image pasted into the editor is stored here too. Images do not travel through copy
+      and paste, so upload them again on the platform.</p>
+    <code>{{ assets_folder }}</code>
+  </details>
 
   {% if assets %}
     <div class="asset-scroll">

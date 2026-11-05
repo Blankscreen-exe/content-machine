@@ -1,32 +1,19 @@
 <div id="type-list">
   {% if types %}
     <table class="list" id="types-table" data-table>
-      <thead><tr><th>Name</th><th>Main file</th><th class="num">Character limit</th><th>Video</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th>Main file</th><th class="num">Limit</th><th>Video</th><th class="num">Pieces</th><th class="actions-head no-sort">Actions</th></tr></thead>
       <tbody>
         {% for piece_type in types %}
           <tr class="{{ '' if piece_type.active else 'inactive' }}">
-            {# one form per row, spread over the cells with the form attribute #}
-            <td data-label="Name" data-order="{{ piece_type.name | lower }}">
-              <input name="name" value="{{ piece_type.name }}" size="16" required form="type-{{ piece_type.id }}">
+            <td class="title" data-label="Name" data-order="{{ piece_type.name | lower }}">{{ piece_type.name }}{% if not piece_type.active %} <span class="hint">(off)</span>{% endif %}</td>
+            <td data-label="Main file"><code>{{ piece_type.main_file }}</code></td>
+            <td class="num" data-label="Limit" data-order="{{ '%07d' % piece_type.char_limit if piece_type.char_limit else '9999999' }}">
+              {{- '{:,}'.format(piece_type.char_limit) if piece_type.char_limit else "—" -}}
             </td>
-            <td data-label="Main file" data-order="{{ piece_type.main_file }}">
-              <input name="main_file" value="{{ piece_type.main_file }}" size="16" required form="type-{{ piece_type.id }}">
-            </td>
-            <td class="num" data-label="Character limit" data-order="{{ '%07d' % piece_type.char_limit if piece_type.char_limit else '9999999' }}">
-              <input type="number" name="char_limit" min="1" value="{{ piece_type.char_limit or '' }}" placeholder="none"
-                     form="type-{{ piece_type.id }}" class="short-number">
-            </td>
-            <td data-label="Video" data-order="{{ 1 if piece_type.video else 0 }}">
-              <input type="checkbox" name="video" value="true" {{ 'checked' if piece_type.video }}
-                     form="type-{{ piece_type.id }}" aria-label="{{ piece_type.name }}: video">
-            </td>
-            <td data-label="Status">{{ 'on' if piece_type.active else 'off' }}</td>
+            <td data-label="Video">{{ "yes" if piece_type.video else "—" }}</td>
+            <td class="num" data-label="Pieces" data-order="{{ '%07d' % usage.get(piece_type.id, 0) }}">{{ usage.get(piece_type.id, 0) }}</td>
             <td class="actions-cell" data-label="Actions">
-              <form id="type-{{ piece_type.id }}" class="inline-form" hx-post="/manage/types/{{ piece_type.id }}"
-                    hx-target="#type-list" hx-swap="outerHTML">
-                <button class="btn btn-primary" type="submit">Save</button>
-              </form>
-              {% with item = piece_type, base = "/manage/types", list_id = "type-list" %}
+              {% with item = piece_type, base = "/manage/types", list_id = "type-list", count_shown = true %}
                 {% include "manage/item_actions.html" %}
               {% endwith %}
             </td>
@@ -35,6 +22,6 @@
       </tbody>
     </table>
   {% else %}
-    <p class="empty">No piece types yet. Add one below.</p>
+    <p class="empty">No piece types yet. Hit <b>Add type</b>.</p>
   {% endif %}
 </div>

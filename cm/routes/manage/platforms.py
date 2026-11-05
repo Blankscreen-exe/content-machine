@@ -19,6 +19,18 @@ def platforms(request: Request, session: Session = Depends(get_session)):
                        **_list_context(session))
 
 
+@router.get("/new", response_class=HTMLResponse)
+def platform_new(request: Request):
+    """The form for a new platform, opened in the dialog."""
+    return page.partial(request, "manage/platform_form.html", platform=None)
+
+
+@router.get("/{platform_id}/edit", response_class=HTMLResponse)
+def platform_edit(platform_id: int, request: Request, session: Session = Depends(get_session)):
+    return page.partial(request, "manage/platform_form.html",
+                        platform=page.item_or_404(session, Platform, platform_id))
+
+
 @router.post("", response_class=HTMLResponse)
 def platform_create(request: Request, name: str = Form(...),
                     session: Session = Depends(get_session)):

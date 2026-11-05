@@ -10,8 +10,7 @@ from ...templating import page_context, templates
 
 # The sidebar, in order: (address under /manage, label).
 SECTIONS = [
-    ("brands", "Brands"),
-    ("modes", "Modes"),
+    ("brands", "Brands"),           # each brand's modes are on the brand's own page
     ("types", "Piece types"),
     ("platforms", "Platforms"),
 ]

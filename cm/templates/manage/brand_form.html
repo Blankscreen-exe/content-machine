@@ -1,0 +1,25 @@
+{# Adding a brand, or renaming one, in the dialog. A new brand needs a slug, which names its
+   folders and so never changes; renaming changes only the name. #}
+{% with title = "Rename brand" if brand else "Add a brand" %}{% include "partials/modal_head.html" %}{% endwith %}
+{% if brand %}
+  <form class="stacked-form" hx-post="/manage/brands/{{ brand.id }}" hx-target="#brand-head" hx-swap="outerHTML">
+    <label>Name <input name="name" value="{{ brand.name }}" required autofocus></label>
+    <p class="hint field-hint">The slug, <code>{{ brand.slug }}</code>, names the brand's folders and stays as it is.</p>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <button class="btn" type="button" data-close-modal>Cancel</button>
+    </div>
+  </form>
+{% else %}
+  <form class="stacked-form" hx-post="/manage/brands" hx-target="#brand-list" hx-swap="outerHTML">
+    <label>Name <input name="name" placeholder="Acme Co" autofocus></label>
+    <label>Slug <input name="slug" placeholder="acme-co" required></label>
+    <p class="hint field-hint">Lowercase letters, numbers and dashes. It names the brand's folders, so
+      it cannot change later; the name can.</p>
+    <p class="hint field-hint">A new brand starts with a placeholder voice and profile to fill in.</p>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Add brand</button>
+      <button class="btn" type="button" data-close-modal>Cancel</button>
+    </div>
+  </form>
+{% endif %}
