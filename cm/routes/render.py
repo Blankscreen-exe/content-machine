@@ -1,7 +1,7 @@
-"""The Render panel on a video piece's page: start a draft or final render, and follow it.
+"""The render step in a video piece's Video panel: start a draft or final render, and follow it.
 
 Rendering runs on this machine whichever device asked for it, so any device may start one.
-While a render runs, the panel asks for itself again every second; when the render is
+While a render runs, the step asks for itself again every second; when the render is
 done, it tells the Assets panel to redraw so the new video appears there.
 """
 from __future__ import annotations
@@ -22,7 +22,7 @@ ASSETS_CHANGED = "assets-changed"
 
 
 def panel_context(piece: Piece) -> dict:
-    """What the Render panel needs; the piece page uses it for its first render too."""
+    """What the render step needs; the piece page uses it for its first render too."""
     return {"render_job": render_jobs.latest(piece.id)}
 
 

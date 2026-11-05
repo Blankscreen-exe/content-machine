@@ -1,0 +1,43 @@
+{# An idea's details. Saving an existing idea redraws this in place; a new one, once saved,
+   opens on its own page. #}
+<section class="editor" id="idea-form">
+  <form hx-post="{{ '/ideas/' ~ idea.id if idea else '/ideas' }}"
+        hx-target="#idea-form" hx-swap="outerHTML">
+    {% if not idea %}
+      {# picking the brand redraws the mode dropdown with that brand's modes #}
+      {% set brand_picks_modes = true %}
+      {% include "partials/brand_field.html" %}
+    {% endif %}
+
+    <label>Title <input name="title" value="{{ idea.title if idea else '' }}" required autofocus></label>
+    <label>Angle <input name="angle" value="{{ idea.angle if idea else '' }}"></label>
+    <label>Talking points <textarea name="talking_points" rows="4">{{ idea.talking_points if idea else '' }}</textarea></label>
+    <label>Notes <textarea name="notes" rows="2">{{ idea.notes if idea else '' }}</textarea></label>
+
+    <div class="row">
+      {% include "partials/mode_field.html" %}
+      <label>Status
+        <select name="status">
+          {% for value in statuses %}
+            <option value="{{ value }}" {{ 'selected' if idea and idea.status.value == value }}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Priority
+        <select name="priority">
+          {% for value, name in priorities.items() %}
+            <option value="{{ value }}" {{ 'selected' if (idea.priority if idea else 2) == value }}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Source <input name="source" value="{{ idea.source if idea else '' }}" placeholder="where it came from"></label>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">{{ "Save" if idea else "Add the idea" }}</button>
+      {% if not idea %}<a class="btn" href="/ideas{{ '?brand_id=' ~ brand_id if brand_id }}">Cancel</a>{% endif %}
+      {% if message %}<span class="saved">{{ message }}</span>{% endif %}
+    </div>
+  </form>
+</section>
+{% if head_oob %}{% include "partials/idea_head.html" %}{% endif %}

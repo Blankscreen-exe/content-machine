@@ -1,0 +1,22 @@
+{# The top of an idea's page. Saving the idea, or making a piece from it, can change what
+   this shows, so both redraw it alongside their own part. #}
+<section class="piece-head" id="idea-head"{% if head_oob %} hx-swap-oob="true"{% endif %}>
+  <div>
+    <h2>{{ idea.title if idea else "New idea" }}</h2>
+    {% if idea %}
+      <p class="piece-meta">
+        <span class="status {{ idea.status.value | status_class }}">{{ idea.status.value }}</span>
+        &middot; {{ idea.priority | priority_name }} priority
+        {% if idea.mode %}&middot; {{ idea.mode.name }}{% endif %}
+        &middot; {{ brand_slug }}
+      </p>
+    {% endif %}
+  </div>
+  {% if idea %}
+    <div class="piece-actions">
+      <button class="btn btn-danger" type="button"
+              hx-post="/ideas/{{ idea.id }}/delete" hx-vals='{"origin": "page"}'
+              hx-confirm="Delete &quot;{{ idea.title }}&quot;? The pieces made from it stay.">Delete</button>
+    </div>
+  {% endif %}
+</section>

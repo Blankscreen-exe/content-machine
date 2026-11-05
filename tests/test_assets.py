@@ -170,11 +170,11 @@ def test_open_folder_is_offered_only_on_this_machine(session: Session, piece, mo
     app.dependency_overrides[get_session] = lambda: session
 
     with TestClient(app, cookies={"cm_token": TEST_TOKEN}, client=("192.168.1.20", 50000)) as remote:
-        assert "Open folder" not in remote.get(f"/pieces/{piece.id}").text
+        assert "Assets folder" not in remote.get(f"/pieces/{piece.id}").text
         refused = remote.post(f"/pieces/{piece.id}/assets/open").text
         assert "only be opened on the machine running the app" in refused
     with TestClient(app, cookies={"cm_token": TEST_TOKEN}, client=("127.0.0.1", 50000)) as local:
-        assert "Open folder" in local.get(f"/pieces/{piece.id}").text
+        assert "Assets folder" in local.get(f"/pieces/{piece.id}").text
         assert "Opened the folder." in local.post(f"/pieces/{piece.id}/assets/open").text
     assert opened == [_assets_folder(session, piece)]
 

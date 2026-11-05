@@ -17,22 +17,22 @@
 
 {% include "partials/masthead.html" %}
 
+<a class="crumb" href="/pieces?brand_id={{ piece.brand_id }}">&larr; Pieces</a>
 {% include "partials/piece_head.html" %}
-{% include "partials/derive_form.html" %}
 
+{# what the heading's actions report: a session opened, a piece made from this one #}
 <div id="session-message"></div>
-<div id="piece-editor"></div>
 
-{# the drafts, with the piece's files beside them: the images and PDFs belong to what is
-   being written, and stay in view while writing #}
+{# the drafts, then for a video the steps that make it, then where it went out; the
+   piece's files beside them, in view while writing #}
 <div class="workbench">
   <div class="workbench-main">
     {% include "partials/editor_pane.html" %}
+    {% if piece.type.video %}{% include "partials/video_panel.html" %}{% endif %}
     {% include "partials/publications.html" %}
     {% include "partials/history.html" %}
   </div>
   <aside class="workbench-side">
-    {% if piece.type.video %}{% include "partials/render_panel.html" %}{% endif %}
     {% include "partials/assets_panel.html" %}
   </aside>
 </div>

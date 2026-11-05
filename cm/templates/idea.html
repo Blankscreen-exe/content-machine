@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{# One idea, shaped like a piece's page: the idea on the left, what was made from it beside
+   it. A new idea is the same page with only the form, until it is saved. #}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<a class="crumb" href="/ideas{{ '?brand_id=' ~ brand_id if brand_id }}">&larr; Ideas</a>
+{% include "partials/idea_head.html" %}
+
+{% if idea %}
+  <div class="workbench">
+    <div class="workbench-main">{% include "partials/idea_form.html" %}</div>
+    <aside class="workbench-side">{% include "partials/idea_pieces.html" %}</aside>
+  </div>
+{% else %}
+  <div class="form-page">{% include "partials/idea_form.html" %}</div>
+{% endif %}
+
+{% endblock %}

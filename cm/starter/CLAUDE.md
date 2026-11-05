@@ -42,7 +42,9 @@ The web app tracks ideas and pieces, and you reach it through the content machin
 (`mcp__cm__...`), never by running commands. When something changes, say so:
 
 - `set_stage(<piece id>, "draft")` once a first version is written, `"wip"` while you rework
-  it. Ready and published are mine.
+  it. Ready is mine.
+- `record_publication(<piece id>, <platform>, <link>)` only once I tell you a piece went out.
+  It marks the piece published; `list_platforms` gives the names.
 - `add_note(<piece id>, "what you did")`.
 
 The piece id is in `brief.md`. `brand_context`, `list_pieces` and `search_drafts` show the

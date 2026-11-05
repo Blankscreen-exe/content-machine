@@ -20,8 +20,9 @@ from .database import engine, migrate
 INSTRUCTIONS = """\
 Content Machine's database, for one brand. Use these tools to read and file ideas and
 pieces and to report what you did; write drafts with your file tools, in the folder a
-piece's tools give. Moving a piece to ready or published, publishing, deleting, and
-changing the brand's voice or settings are not here: they are the person's.
+piece's tools give. Moving a piece to ready, publishing, deleting, and changing the brand's
+voice or settings are not here: they are the person's. record_publication writes down that a
+piece went out, only once the person says it did.
 """
 
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{# The idea pool: filters, then the list. Each idea opens on a page of its own. #}
 {% block body %}
 
 {% include "partials/masthead.html" %}
@@ -19,12 +20,9 @@
     {% endfor %}
   </select>
   <span class="count" id="count">{{ counts.get('total', 0) }} ideas &middot; {{ counts.get('pool', 0) }} in pool</span>
-  <button class="btn btn-primary" hx-get="/ideas/new?brand_id={{ brand_id or '' }}"
-          hx-target="#editor" hx-swap="innerHTML">New idea</button>
+  <a class="btn btn-primary" href="/ideas/new?brand_id={{ brand_id or '' }}">New idea</a>
 </div>
 
 {% include "partials/list.html" %}
-
-<div id="editor"></div>
 
 {% endblock %}

@@ -1,5 +1,5 @@
-"""A brand's cadences on its Manage page: how often it publishes each piece type. The panel
-answers every change by redrawing itself."""
+"""A brand's cadences on its Manage page: how often it publishes each piece type. Each is
+edited in the dialog, and the panel answers every change by redrawing itself."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -26,9 +26,18 @@ def panel_context(session: Session, brand: Brand) -> dict:
     return {
         "cadence_rows": [(kind, cadence.Rule.of(cadences[kind.id]) if kind.id in cadences else None)
                          for kind in kinds],
-        "rule_labels": RULE_LABELS,
-        "weekdays": cadence.WEEKDAYS,
     }
+
+
+@router.get("/{type_id}/edit", response_class=HTMLResponse)
+def cadence_edit(brand_id: int, type_id: int, request: Request, session: Session = Depends(get_session)):
+    """One type's cadence for this brand, in the dialog."""
+    brand = _brand(session, brand_id)
+    kind = page.item_or_404(session, PieceType, type_id)
+    stored = crud.get_cadence(session, brand.id, kind.id)
+    return page.partial(request, "manage/cadence_form.html", brand=brand, kind=kind,
+                        rule=cadence.Rule.of(stored) if stored else None,
+                        rule_labels=RULE_LABELS, weekdays=cadence.WEEKDAYS)
 
 
 @router.post("/{type_id}", response_class=HTMLResponse)

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{# A piece's details, or a new piece's, on a page of their own. Saving and Cancel go back to
+   `back`, the page the form was opened from; a new piece opens on its own page instead. #}
+{% block body %}
+
+{% include "partials/masthead.html" %}
+
+<a class="crumb" href="{{ back }}">&larr; {{ back_label }}</a>
+
+<div class="form-page">
+  <section class="piece-head">
+    <div>
+      <h2>{{ "Edit piece" if piece else "New piece" }}</h2>
+      {% if piece %}<p class="piece-meta">{{ piece.title }} &middot; {{ piece.type.name }}</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="editor">
+    <form hx-post="{{ '/pieces/' ~ piece.id if piece else '/pieces' }}">
+      <input type="hidden" name="next" value="{{ back }}">
+      {% if not piece %}{% include "partials/brand_field.html" %}{% endif %}
+
+      <label>Title <input name="title" value="{{ piece.title if piece else '' }}" required autofocus></label>
+
+      {# a piece made before its idea was filed can be put under it here #}
+      {% if ideas %}
+        <label>Idea
+          <select name="idea_id">
+            {# not empty: a form field sent empty arrives as not sent at all, which keeps the idea #}
+            <option value="none">none</option>
+            {% for idea in ideas %}
+              <option value="{{ idea.id }}" {% if piece and piece.idea_id == idea.id %}selected{% endif %}>{{ idea.title }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      {% endif %}
+
+      <div class="row">
+        <label>Type
+          <select name="type_id">
+            {% for piece_type in types %}
+              <option value="{{ piece_type.id }}" {% if piece and piece.type_id == piece_type.id %}selected{% endif %}>{{ piece_type.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Stage
+          <select name="stage">
+            {% for value in stages %}
+              <option value="{{ value }}" {{ 'selected' if piece and piece.stage.value == value }}>{{ value }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Due <input type="date" name="due_on" value="{{ piece.due_on.isoformat() if piece and piece.due_on else '' }}"></label>
+      </div>
+
+      <label>Notes <textarea name="notes" rows="3">{{ piece.notes if piece else '' }}</textarea></label>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="submit">{{ "Save" if piece else "Make the piece" }}</button>
+        <a class="btn" href="{{ back }}">Cancel</a>
+        {% if piece %}
+          <span class="push"></span>
+          <button class="btn btn-danger" type="button"
+                  hx-post="/pieces/{{ piece.id }}/delete" hx-vals='{"origin": "page"}'
+                  hx-confirm="Delete &quot;{{ piece.title }}&quot;? Its folder moves to the workspace trash.">Delete</button>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+</div>
+
+{% endblock %}

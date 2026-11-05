@@ -11,7 +11,7 @@ def test_first_render_has_no_duplicate_ids(client: TestClient, session: Session,
     crud.create_idea(session, brand_id=brand.id, title="Legacy systems age badly")
     page = client.get("/ideas").text
     assert page.count('id="count"') == 1
-    assert page.count('id="editor"') == 1
+    assert page.count('id="modal"') == 1      # one dialog, which every short form opens in
     assert "hx-swap-oob" not in page          # nothing to swap on a full page load
 
 

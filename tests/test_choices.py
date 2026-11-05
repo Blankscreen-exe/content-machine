@@ -103,7 +103,7 @@ def test_a_piece_keeps_its_type_when_the_type_is_turned_off(client, session: Ses
     piece = crud.create_piece(session, brand_id=brand.id, type_id=quote.id, title="A quote")
     choices.update(session, quote, active=False)
 
-    form = client.get(f"/pieces/{piece.id}/form").text
+    form = client.get(f"/pieces/{piece.id}/edit").text
     new_form = client.get(f"/pieces/new?brand_id={brand.id}").text
 
     assert f'<option value="{quote.id}" selected>quote</option>' in form

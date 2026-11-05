@@ -5,6 +5,7 @@ Both the web app and the CLI call these, so the rules live in one place.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from datetime import date, datetime
 
 from sqlmodel import Session, func, or_, select
@@ -372,11 +373,17 @@ def undated_count(session: Session, brand_id: int | None = None) -> int:
 IN_PROGRESS = (Stage.draft, Stage.wip, Stage.ready)
 
 
-def pieces_in_progress(session: Session, brand_id: int | None = None, limit: int = 10) -> list[Piece]:
-    """Started and not yet out: soonest due first, undated after, most recently touched first."""
+def pieces_in_progress(session: Session, brand_id: int | None = None, limit: int = 10,
+                       leave_out: Iterable[int] = ()) -> list[Piece]:
+    """Started and not yet out: soonest due first, undated after, most recently touched first.
+
+    `leave_out` is pieces already shown elsewhere on the page, so they are not listed twice.
+    """
     query = select(Piece).where(Piece.stage.in_(IN_PROGRESS))
     if brand_id:
         query = query.where(Piece.brand_id == brand_id)
+    if leave_out:
+        query = query.where(Piece.id.not_in(list(leave_out)))
     query = query.order_by(Piece.due_on.is_(None), Piece.due_on, Piece.updated_at.desc())
     return list(session.exec(query.limit(limit)).all())
 

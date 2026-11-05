@@ -11,22 +11,30 @@
   <script src="/static/drop.js" defer></script>
 {% endblock %}
 
+{# One brand: everything that is its own, each in a section of its own, named at the top. #}
 {% block section %}
-<section class="piece-head">
-  <div>
-    <h2>{{ brand.name }}</h2>
-    <p class="piece-meta"><code>{{ brand.slug }}</code> &middot; {{ 'on' if brand.active else 'off' }}</p>
-  </div>
-  <div class="piece-actions">
-    <a class="btn" href="/manage/modes?brand_id={{ brand.id }}">Modes</a>
-    <a class="btn" href="/manage/brands">Back to brands</a>
-  </div>
-</section>
+<a class="crumb" href="/manage/brands">&larr; Brands</a>
+{% include "manage/brand_head.html" %}
+
+<nav class="subnav" aria-label="This brand's sections">
+  <a href="#editor-pane">Voice &amp; profile</a>
+  <a href="#modes">Modes</a>
+  <a href="#cadence">Cadence</a>
+  <a href="#resources">Resources</a>
+</nav>
 
 {% include "partials/editor_pane.html" %}
 
-<p class="hint">Both are handed to every session for this brand in <code>brief.md</code>.
-  The voice is how the brand writes; the profile is its identity and visual constants.</p>
+<section class="panel" id="modes">
+  <div class="panel-head">
+    <h2>Modes</h2>
+    <button class="btn" type="button" hx-get="/manage/modes/new?brand_id={{ brand.id }}"
+            hx-target="#modal-body">Add a mode</button>
+  </div>
+  <p class="panel-sub">A stance the brand writes in. Its description goes into the brief of every
+    piece whose idea uses it.</p>
+  {% include "manage/mode_list.html" %}
+</section>
 
 {% include "manage/cadence_panel.html" %}
 {% include "manage/resources_panel.html" %}

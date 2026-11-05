@@ -1,0 +1,12 @@
+{# A platform's name, new or existing, in the dialog. Saving redraws the list behind it. #}
+{% with title = "Rename platform" if platform else "Add a platform" %}{% include "partials/modal_head.html" %}{% endwith %}
+<form class="stacked-form" hx-post="/manage/platforms{{ '/' ~ platform.id if platform }}"
+      hx-target="#platform-list" hx-swap="outerHTML">
+  <label>Name <input name="name" value="{{ platform.name if platform else '' }}" placeholder="newsletter" required autofocus></label>
+  <p class="hint field-hint">Offered when you record where a piece was published, so each platform
+    is always spelled the same way.</p>
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">{{ "Save" if platform else "Add platform" }}</button>
+    <button class="btn" type="button" data-close-modal>Cancel</button>
+  </div>
+</form>

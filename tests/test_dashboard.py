@@ -47,6 +47,19 @@ def test_in_progress_leaves_out_unstarted_and_published_work(client: TestClient,
     assert "Not yet" not in in_progress and ">Out</a>" not in in_progress
 
 
+def test_a_piece_due_now_is_not_listed_again_as_in_progress(client: TestClient, session: Session, brand):
+    blog, today = type_id(session, "blog"), date.today()
+    crud.create_piece(session, brand_id=brand.id, type_id=blog, title="Late draft", stage=Stage.draft,
+                      due_on=today - timedelta(days=1))
+    crud.create_piece(session, brand_id=brand.id, type_id=blog, title="Later draft", stage=Stage.draft,
+                      due_on=today + timedelta(days=9))
+    page = client.get("/").text
+
+    assert ">Late draft</a>" in _section(page, "Due now")
+    assert ">Late draft</a>" not in _section(page, "In progress")
+    assert ">Later draft</a>" in _section(page, "In progress")
+
+
 def test_next_up_is_pool_ideas_by_priority(client: TestClient, session: Session, brand):
     crud.create_idea(session, brand_id=brand.id, title="Someday", priority=3)
     crud.create_idea(session, brand_id=brand.id, title="Urgent", priority=1)

@@ -88,7 +88,7 @@ def test_from_another_device_it_makes_the_piece_but_no_session(client: TestClien
 
 def test_the_form_offers_every_other_type(client: TestClient, session: Session, blog):
     page = client.get(f"/pieces/{blog.id}").text
-    form = page[page.index('class="inline-form derive-form"'):page.index("</form>", page.index("derive-form"))]
+    form = page[page.index('class="join derive-form"'):page.index("</form>", page.index("derive-form"))]
 
     assert f'value="{type_id(session, "linkedin post")}"' in form
     assert f'value="{type_id(session, "blog")}"' not in form

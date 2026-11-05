@@ -11,7 +11,7 @@ from datetime import date, timedelta
 from sqlmodel import Session
 
 from . import crud
-from .models import Piece
+from .models import Piece, Stage
 
 
 @dataclass(frozen=True)
@@ -23,6 +23,11 @@ class Due:
     @property
     def count(self) -> int:
         return len(self.overdue) + len(self.soon)
+
+
+def is_late(piece: Piece, today: date) -> bool:
+    """Past its due date and not out yet: one piece by the rule the overdue list uses."""
+    return piece.due_on is not None and piece.due_on < today and piece.stage != Stage.published
 
 
 def window_days(session: Session) -> int:

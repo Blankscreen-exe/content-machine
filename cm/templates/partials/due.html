@@ -1,16 +1,14 @@
-{# On the Calendar tab, above the month: what is overdue and what is coming up.
-   Hidden when nothing is. #}
-<section id="due" class="panel due"{% if oob %} hx-swap-oob="true"{% endif %}{% if not due.count %} hidden{% endif %}>
-  <h2>Due</h2>
-  <ul class="due-list">
-    {% for piece in due.overdue %}
-      <li class="overdue"><a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
-        &middot; {{ piece.type.name }} &middot; was due {{ piece.due_on.isoformat() }}</li>
-    {% endfor %}
-    {% for piece in due.soon %}
-      <li><a href="/pieces/{{ piece.id }}">{{ piece.title }}</a>
-        &middot; {{ piece.type.name }} &middot; due {{ "today" if piece.due_on == today else piece.due_on.isoformat() }}</li>
-    {% endfor %}
-  </ul>
-  <p class="hint">Unpublished pieces that are overdue or due in the next {{ due.window_days }} days. Change the window in <a href="/settings">Settings</a>.</p>
-</section>
+{# What is overdue and what is coming up, as a strip of chips at the top of the month.
+   Hidden when nothing is. An overdue piece says so in words, not by colour alone. #}
+<div id="due" class="due-strip"{% if not due.count %} hidden{% endif %}>
+  <span class="label">Due</span>
+  {% for piece in due.overdue %}
+    <a class="chip overdue" href="/pieces/{{ piece.id }}"><span class="late">overdue</span> {{ piece.title }}
+      <small>{{ piece.type.name }} &middot; was due {{ piece.due_on.isoformat() }}</small></a>
+  {% endfor %}
+  {% for piece in due.soon %}
+    <a class="chip" href="/pieces/{{ piece.id }}">{{ piece.title }}
+      <small>{{ piece.type.name }} &middot; {{ "today" if piece.due_on == today else piece.due_on.isoformat() }}</small></a>
+  {% endfor %}
+  <a class="settings" href="/settings" title="Unpublished pieces overdue or due in the next {{ due.window_days }} days">next {{ due.window_days }} days &middot; change</a>
+</div>

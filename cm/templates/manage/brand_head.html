@@ -1,0 +1,14 @@
+{# The top of a brand's page: its name and slug, renaming (in the dialog) and turning it off.
+   Both redraw only this. #}
+<section class="piece-head" id="brand-head">
+  <div>
+    <h2>{{ brand.name }}</h2>
+    <p class="piece-meta"><code>{{ brand.slug }}</code> &middot; {{ 'on' if brand.active else 'off' }}</p>
+  </div>
+  <div class="piece-actions">
+    <button class="btn" type="button" hx-get="/manage/brands/{{ brand.id }}/rename" hx-target="#modal-body">Rename</button>
+    <button class="btn" type="button" hx-post="/manage/brands/{{ brand.id }}/active"
+            hx-vals='{"active": "{{ 'false' if brand.active else 'true' }}", "origin": "page"}'
+            hx-target="#brand-head" hx-swap="outerHTML">{{ 'Turn off' if brand.active else 'Turn on' }}</button>
+  </div>
+</section>

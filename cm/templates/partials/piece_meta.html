@@ -1,0 +1,8 @@
+{# A piece's facts under its title. On its own so a change to them, such as recording a
+   publish, can redraw this line and leave the rest of the page alone. #}
+<p class="piece-meta" id="piece-meta"{% if meta_oob %} hx-swap-oob="true"{% endif %}>
+  {{ piece.type.name }} &middot; <span class="status {{ piece.stage.value | status_class }}">{{ piece.stage.value }}</span>
+  &middot; due {{ piece.due_on.isoformat() if piece.due_on else "not scheduled" }}
+  {%- if is_late(piece) %} <span class="late">overdue</span>{% endif %}
+  {% if idea %}&middot; from <a href="/ideas/{{ idea.id }}">{{ idea.title }}</a>{% endif %}
+</p>

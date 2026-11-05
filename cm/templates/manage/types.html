@@ -1,20 +1,11 @@
 {% extends "manage/layout.html" %}
 {% block section %}
 <section class="panel">
-  <h2>Piece types</h2>
+  <div class="panel-head">
+    <h2>Piece types</h2>
+    <button class="btn" type="button" hx-get="/manage/types/new" hx-target="#modal-body">Add type</button>
+  </div>
+  <p class="panel-sub">What can be made, and the draft each one opens on.</p>
   {% include "manage/type_list.html" %}
-
-  <form class="inline-form" hx-post="/manage/types" hx-target="#type-list" hx-swap="outerHTML">
-    <label class="inline">Name <input name="name" placeholder="newsletter" size="16" required></label>
-    <label class="inline">Main file <input name="main_file" placeholder="newsletter.md" size="16" required></label>
-    <label class="inline">Character limit <input type="number" name="char_limit" min="1" placeholder="none" class="short-number"></label>
-    <label class="inline"><input type="checkbox" name="video" value="true"> Video</label>
-    <button class="btn btn-primary" type="submit">Add type</button>
-  </form>
-  <p class="hint">The main file is the draft a piece of this type opens on and creates on its
-    first save. The character limit is shown against the draft as it is written, counted as
-    it will read once pasted; leave it empty for none. A video type's pieces are frames
-    rendered into a video, so it has no character limit. Renaming a type is safe: existing
-    pieces keep their folders.</p>
 </section>
 {% endblock %}

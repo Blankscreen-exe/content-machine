@@ -40,8 +40,8 @@ def test_recording_a_publish_lists_it_and_marks_the_piece_published(client: Test
     assert ">2026-09-01<" in response.text and "https://example.com/post" in response.text
     session.refresh(piece)
     assert piece.stage == Stage.published
-    # the heading shows the stage, so it is redrawn alongside the panel
-    assert 'id="piece-head" hx-swap-oob="true"' in response.text
+    # the facts under the title show the stage, so they are redrawn alongside the panel
+    assert 'id="piece-meta" hx-swap-oob="true"' in response.text
     assert crud.list_publications(session, piece.id)[0].platform.name == "blog"
 
 

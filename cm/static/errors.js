@@ -10,16 +10,18 @@
     413: "That was too large to send.",
   };
 
+  // An open dialog sits above the page, hiding the page's banner, so it has one of its own.
   function show(text) {
-    const banner = document.getElementById("error-banner");
+    const banner = document.querySelector("dialog[open] .error-banner")
+                   || document.getElementById("error-banner");
     if (!banner) return;
     banner.querySelector(".error-text").textContent = text;
     banner.hidden = false;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const banner = document.getElementById("error-banner");
-    banner?.querySelector(".error-close")?.addEventListener("click", () => { banner.hidden = true; });
+  document.addEventListener("click", (event) => {
+    const close = event.target.closest(".error-close");
+    if (close) close.closest(".error-banner").hidden = true;
   });
 
   // For anything not covered above, the server's own explanation, which FastAPI sends as

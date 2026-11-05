@@ -1,0 +1,32 @@
+{# One piece type's cadence for a brand, in the dialog. It asks only for what the chosen rule
+   uses — a number for "every N days", a day for "weekly" — by the stylesheet's :has rule, so
+   switching rule needs no script; the rule ignores whatever it does not use. #}
+{% with title = "Cadence: " ~ kind.name %}{% include "partials/modal_head.html" %}{% endwith %}
+<form class="stacked-form cadence-form" hx-post="/manage/brands/{{ brand.id }}/cadence/{{ kind.id }}"
+      hx-target="#cadence" hx-swap="outerHTML">
+  <label>How often
+    <select name="rule" autofocus>
+      <option value="" {% if not rule %}selected{% endif %}>no rhythm</option>
+      {% for value, label in rule_labels.items() %}
+        <option value="{{ value.value }}" {% if rule and rule.kind == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="rule-n">N, in days
+    <input type="number" name="every_days" min="1" max="365" class="short-number"
+           value="{{ rule.every_days if rule and rule.every_days else '' }}">
+  </label>
+  <label class="rule-day">Day
+    <select name="weekday">
+      {% for day in weekdays %}
+        <option value="{{ loop.index0 }}" {% if rule and rule.weekday == loop.index0 %}selected{% endif %}>{{ day }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <p class="hint field-hint">Every N days keeps each piece of the type at least N days from the
+    others, so a gap is filled before dates further on are used.</p>
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">Save</button>
+    <button class="btn" type="button" data-close-modal>Cancel</button>
+  </div>
+</form>

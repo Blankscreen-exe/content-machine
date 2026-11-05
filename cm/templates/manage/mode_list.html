@@ -1,19 +1,17 @@
+{# A brand's modes as short rows: the name, the first line of what it says, how many ideas
+   use it. Editing one opens in the dialog. #}
 <div id="mode-list">
   {% for mode in modes %}
-    <article class="item-card {{ '' if mode.active else 'inactive' }}">
-      <form class="stacked-form" hx-post="/manage/modes/{{ mode.id }}"
-            hx-target="#mode-list" hx-swap="outerHTML">
-        <label>Name <input name="name" value="{{ mode.name }}" required></label>
-        <label>Description <textarea name="description" rows="6">{{ mode.description }}</textarea></label>
-        <div class="actions">
-          <button class="btn btn-primary" type="submit">Save</button>
-          {% with item = mode, base = "/manage/modes", list_id = "mode-list" %}
-            {% include "manage/item_actions.html" %}
-          {% endwith %}
-        </div>
-      </form>
-    </article>
+    <div class="item-row {{ '' if mode.active else 'inactive' }}">
+      <span class="name">{{ mode.name }}</span>
+      {# the first line as it reads, without the list and bold marks it is written with #}
+      {% set first = mode.description.strip().splitlines()[0] if mode.description.strip() else "" %}
+      <span class="gist">{{ first.lstrip("-*# ").replace("**", "") if first else "No description yet." }}</span>
+      {% with item = mode, base = "/manage/modes", list_id = "mode-list" %}
+        {% include "manage/item_actions.html" %}
+      {% endwith %}
+    </div>
   {% else %}
-    <p class="empty">This brand has no modes yet.</p>
+    <p class="empty-inline">This brand has no modes yet.</p>
   {% endfor %}
 </div>

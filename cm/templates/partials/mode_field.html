@@ -10,6 +10,6 @@
   {% if not brand_id %}
     <span class="hint">Pick a brand to see its modes.</span>
   {% elif not modes %}
-    <span class="hint">This brand has no modes yet. Add them under <a href="/manage/modes?brand_id={{ brand_id }}">Manage</a>.</span>
+    <span class="hint">This brand has no modes yet. Add them on <a href="/manage/brands/{{ brand_id }}#modes">the brand's page</a>.</span>
   {% endif %}
 </label>

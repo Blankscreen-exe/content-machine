@@ -1,4 +1,5 @@
-"""The Manage tab: brands with their voice and profile, and the lists you pick from."""
+"""The Manage tab: brands, each with its own page, and the lists you pick from. Short forms
+open in the dialog: these tests fetch them as the dialog does."""
 from __future__ import annotations
 
 import pytest
@@ -10,7 +11,7 @@ from cm.files import digest
 from cm.models import Mode, PieceType, Platform
 from helpers import mode_id, type_id
 
-SECTIONS = ("brands", "modes", "types", "platforms")
+SECTIONS = ("brands", "types", "platforms")        # a brand's modes are on its own page
 
 
 # --- the page -----------------------------------------------------------------------
@@ -30,6 +31,17 @@ def test_every_section_has_the_sidebar_with_itself_selected(client: TestClient, 
 
 
 # --- brands -------------------------------------------------------------------------
+
+def test_the_old_modes_address_goes_to_the_brands_page(client: TestClient, session: Session, brand):
+    other = crud.create_brand(session, "acme", "Acme Co")
+
+    chosen = client.get(f"/manage/modes?brand_id={other.id}", follow_redirects=False)
+    first = client.get("/manage/modes", follow_redirects=False)
+
+    assert chosen.status_code == 303 and chosen.headers["location"] == f"/manage/brands/{other.id}#modes"
+    # with none named, the first brand as the list orders them
+    assert first.headers["location"] == f"/manage/brands/{crud.list_brands(session)[0].id}#modes"
+
 
 def test_a_new_brand_starts_with_a_placeholder_voice_and_profile(client: TestClient, session: Session):
     response = client.post("/manage/brands", data={"slug": "acme-co", "name": "Acme Co"})
@@ -54,16 +66,35 @@ def test_a_taken_slug_is_refused_not_ignored(client: TestClient, brand):
 
 
 def test_renaming_a_brand_keeps_its_slug(client: TestClient, session: Session, brand):
-    client.post(f"/manage/brands/{brand.id}", data={"name": "  A   New Name "})
+    assert f'hx-post="/manage/brands/{brand.id}"' in client.get(f"/manage/brands/{brand.id}/rename").text
+
+    response = client.post(f"/manage/brands/{brand.id}", data={"name": "  A   New Name "})
+
     session.refresh(brand)
     assert (brand.name, brand.slug) == ("A New Name", "personal")
+    # renaming is done from the brand's page, so its heading is what is redrawn
+    assert 'id="brand-head"' in response.text and "A New Name" in response.text
+
+
+def test_the_brands_list_links_each_brand_with_its_counts(client: TestClient, session: Session, brand):
+    mode_id(session, brand.id, "advisor")
+    crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="One")
+
+    page = client.get("/manage/brands").text
+
+    assert f'<a href="/manage/brands/{brand.id}">{brand.name}</a>' in page
+    assert 'data-label="Modes" data-order="0000001">1</td>' in page
+    assert 'data-label="Pieces" data-order="0000001">1</td>' in page
+    assert 'name="name"' not in page                     # no rename boxes in the list
 
 
 def test_turning_a_brand_off_keeps_its_work(client: TestClient, session: Session, brand):
     crud.create_idea(session, brand_id=brand.id, title="Still here")
 
-    client.post(f"/manage/brands/{brand.id}/active", data={"active": "false"})
+    from_list = client.post(f"/manage/brands/{brand.id}/active", data={"active": "false"})
+    from_page = client.post(f"/manage/brands/{brand.id}/active", data={"active": "false", "origin": "page"})
 
+    assert 'id="brand-list"' in from_list.text and 'id="brand-head"' in from_page.text
     session.refresh(brand)
     assert brand.active is False
     assert len(crud.list_ideas(session, brand_id=brand.id)) == 1
@@ -113,23 +144,29 @@ def test_only_voice_and_profile_can_be_edited(client: TestClient, brand):
 
 # --- modes --------------------------------------------------------------------------
 
-def test_modes_show_one_brand_at_a_time(client: TestClient, session: Session, brand):
+def test_a_brands_page_lists_its_own_modes(client: TestClient, session: Session, brand):
     other = crud.create_brand(session, "acme", "Acme Co")
-    mode_id(session, brand.id, "advisor")
+    mode_id(session, brand.id, "advisor", description="- **The reader is** a team lead")
     mode_id(session, other.id, "commentator")
 
-    page = client.get(f"/manage/modes?brand_id={other.id}").text
+    page = client.get(f"/manage/brands/{brand.id}").text
+    modes = page[page.index('id="modes"'):page.index('id="cadence"')]
 
-    assert 'value="commentator"' in page and 'value="advisor"' not in page
-
-
-def test_without_a_brand_chosen_the_first_brand_is_shown(client: TestClient, session: Session, brand):
-    mode_id(session, brand.id, "advisor")
-    assert 'value="advisor"' in client.get("/manage/modes").text
+    assert '<span class="name">advisor</span>' in modes and "commentator" not in modes
+    # the first line as it reads, without its markdown
+    assert '<span class="gist">The reader is a team lead</span>' in modes
 
 
 def test_the_add_form_starts_from_the_mode_questions(client: TestClient, brand):
-    assert "The reader is" in client.get(f"/manage/modes?brand_id={brand.id}").text
+    form = client.get(f"/manage/modes/new?brand_id={brand.id}").text
+    assert "The reader is" in form and f'name="brand_id" value="{brand.id}"' in form
+
+
+def test_a_mode_opens_for_editing_in_the_dialog(client: TestClient, session: Session, brand):
+    advisor = mode_id(session, brand.id, "advisor", description="calm")
+    form = client.get(f"/manage/modes/{advisor}/edit").text
+    assert 'class="modal-head"' in form and 'value="advisor"' in form and ">calm</textarea>" in form
+    assert 'hx-target="#mode-list"' in form
 
 
 def test_adding_and_editing_a_mode(client: TestClient, session: Session, brand):
@@ -147,7 +184,7 @@ def test_a_mode_in_use_offers_only_to_be_turned_off(client: TestClient, session:
     used = mode_id(session, brand.id, "advisor")
     crud.create_idea(session, brand_id=brand.id, title="Uses it", mode_id=used)
 
-    page = client.get(f"/manage/modes?brand_id={brand.id}").text
+    page = client.get(f"/manage/brands/{brand.id}").text
     assert "used by 1" in page
     assert f'/manage/modes/{used}/delete' not in page
 
@@ -162,7 +199,7 @@ def test_adding_a_type_checks_its_main_file(client: TestClient, session: Session
     assert client.post("/manage/types", data={"name": "thread", "main_file": "thread"}).status_code == 400
 
     response = client.post("/manage/types", data={"name": "thread", "main_file": "thread.md"})
-    assert response.status_code == 200 and 'value="thread.md"' in response.text
+    assert response.status_code == 200 and "<code>thread.md</code>" in response.text
 
 
 def test_renaming_a_type_moves_no_folders(client: TestClient, session: Session, brand):
@@ -206,7 +243,7 @@ def test_types_are_listed_alphabetically(client: TestClient, session: Session):
     names = sorted((t.name for t in choices.all_items(session, PieceType)), key=str.lower)
     page = client.get("/manage/types").text
 
-    positions = [page.index(f'value="{name}"') for name in names]
+    positions = [page.index(f'">{name}</td>') for name in names]
     assert positions == sorted(positions)
 
 
@@ -288,7 +325,17 @@ def test_a_video_type_cannot_have_a_character_limit(client: TestClient, session:
     assert not post.video and post.char_limit == 3000
 
 
-def test_the_types_list_shows_which_are_video(client: TestClient):
+def test_the_types_list_shows_which_are_video(client: TestClient, session: Session):
     page = client.get("/manage/types").text
-    assert "<th>Video</th>" in page
-    assert 'value="true" checked' in page and 'aria-label="youtube short: video"' in page
+    assert "<th>Video</th>" in page and '<td data-label="Video">yes</td>' in page
+    assert 'name="main_file"' not in page                # editing happens in the dialog
+
+    form = client.get(f"/manage/types/{type_id(session, 'youtube short')}/edit").text
+    assert 'name="video" value="true" checked' in form and 'value="frames.md"' in form
+
+
+def test_new_types_and_platforms_open_in_the_dialog(client: TestClient, session: Session):
+    assert 'hx-post="/manage/types"' in client.get("/manage/types/new").text
+    assert 'hx-post="/manage/platforms"' in client.get("/manage/platforms/new").text
+    newsletter = choices.create(session, Platform, "newsletter")
+    assert 'value="newsletter"' in client.get(f"/manage/platforms/{newsletter.id}/edit").text

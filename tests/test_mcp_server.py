@@ -53,9 +53,11 @@ def test_claude_code_gets_the_tools_and_a_refusal_it_can_read(workspace):
         ("update_piece", {"piece_id": 1, "due_on": "2026-11-02"}),      # dates arrive as text
     ])
 
-    assert {"brand_context", "create_piece", "set_stage", "add_note", "render_draft", "still"} <= set(names)
+    assert {"brand_context", "create_piece", "set_stage", "add_note", "render_draft", "still",
+            "record_publication"} <= set(names)
     assert not moved.is_error and not dated.is_error
-    assert refused.is_error and "Published is mine" in refused.content[0].text
+    # published is not a stage it can set: it says what records a publish instead
+    assert refused.is_error and "use record_publication" in refused.content[0].text
 
     engine = create_engine(f"sqlite:///{workspace / 'content.db'}")
     with Session(engine) as session:

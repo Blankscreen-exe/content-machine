@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlmodel import Session
 
-from .. import crud
+from .. import crud, themes
 from ..database import get_session
 from ..settings import get_settings
 from ..templating import page_context, templates
@@ -28,11 +28,12 @@ def _whole_days(value: str) -> str:
 # Only these can be written from the browser, so a stray form cannot invent a setting.
 # Each one maps to the check its value must pass, which returns the value to store.
 ALLOWED_SETTINGS = {
-    "theme": str.strip,
+    "theme": themes.check,
     "terminal": str.strip,
     "due_soon_days": _whole_days,
 }
-SETTING_RULES = {"due_soon_days": "a whole number of days from 0 to 365"}
+SETTING_RULES = {"due_soon_days": "a whole number of days from 0 to 365",
+                 "theme": "the name of a stylesheet in cm/static/themes/"}
 
 
 @router.get("/settings", response_class=HTMLResponse)

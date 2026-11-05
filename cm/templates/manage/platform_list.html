@@ -1,20 +1,14 @@
 <div id="platform-list">
   {% if platforms %}
     <table class="list" id="platforms-table" data-table>
-      <thead><tr><th>Name</th><th>Status</th><th class="actions-head no-sort">Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th class="num">Publish records</th><th class="actions-head no-sort">Actions</th></tr></thead>
       <tbody>
         {% for platform in platforms %}
           <tr class="{{ '' if platform.active else 'inactive' }}">
-            <td data-label="Name" data-order="{{ platform.name | lower }}">
-              <form class="inline-form" hx-post="/manage/platforms/{{ platform.id }}"
-                    hx-target="#platform-list" hx-swap="outerHTML">
-                <input name="name" value="{{ platform.name }}" size="18" required>
-                <button class="btn" type="submit">Rename</button>
-              </form>
-            </td>
-            <td data-label="Status">{{ 'on' if platform.active else 'off' }}</td>
+            <td class="title" data-label="Name" data-order="{{ platform.name | lower }}">{{ platform.name }}{% if not platform.active %} <span class="hint">(off)</span>{% endif %}</td>
+            <td class="num" data-label="Publish records" data-order="{{ '%07d' % usage.get(platform.id, 0) }}">{{ usage.get(platform.id, 0) }}</td>
             <td class="actions-cell" data-label="Actions">
-              {% with item = platform, base = "/manage/platforms", list_id = "platform-list" %}
+              {% with item = platform, base = "/manage/platforms", list_id = "platform-list", count_shown = true %}
                 {% include "manage/item_actions.html" %}
               {% endwith %}
             </td>
@@ -23,6 +17,6 @@
       </tbody>
     </table>
   {% else %}
-    <p class="empty">No platforms yet. Add one below.</p>
+    <p class="empty">No platforms yet. Hit <b>Add platform</b>.</p>
   {% endif %}
 </div>
