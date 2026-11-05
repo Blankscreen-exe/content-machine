@@ -2,15 +2,15 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 from sqlmodel import Session, select
 
-from cm import cadence, crud
+from cm import cadence, choices, crud
 from cm.claude_tools import Refused, Tools
-from cm.models import Actor, CadenceRule, Event, IdeaStatus, Stage
+from cm.models import Actor, CadenceRule, Event, IdeaStatus, Platform, Stage
 from cm.settings import get_settings
 from helpers import type_id
 
@@ -63,10 +63,79 @@ def test_parking_or_dropping_an_idea_is_yours(tools, status):
         tools.update_idea(idea["id"], status=status)
 
 
-def test_there_is_no_tool_to_publish_delete_or_change_the_brand(tools):
+def test_there_is_no_tool_to_delete_or_change_the_brand_or_the_lists(tools):
     names = {tool.__name__ for tool in tools.all()} | {tools.still.__name__}
-    for forbidden in ("publish", "delete", "ready", "voice", "profile", "setting", "platform"):
+    for forbidden in ("delete", "ready", "voice", "profile", "setting"):
         assert not any(forbidden in name for name in names), forbidden
+    # publishing is only written down, and the platforms only read: adding one stays yours
+    assert {name for name in names if "publi" in name or "platform" in name} == {
+        "record_publication", "list_platforms"}
+
+
+# --- writing down that a piece went out -------------------------------------------------------
+
+@pytest.fixture(name="linkedin")
+def linkedin_fixture(session: Session) -> Platform:
+    return choices.create(session, Platform, "LinkedIn")
+
+
+def test_recording_a_publication_marks_the_piece_published(tools, session, linkedin):
+    piece = _blog(tools)
+
+    answer = tools.record_publication(piece["id"], "linkedin", "https://example.com/post",
+                                      posted_on=date(2026, 9, 1))
+
+    assert answer["stage"] == "published"
+    assert answer["published"] == {"platform": "LinkedIn", "url": "https://example.com/post"}
+    [record] = crud.list_publications(session, piece["id"])
+    assert record.platform_id == linkedin.id and record.posted_at.date() == date(2026, 9, 1)
+    events = session.exec(select(Event).where(Event.to_state == "published")).all()
+    assert [event.actor for event in events] == [Actor.claude]
+
+
+def test_a_publication_is_refused_where_it_could_be_wrong(tools, linkedin):
+    piece = _blog(tools)
+    with pytest.raises(Refused, match="is not a link"):
+        tools.record_publication(piece["id"], "LinkedIn", "linkedin.com/posts/1")
+    with pytest.raises(Refused, match="has not happened yet"):
+        tools.record_publication(piece["id"], "LinkedIn", posted_on=date.today() + timedelta(days=1))
+    with pytest.raises(Refused, match="no platform called 'Mastodon'. The platforms are: LinkedIn"):
+        tools.record_publication(piece["id"], "Mastodon")
+
+    tools.record_publication(piece["id"], "LinkedIn")
+    with pytest.raises(Refused, match="already recorded as published on LinkedIn"):
+        tools.record_publication(piece["id"], "LinkedIn")       # a retried call does not record it twice
+
+
+def test_only_platforms_in_use_are_offered(tools, session, linkedin):
+    choices.update(session, choices.create(session, Platform, "Old forum"), active=False)
+    assert tools.list_platforms() == ["LinkedIn"]
+    with pytest.raises(Refused, match="no platform called 'Old forum'"):
+        tools.record_publication(_blog(tools)["id"], "Old forum")
+
+
+def test_another_brands_piece_cannot_be_recorded_as_published(tools, other, linkedin):
+    with pytest.raises(Refused, match="There is no piece"):
+        tools.record_publication(other["piece"].id, "LinkedIn")
+
+
+# --- filing work that came first ---------------------------------------------------------------
+
+def test_a_piece_made_before_its_idea_can_be_put_under_it(tools):
+    piece = _blog(tools)
+    idea = tools.create_idea("Legacy systems age badly")
+
+    assert tools.update_piece(piece["id"], idea_id=idea["id"])["idea_id"] == idea["id"]
+    assert tools.update_piece(piece["id"], title="Legacy systems, later")["idea_id"] == idea["id"]
+
+
+def test_a_piece_cannot_be_put_under_another_brands_idea(tools, other):
+    with pytest.raises(Refused, match="There is no idea"):
+        tools.update_piece(_blog(tools)["id"], idea_id=other["idea"].id)
+
+
+def test_an_idea_can_be_filed_with_its_notes(tools):
+    assert tools.create_idea("Automation before AI", notes="from a client call")["notes"] == "from a client call"
 
 
 # --- one brand only ---------------------------------------------------------------------------
@@ -89,7 +158,6 @@ def test_new_work_cannot_be_hung_on_another_brands_idea_or_piece(tools, other):
 
 
 def test_another_brands_mode_is_not_offered(tools, session, other):
-    from cm import choices
     from cm.models import Mode
     choices.create(session, Mode, "advisor", brand_id=other["brand"].id)
     with pytest.raises(Refused, match="personal has no mode called 'advisor'"):

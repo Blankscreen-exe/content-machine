@@ -144,6 +144,8 @@ def _form_page(request: Request, session: Session, piece: Piece | None, brand_id
         "back_label": piece.title if piece and back == f"/pieces/{piece.id}" else "Pieces",
         "stages": STAGES,
         "types": _type_options(session, piece) if piece else choices.options(session, PieceType),
+        # what it can be filed under: its brand's ideas, once the brand is known
+        "ideas": crud.list_ideas(session, brand_id=brand_id) if brand_id else [],
     }
     return templates.TemplateResponse(request, "piece_edit.html", context)
 
@@ -152,12 +154,13 @@ def _form_page(request: Request, session: Session, piece: Piece | None, brand_id
 def piece_create(session: Session = Depends(get_session),
                  brand_id: int = Form(...), title: str = Form(...), type_id: int = Form(...),
                  stage: Stage = Form(Stage.not_started), due_on: date | None = Form(None),
-                 notes: str = Form("")):
+                 notes: str = Form(""), idea_id: str | None = Form(None)):
     """A new piece opens on its own page, ready to be written."""
     if not choices.get(session, PieceType, type_id):
         raise choices.ChoiceError("That piece type does not exist.")
     piece = crud.create_piece(session, brand_id=brand_id, type_id=type_id, title=title.strip(),
-                              stage=stage, due_on=due_on, notes=notes)
+                              stage=stage, due_on=due_on, notes=notes,
+                              idea_id=_idea_link(session, brand_id, idea_id or ""))
     return _go(f"/pieces/{piece.id}")
 
 
@@ -165,15 +168,28 @@ def piece_create(session: Session = Depends(get_session),
 def piece_update(piece_id: int, session: Session = Depends(get_session),
                  title: str = Form(...), type_id: int = Form(...),
                  stage: Stage = Form(Stage.not_started), due_on: date | None = Form(None),
-                 notes: str = Form(""), next_url: str | None = Form(None, alias="next")):
+                 notes: str = Form(""), idea_id: str | None = Form(None),
+                 next_url: str | None = Form(None, alias="next")):
+    """`idea_id` left out keeps the piece's idea; "none" takes the piece off it."""
     piece = crud.get_piece(session, piece_id)
     if not piece:
         raise HTTPException(404, "piece not found")
     if not choices.get(session, PieceType, type_id):
         raise choices.ChoiceError("That piece type does not exist.")
+    linked = {} if idea_id is None else {"idea_id": _idea_link(session, piece.brand_id, idea_id)}
     crud.update_piece(session, piece, title=title.strip(), type_id=type_id, stage=stage,
-                      due_on=due_on, notes=notes)
+                      due_on=due_on, notes=notes, **linked)
     return _go(back_to(next_url, f"/pieces/{piece.id}"))
+
+
+def _idea_link(session: Session, brand_id: int, idea_id: str) -> int | None:
+    """The idea a piece is filed under, from the form: "none", or one of its own brand's."""
+    if idea_id.strip() in ("", "none"):
+        return None
+    idea = crud.get_idea(session, int(idea_id)) if idea_id.strip().isdigit() else None
+    if not idea or idea.brand_id != brand_id:
+        raise choices.ChoiceError("That idea is not one of this brand's.")
+    return idea.id
 
 
 def _go(path: str) -> Response:

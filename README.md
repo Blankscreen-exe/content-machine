@@ -151,11 +151,13 @@ keep them (`claude_session.py`):
   and the example kit. Another brand's work, the database and `.cm/` are outside.
 - **The database through tools only.** `cm mcp --brand <slug>` serves the content machine tools
   over stdio (`mcp_server.py`, rules in `claude_tools.py`); Claude Code starts it itself from a
-  config written to `.cm/sessions/`. The tools read and file ideas and pieces, move a piece to
-  draft or wip, add notes, search drafts, find the next free due dates by the brand's cadence,
-  and render and look at a draft video. There is no tool
-  to move a piece to ready, publish, delete, or change a brand, the settings or the lists: those
-  stay yours. Everything a session changes is recorded as Claude's.
+  config written to `.cm/sessions/`. The tools read and file ideas and pieces, put a piece
+  made earlier under its idea, move a piece to draft or wip, add notes, search drafts, find the
+  next free due dates by the brand's cadence, and render and look at a draft video. Once you
+  say a piece went out, `record_publication` writes down where, with its link, which marks it
+  published; it refuses a platform not on your list, a date to come, and a second record on
+  the same platform. There is no tool to move a piece to ready, delete, or change a brand, the
+  settings or the lists: those stay yours. Everything a session changes is recorded as Claude's.
 - **Rules and skills handed over.** Restricted mode also ignores a project's own `CLAUDE.md`
   and `.claude/skills/`, so the session is given the workspace's `CLAUDE.md` as part of its
   system prompt, and the skills as a Claude Code plugin from `plugin/` (named `cm`, so they
@@ -481,7 +483,8 @@ from `content.db`: it holds nothing of its own, so deleting it only means the ne
 ## Publishing
 
 Recording a publish on a piece's page (platform, link, date) moves the piece to published. The
-platform comes from the managed list, so the same one is always spelled the same way.
+platform comes from the managed list, so the same one is always spelled the same way. A
+session can record one too, once you tell it the piece went out (`record_publication`).
 `cm published <id> --platform <name>` does the same from a terminal.
 
 ## Moving to another machine

@@ -22,6 +22,19 @@
 
       <label>Title <input name="title" value="{{ piece.title if piece else '' }}" required autofocus></label>
 
+      {# a piece made before its idea was filed can be put under it here #}
+      {% if ideas %}
+        <label>Idea
+          <select name="idea_id">
+            {# not empty: a form field sent empty arrives as not sent at all, which keeps the idea #}
+            <option value="none">none</option>
+            {% for idea in ideas %}
+              <option value="{{ idea.id }}" {% if piece and piece.idea_id == idea.id %}selected{% endif %}>{{ idea.title }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      {% endif %}
+
       <div class="row">
         <label>Type
           <select name="type_id">

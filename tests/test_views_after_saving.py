@@ -120,6 +120,37 @@ def test_deleting_from_the_piece_page_goes_back_to_the_list(client: TestClient, 
     assert crud.get_piece(session, piece.id) is None
 
 
+# --- the idea a piece is filed under ----------------------------------------------------
+
+def test_a_piece_can_be_put_under_an_idea_of_its_brand(client: TestClient, session: Session, brand,
+                                                       other_brand):
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Mine")
+    idea = crud.create_idea(session, brand_id=brand.id, title="Came later")
+    theirs = crud.create_idea(session, brand_id=other_brand.id, title="Theirs")
+
+    page = client.get(f"/pieces/{piece.id}/edit").text
+    assert f'<option value="{idea.id}"' in page and "Theirs" not in page    # its own brand's only
+
+    client.post(f"/pieces/{piece.id}", data=_piece_fields(session) | {"idea_id": str(idea.id)})
+    assert crud.get_piece(session, piece.id).idea_id == idea.id
+
+    refused = client.post(f"/pieces/{piece.id}", data=_piece_fields(session) | {"idea_id": str(theirs.id)})
+    assert refused.status_code == 400 and crud.get_piece(session, piece.id).idea_id == idea.id
+
+
+def test_leaving_the_idea_out_keeps_it_and_choosing_none_takes_it_off(client: TestClient,
+                                                                        session: Session, brand):
+    idea = crud.create_idea(session, brand_id=brand.id, title="An idea")
+    piece = crud.create_piece(session, brand_id=brand.id, type_id=type_id(session, "blog"), title="Mine",
+                              idea_id=idea.id)
+
+    client.post(f"/pieces/{piece.id}", data=_piece_fields(session))
+    assert crud.get_piece(session, piece.id).idea_id == idea.id
+
+    client.post(f"/pieces/{piece.id}", data=_piece_fields(session) | {"idea_id": "none"})
+    assert crud.get_piece(session, piece.id).idea_id is None
+
+
 # --- and only ever to a page of this app -----------------------------------------------
 
 @pytest.mark.parametrize("wanted", ["/pieces", "/pieces?brand_id=2&stage=draft", "/pieces/7"])

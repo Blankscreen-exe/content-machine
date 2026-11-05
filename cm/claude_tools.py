@@ -5,9 +5,11 @@ and tested on their own. A set of tools is bound to one brand: a piece or idea o
 brand is "not found", so a session cannot read or file work under a brand it was not
 opened for. Every change is recorded as Claude's.
 
-What is missing is the point. Nothing here moves a piece to ready (that is your proofread)
-or published, records a publication, deletes anything, or touches a brand's voice,
-profile or modes, the settings or the managed lists. Those stay yours, in the app.
+What is missing is the point. Nothing here moves a piece to ready (that is your proofread),
+deletes anything, or touches a brand's voice, profile or modes, the settings or the managed
+lists. Those stay yours, in the app. Publishing stays yours too: record_publication only
+writes down that a piece went out, once you have said it did, which is what moves it to
+published.
 
 The docstrings are what Claude reads about each tool, so they are written to it.
 """
@@ -25,7 +27,8 @@ from sqlalchemy.engine import Engine
 from sqlmodel import Session
 
 from . import cadence, choices, crud, frames, renders, resources, search, video, workspace
-from .models import PRIORITIES, Actor, Idea, IdeaStatus, Mode, Piece, PieceType, Stage
+from .dates import moment_on
+from .models import PRIORITIES, Actor, Idea, IdeaStatus, Mode, Piece, PieceType, Platform, Stage
 from .settings import get_settings
 
 # Where Claude may move a piece, and the stages it may move one from. Past wip is yours.
@@ -61,6 +64,7 @@ class Tools:
                 self.list_ideas, self.get_idea, self.create_idea, self.update_idea,
                 self.list_pieces, self.get_piece, self.create_piece, self.update_piece, self.next_slots,
                 self.set_stage, self.add_note, self.search_drafts,
+                self.list_platforms, self.record_publication,
                 self.start_kit, self.render_draft]
 
     # --- the brand ---------------------------------------------------------------------------
@@ -94,12 +98,12 @@ class Tools:
             return _idea(self._idea(session, idea_id))
 
     def create_idea(self, title: str, angle: str = "", talking_points: str = "", source: str = "",
-                    mode: str | None = None, priority: str = "normal") -> dict:
+                    notes: str = "", mode: str | None = None, priority: str = "normal") -> dict:
         """Add an idea to the pool. `mode` is one of the brand's modes by name; `priority` is
         high, normal or low; `source` is where the idea came from."""
         with self._session() as session:
             idea = crud.create_idea(session, brand_id=self.brand_id, title=_title(title), angle=angle,
-                                    talking_points=talking_points, source=source,
+                                    talking_points=talking_points, source=source, notes=notes,
                                     mode_id=self._mode_id(session, mode), priority=_priority(priority))
             return _idea(idea)
 
@@ -150,12 +154,17 @@ class Tools:
             workspace.write_brief(session, piece)
             return _piece(session, piece)
 
-    def update_piece(self, piece_id: int, title: str | None = None, due_on: date | None = None) -> dict:
-        """Change a piece's title or due date. Only what is given changes. Its stage has
-        set_stage, its notes add_note."""
+    def update_piece(self, piece_id: int, title: str | None = None, due_on: date | None = None,
+                     idea_id: int | None = None) -> dict:
+        """Change a piece's title, due date, or the idea it came from (`idea_id`, one of this
+        brand's ideas, for a piece made before its idea was filed). Only what is given
+        changes. Its stage has set_stage, its notes add_note."""
         with self._session() as session:
             piece = self._piece(session, piece_id)
-            fields = {"title": _title(title) if title is not None else None, "due_on": due_on}
+            if idea_id is not None:
+                self._idea(session, idea_id)
+            fields = {"title": _title(title) if title is not None else None, "due_on": due_on,
+                      "idea_id": idea_id}
             return _piece(session, crud.update_piece(session, piece, **_given(fields)))
 
     def next_slots(self, type: str, count: int, start: date | None = None) -> list[str]:
@@ -171,11 +180,16 @@ class Tools:
 
     def set_stage(self, piece_id: int, stage: Stage) -> dict:
         """Move a piece to draft (a first version is written) or wip (being reworked). Ready
-        and published are mine: I move a piece there once I have proofread or posted it."""
+        is mine: I move a piece there once I have proofread it. A piece becomes published when
+        record_publication writes down where it went out."""
+        if stage is Stage.published:
+            raise Refused(f"A piece can be moved to {' or '.join(s.value for s in CLAUDE_STAGES)} here. "
+                          "It becomes published when its publication is recorded: once I have told "
+                          "you it went out, use record_publication with the platform and the link.")
         if stage not in CLAUDE_STAGES:
             raise Refused(f"A piece can be moved to {' or '.join(s.value for s in CLAUDE_STAGES)} here. "
                           f"{stage.value.capitalize()} is mine: I move a piece there after proofreading "
-                          "or posting it. Tell me it is waiting for me instead.")
+                          "it. Tell me it is waiting for me instead.")
         with self._session() as session:
             piece = self._piece(session, piece_id)
             if piece.stage not in MOVABLE_STAGES:
@@ -200,6 +214,35 @@ class Tools:
             return [{"piece_id": hit.piece.id, "title": hit.piece.title, "file": hit.name,
                      "snippet": html.unescape(hit.snippet.replace("<mark>", "**").replace("</mark>", "**"))}
                     for hit in search.search(session, query, brand_id=self.brand_id)]
+
+    # --- publishing --------------------------------------------------------------------------
+
+    def list_platforms(self) -> list[str]:
+        """The platforms a piece can be recorded as published on. I add new ones in the app."""
+        with self._session() as session:
+            return [platform.name for platform in choices.options(session, Platform)]
+
+    def record_publication(self, piece_id: int, platform: str, url: str = "",
+                           posted_on: date | None = None) -> dict:
+        """Write down that a piece went out, which marks it published: the platform (one of
+        list_platforms), the link to the post, and the day (today if not given). Only once I
+        have told you it went out, or said yes to you posting it; never on your own judgement.
+        One record per platform: a second post on the same one is mine to record."""
+        url = url.strip()
+        if url and not url.startswith(("https://", "http://")):
+            raise Refused(f"{url!r} is not a link. Give the post's address, starting with https://, "
+                          "or leave it out.")
+        if posted_on is not None and posted_on > date.today():
+            raise Refused(f"{posted_on.isoformat()} has not happened yet. Record a post once it is out.")
+        with self._session() as session:
+            piece = self._piece(session, piece_id)
+            found = self._platform(session, platform)
+            if any(earlier.platform_id == found.id for earlier in crud.list_publications(session, piece.id)):
+                raise Refused(f"{piece.title} is already recorded as published on {found.name}. "
+                              "If it went out there twice, tell me and I will record the second one.")
+            publication = crud.record_publication(session, piece, platform_id=found.id, url=url,
+                                                  posted_at=moment_on(posted_on) if posted_on else None)
+            return _piece(session, piece) | {"published": {"platform": found.name, "url": publication.url}}
 
     # --- video -------------------------------------------------------------------------------
 
@@ -273,6 +316,14 @@ class Tools:
             raise Refused(f"There is no piece type called {name!r}. The types are: {known}. "
                           "A new type is added by me, on the Manage page.")
         return kind
+
+    def _platform(self, session: Session, name: str) -> Platform:
+        found = choices.by_name(session, Platform, name)
+        if not found or not found.active:
+            known = ", ".join(p.name for p in choices.options(session, Platform)) or "none yet"
+            raise Refused(f"There is no platform called {name!r}. The platforms are: {known}. "
+                          "A new one is added by me, on the Manage page.")
+        return found
 
     def _mode_id(self, session: Session, name: str | None) -> int | None:
         if not name:
